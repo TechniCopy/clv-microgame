@@ -775,8 +775,10 @@ function ControleSVG({ checked, running }) {
   const fillOk = (id) => (checked.includes(id) ? C.greenLight : "white");
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
 
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
+
   return (
-    <svg viewBox="0 0 260 385" className="w-full h-auto select-none">
+    <svg viewBox="0 0 280 400" className="w-full h-auto select-none">
       <defs>
         <pattern id="hatchM3" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
@@ -784,51 +786,67 @@ function ControleSVG({ checked, running }) {
       </defs>
 
       {/* vloer (met sparing voor de rioolaansluiting) */}
-      <rect x="8" y="358" width="230" height="12" fill="url(#hatchM3)" stroke={C.brownText} strokeWidth="1.5" />
+      <rect x="8" y="370" width="232" height="12" fill="url(#hatchM3)" stroke={C.brownText} strokeWidth="1.5" />
 
-      {/* schachtwanden (doorsnede) */}
-      <rect x="170" y="28" width="8" height="330" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      <rect x="218" y="28" width="8" height="330" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* schachtwanden (doorsnede, zoals de NEN-figuur) */}
+      <rect x="160" y="20" width="8" height="350" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="208" y="20" width="8" height="350" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
       {/* binnenste rookgaskanaal + opvangbak */}
-      <line x1="192" y1="28" x2="192" y2="320" stroke={C.brownText} strokeWidth="2" />
-      <line x1="206" y1="28" x2="206" y2="320" stroke={C.brownText} strokeWidth="2" />
-      <path d="M190 320 H208 V327 Q208 334 199 334 Q190 334 190 327 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
-      {running && <path d="M199 316 L199 30" fill="none" stroke={C.red} strokeWidth="3.5" strokeLinecap="round" style={flow} />}
+      <line x1="180" y1="20" x2="180" y2="300" stroke={C.brownText} strokeWidth="2" />
+      <line x1="196" y1="20" x2="196" y2="300" stroke={C.brownText} strokeWidth="2" />
+      <path d="M178 300 H198 V308 Q198 316 188 316 Q178 316 178 308 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* drukvereffeningsopeningen onderin */}
+      {[176, 188, 200].map((cx) => (
+        <circle key={cx} cx={cx} cy="352" r="3.5" fill="none" stroke={C.brownText} strokeWidth="1.5" />
+      ))}
+      {running && (
+        <>
+          <path d="M188 296 L188 26" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" style={flow} />
+          <path d="M173 30 L173 280" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
+          <path d="M203 30 L203 280" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
+        </>
+      )}
 
       {/* schoorsteenplaat (gegevensplaat aan de schachtwand) */}
-      <rect x="152" y="6" width="46" height="20" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
-      <line x1="158" y1="13" x2="192" y2="13" stroke={hl("plaat")} strokeWidth="1.5" />
-      <line x1="158" y1="19" x2="184" y2="19" stroke={hl("plaat")} strokeWidth="1.5" />
-
-      {/* toestel + typeplaat + vlam */}
-      <rect x="28" y="90" width="70" height="90" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
-      <rect x="38" y="100" width="34" height="18" fill={fillOk("typeplaat")} stroke={hl("typeplaat")} strokeWidth={checked.includes("typeplaat") ? 2.5 : 1.5} />
-      <text x="55" y="112" fontSize="7" fontWeight="700" fill={C.brownText} textAnchor="middle">C43</text>
-      <circle cx="63" cy="150" r="11" fill="none" stroke={running ? C.red : C.beigeMid} strokeWidth="2" />
-      {running && <path d="M58 153 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />}
-      {/* verbindingsleiding met terugslagklep, op de stomp met flens */}
-      <rect x="98" y="116" width="66" height="14" fill="#B7BFC4" stroke={C.brownText} strokeWidth="2" />
-      <ellipse cx="166" cy="123" rx="4" ry="11" fill="white" stroke={C.brownText} strokeWidth="2" />
-      <circle cx="132" cy="123" r="9" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
-      <line x1="127" y1="128" x2="137" y2="118" stroke={hl("klep")} strokeWidth="2.5" />
-
-      {/* inspectieluik in de schachtwand */}
-      <rect x="158" y="258" width="20" height="34" fill={fillOk("luik")} stroke={hl("luik")} strokeWidth={checked.includes("luik") ? 3 : 2} />
-      <line x1="162" y1="264" x2="174" y2="264" stroke={hl("luik")} strokeWidth="1.5" />
-      <line x1="162" y1="286" x2="174" y2="286" stroke={hl("luik")} strokeWidth="1.5" />
-
-      {/* condensafvoer: sifon, open verbinding, tweede sifon, naar riool */}
-      <g fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5}>
-        <path d="M199 334 V340 C199 351 213 351 213 340 V352 H224" />
-        <path d="M228 346 H238 M230 349 L233 353 L236 349" />
-        <path d="M233 353 V355 H240 C240 367 254 367 254 355 V372" />
-      </g>
-      <text x="246" y="382" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
+      <rect x="146" y="2" width="46" height="18" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
+      <line x1="152" y1="8" x2="186" y2="8" stroke={hl("plaat")} strokeWidth="1.5" />
+      <line x1="152" y1="14" x2="178" y2="14" stroke={hl("plaat")} strokeWidth="1.5" />
 
       {/* CO-melder in de opstellingsruimte */}
-      <circle cx="58" cy="48" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
-      <circle cx="58" cy="48" r="4" fill={hl("melder")} />
-      <text x="58" y="72" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
+      <circle cx="50" cy="42" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
+      <circle cx="50" cy="42" r="4" fill={hl("melder")} />
+      <text x="50" y="66" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
+
+      {/* verbindingsleiding: verticaal op de ketel, 90 graden bocht naar het kanaal */}
+      <path d="M60 112 V80 H156" fill="none" stroke={C.brownText} strokeWidth="16" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M60 112 V80 H156" fill="none" stroke="#B7BFC4" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
+      {running && <path d="M60 108 V80 H172" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" style={flow} />}
+      {/* flens op de aansluitstomp */}
+      <ellipse cx="158" cy="80" rx="4.5" ry="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* terugslagklep in het horizontale deel */}
+      <circle cx="118" cy="80" r="9" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
+      <line x1="113" y1="85" x2="123" y2="75" stroke={hl("klep")} strokeWidth="2.5" />
+
+      {/* toestel met aansluitstub bovenop + typeplaat + vlam */}
+      <rect x="52" y="108" width="16" height="12" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
+      <rect x="20" y="120" width="80" height="100" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
+      <rect x="30" y="132" width="36" height="18" fill={fillOk("typeplaat")} stroke={hl("typeplaat")} strokeWidth={checked.includes("typeplaat") ? 2.5 : 1.5} />
+      <text x="48" y="144" fontSize="7" fontWeight="700" fill={C.brownText} textAnchor="middle">C43</text>
+      <circle cx="60" cy="185" r="11" fill="none" stroke={running ? C.red : C.beigeMid} strokeWidth="2" />
+      {running && <path d="M55 188 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />}
+
+      {/* bouwkundig inspectieluik in de schachtwand */}
+      <rect x="152" y="240" width="16" height="32" fill={fillOk("luik")} stroke={hl("luik")} strokeWidth={checked.includes("luik") ? 3 : 2} />
+      <line x1="155" y1="246" x2="165" y2="246" stroke={hl("luik")} strokeWidth="1.5" />
+      <line x1="155" y1="266" x2="165" y2="266" stroke={hl("luik")} strokeWidth="1.5" />
+
+      {/* condensafvoer (NEN): sifon, open verbinding, tweede sifon, naar riool */}
+      <g fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5}>
+        <path d="M188 316 V324 C188 336 202 336 202 324 V342 H224" />
+        <path d="M228 335 H238 M230 338 L233 342 L236 338" />
+        <path d="M233 342 V344 H242 C242 357 256 357 256 344 V370" />
+      </g>
+      <text x="256" y="392" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
     </svg>
   );
 }
@@ -874,7 +892,7 @@ function Ronde3({ addScore, onDone }) {
     <div className="flex-1 flex flex-col items-center p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
-        Ronde 3: Controleren en in bedrijf stellen
+        Ronde 3: Inbedrijfstellen &amp; Onderhoud
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
         Werk het opleverformulier af: sleep elk verplicht controlepunt naar &lsquo;Gecontroleerd&rsquo;. Pas op — er zitten
