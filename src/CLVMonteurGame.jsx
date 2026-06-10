@@ -422,7 +422,7 @@ function LeidingKaart({ mat }) {
 
 function AansluitSVG({ stap, afschot, beugels }) {
   // toestel links (afvoer bovenop), schachtstomp rechts; horizontale leiding ~3 m
-  const leidingY = 120;
+  const leidingY = 88;
   // positief afschot = leiding loopt af richting het toestel (linkerkant lager)
   const leftY = leidingY + afschot * 2.2;
   const pipeAt = (x) => leftY + (leidingY - leftY) * ((x - 132) / (408 - 132));
@@ -495,7 +495,7 @@ function AansluitSVG({ stap, afschot, beugels }) {
       )}
       {stap === 0 && (
         <g>
-          <path d="M88 136 V120 H132" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
+          <path d={`M88 136 V${leidingY} H132`} fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
           <rect x="132" y={leidingY - 9} width="276" height="18" rx="9" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
         </g>
       )}
@@ -604,7 +604,7 @@ function Ronde2({ addScore, onDone }) {
             id="leiding-gat"
             onDropItem={dropMateriaal}
             className="absolute"
-            style={{ left: `${(128 / 520) * 100}%`, top: `${(95 / 260) * 100}%`, width: `${(280 / 520) * 100}%`, height: `${(34 / 260) * 100}%` }}
+            style={{ left: `${(128 / 520) * 100}%`, top: `${(63 / 260) * 100}%`, width: `${(280 / 520) * 100}%`, height: `${(34 / 260) * 100}%` }}
           >
             {({ isHover, flash }) => (
               <div
@@ -637,7 +637,7 @@ function Ronde2({ addScore, onDone }) {
               className="absolute"
               style={{
                 left: `${((128 + pos * 93.3 - 20) / 520) * 100}%`,
-                top: `${(78 / 260) * 100}%`,
+                top: `${(46 / 260) * 100}%`,
                 width: `${(40 / 520) * 100}%`,
                 height: `${(34 / 260) * 100}%`,
               }}
