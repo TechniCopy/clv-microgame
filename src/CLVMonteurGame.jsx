@@ -30,14 +30,14 @@ const POOL_R1 = [
       "Dat de schachtwand wordt aangeheeld.",
     ],
     correct: 0,
-    feedbackCorrect: "Precies! Beide stompen direct afsluiten, anders kan rookgas van de buren de woning instromen.",
+    feedbackCorrect: "Precies! Beide stompen direct afsluiten, anders kan rookgas van de buren de woning instromen. Deze waarschuwing staat ook verplicht op de typeplaat bij elke aansluiting (voorschriften CLV C(10)-toepassingen, hoofdstuk 7).",
     feedbackWrong: "Denk aan de animatie: de open stomp liet rookgas binnen. Altijd beide stompen direct afsluiten bij demontage.",
   },
   {
     question: "[EXAMENVRAAG] Een HR-toestel wordt aangesloten op een CLV-kanaal op overdruk. Wat moet er in het toestel aanwezig zijn om rookgas-recirculatie te voorkomen?",
     options: ["Een rookgaskeerklep (terugslagklep)", "Een TTB (thermische terugslagbeveiliging)", "Een rookgasdop", "Een rookgassensor"],
     correct: 0,
-    feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel.",
+    feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel (voorschriften CLV C(10)-toepassingen, bijlage D).",
     feedbackWrong: "Bij overdruk-CLV is de rookgaskeerklep (terugslagklep) verplicht. Een TTB is iets anders: die meet temperatuur bij open toestellen.",
   },
   {
@@ -71,7 +71,7 @@ const POOL_R2 = [
       "Er is geen verschil; het zijn twee namen voor hetzelfde systeem.",
     ],
     correct: 0,
-    feedbackCorrect: "Juist! Onderdruk (VR) werkt op natuurlijke trek; bij overdruk (HR) duwt de ventilator het rookgas onder druk het kanaal in.",
+    feedbackCorrect: "Juist! Onderdruk (VR) werkt op natuurlijke trek (NPR 3378-40); bij overdruk (HR) duwt de ventilator het rookgas onder druk het kanaal in (voorschriften CLV C(10)-toepassingen).",
     feedbackWrong: "Denk aan de schuif: bij onderdruk stijgt het rookgas vanzelf (natuurlijke trek), bij overdruk zet de ventilator van het toestel druk op het kanaal.",
   },
   {
@@ -83,7 +83,7 @@ const POOL_R2 = [
       "De klep is alleen nodig om geluid te dempen.",
     ],
     correct: 0,
-    feedbackCorrect: "Correct! Bij overdruk staat het kanaal onder druk. Een stilstaand toestel zonder terugslagklep wordt dan een open route voor rookgas de woning in.",
+    feedbackCorrect: "Correct! Bij overdruk staat het kanaal onder druk. Een stilstaand toestel zonder terugslagklep wordt dan een open route voor rookgas de woning in (voorschriften CLV C(10)-toepassingen, bijlage D).",
     feedbackWrong: "Kern: bij overdruk is de druk in het kanaal hóger dan in de woning. Zonder terugslagklep drukt het rookgas zich via een stilstaand toestel naar binnen.",
   },
   {
@@ -105,8 +105,8 @@ const POOL_R3 = [
     question: "[EXAMENVRAAG] Wat is de minimale afmeting van het inspectieluik bij een CLV-systeem?",
     options: ["50 x 50 cm", "30 x 30 cm", "60 x 60 cm", "100 x 100 cm"],
     correct: 0,
-    feedbackCorrect: "Klopt! Minimaal 50 x 50 cm, brandwerend, en maximaal 50 cm van het CLV-systeem.",
-    feedbackWrong: "Het inspectieluik moet minimaal 50 x 50 cm zijn, zodat het systeem goed bereikbaar en inspecteerbaar blijft.",
+    feedbackCorrect: "Klopt! Minimaal 50 x 50 cm, brandwerend, en maximaal 50 cm van het hart van het CLV-systeem (NPR 3378-40, art. 5.1.5).",
+    feedbackWrong: "Het inspectieluik moet minimaal 50 x 50 cm zijn, zodat het systeem goed bereikbaar en inspecteerbaar blijft (NPR 3378-40, art. 5.1.5).",
   },
   {
     question: "Wat is de verwachte levensduur van een CLV-systeem?",
@@ -573,7 +573,7 @@ const R2B_KAARTJES = [
   { id: "d3", label: "Terugslagklep in het toestel verplicht", col: "overdruk" },
   { id: "d4", label: "Condensafvoer met 2 sifons", col: "onderdruk" },
   { id: "d5", label: "Condensafvoer met 3 sifons", col: "overdruk" },
-  { id: "d6", label: "Maximaal 1 toestel per verdieping", col: "overdruk" },
+  { id: "d6", label: "Maximaal 2 toestellen per verdieping", col: "overdruk" },
 ];
 
 function DrukSchuif({ modus, onChange }) {
@@ -728,10 +728,10 @@ function DrukSysteemSVG({ modus }) {
         {sifonLoops.length} sifons
       </text>
 
-      {/* max 1 toestel per verdieping (alleen overdruk) */}
+      {/* max 2 toestellen per verdieping (alleen overdruk, C(10)-voorschriften hfst. 8) */}
       {over && (
         <text x="20" y="60" fontSize="9" fontWeight="700" fill={C.brownText}>
-          max. 1 toestel per verdieping
+          max. 2 toestellen per verdieping
         </text>
       )}
     </svg>
@@ -787,7 +787,7 @@ function Ronde2({ addScore, onDone }) {
     setHint(
       col === "onderdruk"
         ? "Hint: bij onderdruk werkt het kanaal op natuurlijke trek met 2 sifons. De extra veiligheidseisen horen bij overdruk."
-        : "Hint: overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons en max. 1 toestel per verdieping."
+        : "Hint: overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons (bij een niet-inregenvrije kap) en max. 2 toestellen per verdieping."
     );
     return "wrong";
   };
@@ -898,14 +898,14 @@ function Ronde2({ addScore, onDone }) {
                 {modus === "onderdruk" ? (
                   <>
                     <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
-                    <li>• Druk in het kanaal is lager dan in de woning</li>
+                    <li>• Druk in het rookgaskanaal is lager dan in de luchttoevoer én de woning (NPR 3378-40)</li>
                     <li>• Condensafvoer met 2 sifons</li>
                   </>
                 ) : (
                   <>
                     <li>• De ventilator van het toestel zet druk op het kanaal</li>
                     <li>• Druk in het kanaal is hóger dan in de woning — terugslagklep verplicht</li>
-                    <li>• Condensafvoer met 3 sifons, max. 1 toestel per verdieping</li>
+                    <li>• Condensafvoer met 3 sifons (als de kap niet inregenvrij is), max. 2 toestellen per verdieping</li>
                   </>
                 )}
               </ul>
@@ -1003,10 +1003,10 @@ function ControleSVG({ checked, running }) {
         </>
       )}
 
-      {/* schoorsteenplaat (gegevensplaat aan de schachtwand) */}
-      <rect x="146" y="2" width="46" height="18" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
-      <line x1="152" y1="8" x2="186" y2="8" stroke={hl("plaat")} strokeWidth="1.5" />
-      <line x1="152" y1="14" x2="178" y2="14" stroke={hl("plaat")} strokeWidth="1.5" />
+      {/* schoorsteenplaat: typeplaat nabij het inspectieluik (C(10)-voorschriften, 7.2) */}
+      <rect x="104" y="246" width="42" height="22" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
+      <line x1="110" y1="253" x2="140" y2="253" stroke={hl("plaat")} strokeWidth="1.5" />
+      <line x1="110" y1="260" x2="132" y2="260" stroke={hl("plaat")} strokeWidth="1.5" />
 
       {/* CO-melder in de opstellingsruimte */}
       <circle cx="50" cy="42" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />

@@ -30,7 +30,7 @@ const POOL_R1 = [
       "Er is geen verschil, het zijn twee namen voor hetzelfde.",
     ],
     correct: 0,
-    feedbackCorrect: "Precies! Bij beide is de rookgasafvoer gemeenschappelijk. Het verschil zit in de lucht: CLV via het dak, half-CLV via de gevel.",
+    feedbackCorrect: "Precies! Bij beide is de rookgasafvoer gemeenschappelijk. Het verschil zit in de lucht: CLV via het dak, half-CLV individueel, bijvoorbeeld via de gevel (NPR 3378-40 en NPR 3378-41).",
     feedbackWrong: "Kijk terug naar de animatie: bij beide systemen ging het rookgas via hetzelfde kanaal. Alleen de luchttoevoer verschilde.",
   },
   {
@@ -64,7 +64,7 @@ const POOL_R2 = [
       "Om de luchttoevoer te regelen.",
     ],
     correct: 0,
-    feedbackCorrect: "Klopt! De terugslagklep voorkomt rookgas-recirculatie — daarover leer je meer in game 2.",
+    feedbackCorrect: "Klopt! De terugslagklep voorkomt rookgas-recirculatie (verplicht bij overdruk volgens de voorschriften CLV C(10)-toepassingen, bijlage D) — daarover leer je meer in game 2.",
     feedbackWrong: "De terugslagklep houdt rookgas van andere toestellen tegen. Zonder klep kan rookgas terugstromen en dat is levensgevaarlijk.",
   },
   {
@@ -88,7 +88,7 @@ const POOL_R2 = [
       "Dat is alleen nodig bij half-CLV-systemen.",
     ],
     correct: 0,
-    feedbackCorrect: "Precies! Twee sifons met een open verbinding ertussen: één tegen rookgas, één tegen rioolgas.",
+    feedbackCorrect: "Precies! Twee sifons met een open verbinding ertussen: één tegen rookgas, één tegen rioolgas. De aansluiting op de riolering moet voldoen aan NEN 3287 (zie NPR 3378-40, art. 5.6).",
     feedbackWrong: "Denk aan de twee gevaren: rookgas uit het systeem én rioolgas uit de riolering. Elke sifon vangt er één af.",
   },
 ];
@@ -96,17 +96,17 @@ const POOL_R2 = [
 const POOL_R3 = [
   {
     question: "[EXAMENVRAAG] Hoeveel toestellen mogen er per verdieping worden aangesloten op een concentrisch C(10) overdruk-CLV-systeem?",
-    options: ["1 toestel", "2 toestellen", "3 toestellen", "4 toestellen"],
+    options: ["2 toestellen", "1 toestel", "3 toestellen", "4 toestellen"],
     correct: 0,
-    feedbackCorrect: "Correct! Bij een overdruk-CLV mag maximaal 1 toestel per verdieping worden aangesloten.",
-    feedbackWrong: "Bij overdruk is dat altijd maar 1 toestel per verdieping — anders kunnen de drukken elkaar verstoren.",
+    feedbackCorrect: "Correct! Bij een C(10) overdruk-CLV mogen maximaal 2 toestellen per verdieping worden aangesloten (voorschriften CLV C(10)-toepassingen, hoofdstuk 8).",
+    feedbackWrong: "Volgens de voorschriften voor C(10)-toepassingen (hoofdstuk 8, Dimensionering) mogen er maximaal 2 toestellen per verdieping op een overdruk-CLV worden aangesloten.",
   },
   {
     question: "[EXAMENVRAAG] Een concentrisch CLV-systeem werkt op natuurlijke trek. Welk type toestel mag hierop worden aangesloten?",
     options: ["C43 toestel", "C53 toestel", "C33 toestel", "C83 toestel"],
     correct: 0,
-    feedbackCorrect: "Juist! C42 en C43 zijn de types voor een concentrisch onderdruk-CLV.",
-    feedbackWrong: "Voor onderdruk-CLV (natuurlijke trek) gelden C42 en C43. C83 hoort bij half-CLV, C33 bij een individuele dakdoorvoer.",
+    feedbackCorrect: "Juist! C42 en C43 zijn de types voor een concentrisch onderdruk-CLV (NPR 3378-40).",
+    feedbackWrong: "Voor onderdruk-CLV (natuurlijke trek) gelden C42 en C43 (NPR 3378-40). C83 hoort bij half-CLV (NPR 3378-41), C33 bij een individuele dakdoorvoer.",
   },
   {
     question: "Wat betekent het laatste cijfer 3 in de codering C43?",
@@ -117,7 +117,7 @@ const POOL_R3 = [
       "Het toestel heeft 3 kW vermogen.",
     ],
     correct: 0,
-    feedbackCorrect: "Klopt! Een 3 = ventilator in de luchttoevoer, een 2 = ventilator in de rookgasafvoer. Alleen gesloten toestellen met ventilator mogen op een CLV.",
+    feedbackCorrect: "Klopt! Een 3 = ventilator in de luchttoevoer, een 2 = ventilator in de rookgasafvoer (toestelaanduidingen volgens NPR 3378-80). Alleen gesloten toestellen met ventilator mogen op een CLV.",
     feedbackWrong: "Het laatste cijfer gaat over de ventilator: 2 = in de rookgasafvoer, 3 = in de luchttoevoer.",
   },
 ];
