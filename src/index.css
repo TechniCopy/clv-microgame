@@ -22,3 +22,7 @@ body {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
+@keyframes spinFan {
+  to { transform: rotate(360deg); }
+}

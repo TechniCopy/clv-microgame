@@ -16,7 +16,7 @@ import {
   playSound,
 } from "./shared.jsx";
 
-const MAX_SCORE = 135;
+const MAX_SCORE = 145;
 
 // ─── VRAGENPOOLS ───
 
@@ -63,16 +63,28 @@ const POOL_R2 = [
     feedbackWrong: "Op een bestaand RVS-systeem mag je geen ander materiaal combineren. Alleen RVS.",
   },
   {
-    question: "Welk afschot moet een horizontale verbindingsleiding minimaal hebben, en in welke richting?",
+    question: "Wat is het verschil tussen een onderdruk- en een overdruk-CLV-systeem?",
     options: [
-      "Minimaal 50 mm per meter, afwaterend richting het toestel.",
-      "Minimaal 30 mm per meter, afwaterend richting het toestel.",
-      "Minimaal 50 mm per meter, afwaterend richting het CLV-kanaal.",
-      "Een horizontale leiding hoeft geen afschot te hebben.",
+      "Bij onderdruk ontstaat de trek natuurlijk door de warme rookgassen; bij overdruk zet de ventilator van het toestel druk op het kanaal.",
+      "Bij onderdruk zit de ventilator in het kanaal, bij overdruk in het toestel.",
+      "Een overdruksysteem werkt alleen bij lage buitentemperaturen.",
+      "Er is geen verschil; het zijn twee namen voor hetzelfde systeem.",
     ],
     correct: 0,
-    feedbackCorrect: "Klopt! 50 mm (5 cm) per meter, richting het toestel — zo loopt condenswater terug naar de ketelsifon.",
-    feedbackWrong: "Het afschot is minimaal 50 mm per meter en altijd richting het toestel, zodat condens via de ketelsifon wordt afgevoerd.",
+    feedbackCorrect: "Juist! Onderdruk (VR) werkt op natuurlijke trek; bij overdruk (HR) duwt de ventilator het rookgas onder druk het kanaal in.",
+    feedbackWrong: "Denk aan de schuif: bij onderdruk stijgt het rookgas vanzelf (natuurlijke trek), bij overdruk zet de ventilator van het toestel druk op het kanaal.",
+  },
+  {
+    question: "Waarom is bij een overdruk-CLV-systeem een terugslagklep in het toestel verplicht?",
+    options: [
+      "De druk in het kanaal is hoger dan in de woning; zonder klep kan rookgas via een stilstaand toestel de woning in worden gedrukt.",
+      "De klep vergroot de trek in het kanaal.",
+      "De klep voorkomt dat condenswater het toestel in loopt.",
+      "De klep is alleen nodig om geluid te dempen.",
+    ],
+    correct: 0,
+    feedbackCorrect: "Correct! Bij overdruk staat het kanaal onder druk. Een stilstaand toestel zonder terugslagklep wordt dan een open route voor rookgas de woning in.",
+    feedbackWrong: "Kern: bij overdruk is de druk in het kanaal hóger dan in de woning. Zonder terugslagklep drukt het rookgas zich via een stilstaand toestel naar binnen.",
   },
   {
     question: "Mag je voor de aansluitleiding onderdelen van twee verschillende merken combineren?",
@@ -553,12 +565,188 @@ function AansluitSVG({ stap, afschot, beugels }) {
   );
 }
 
+// ─── STAP B: DE DRUKVERKENNER (onderdruk vs overdruk) ───
+
+const R2B_KAARTJES = [
+  { id: "d1", label: "Werkt op natuurlijke trek", col: "onderdruk" },
+  { id: "d2", label: "De ventilator van het toestel zet druk op het kanaal", col: "overdruk" },
+  { id: "d3", label: "Terugslagklep in het toestel verplicht", col: "overdruk" },
+  { id: "d4", label: "Condensafvoer met 2 sifons", col: "onderdruk" },
+  { id: "d5", label: "Condensafvoer met 3 sifons", col: "overdruk" },
+  { id: "d6", label: "Maximaal 1 toestel per verdieping", col: "overdruk" },
+];
+
+function DrukSchuif({ modus, onChange }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <span className="text-xs font-bold uppercase tracking-wide" style={{ color: C.brownText }}>
+        Systeemdruk
+      </span>
+      <div
+        className="relative flex rounded-full border-2 p-1 cursor-pointer select-none"
+        style={{ backgroundColor: C.beigeLight, borderColor: C.brownText, width: 240 }}
+        onClick={() => onChange(modus === "onderdruk" ? "overdruk" : "onderdruk")}
+      >
+        <div
+          className="absolute top-1 bottom-1 rounded-full transition-all duration-300 shadow-md"
+          style={{ width: "calc(50% - 4px)", left: modus === "onderdruk" ? 4 : "calc(50% + 0px)", backgroundColor: C.olive }}
+        />
+        {["onderdruk", "overdruk"].map((m) => (
+          <div
+            key={m}
+            className="flex-1 text-center py-2 text-xs font-bold uppercase z-10 transition-colors duration-300"
+            style={{ color: modus === m ? "white" : C.brown }}
+          >
+            {m}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DrukSysteemSVG({ modus }) {
+  const over = modus === "overdruk";
+  const flowUp = { strokeDasharray: "8 6", animation: `flowDash ${over ? "0.45s" : "1.1s"} linear infinite` };
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
+  const sifonLoops = over ? [390, 414, 438] : [390, 414];
+  const drainEndX = sifonLoops[sifonLoops.length - 1] + 24;
+
+  return (
+    <svg viewBox="0 0 520 380" className="w-full h-auto select-none">
+      <defs>
+        <pattern id="hatchM2b" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+      </defs>
+
+      {/* vloer (met sparing voor de rioolaansluiting) */}
+      <rect x="20" y="362" width="440" height="12" fill="url(#hatchM2b)" stroke={C.brownText} strokeWidth="2" />
+
+      {/* schachtwanden */}
+      <rect x="350" y="20" width="8" height="342" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="422" y="20" width="8" height="342" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* binnenste rookgaskanaal + opvangbak */}
+      <line x1="378" y1="20" x2="378" y2="320" stroke={C.brownText} strokeWidth="2" />
+      <line x1="402" y1="20" x2="402" y2="320" stroke={C.brownText} strokeWidth="2" />
+      <path d="M376 320 H404 V328 Q404 336 390 336 Q376 336 376 328 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+
+      {/* stromen */}
+      <path d="M390 316 L390 16" fill="none" stroke={C.red} strokeWidth={over ? 5 : 3.5} strokeLinecap="round" style={flowUp} />
+      <path d="M385 14 L390 4 L395 14" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M364 26 L364 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+      <path d="M416 26 L416 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+      {/* natuurlijke trek: warmtegolfjes boven de uitmonding */}
+      {!over && (
+        <g stroke={C.brown} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.7">
+          <path d="M372 8 q4 -4 8 0" />
+          <path d="M400 8 q4 -4 8 0" />
+        </g>
+      )}
+
+      {/* drukmeter naast het kanaal */}
+      <g>
+        <circle cx="475" cy="80" r="17" fill="white" stroke={C.brownText} strokeWidth="2" />
+        <text x="463" y="85" fontSize="11" fontWeight="700" fill="#3B82F6">&#8722;</text>
+        <text x="482" y="85" fontSize="11" fontWeight="700" fill={C.red}>+</text>
+        <line
+          x1="475"
+          y1="80"
+          x2={over ? 484 : 466}
+          y2="69"
+          stroke={over ? C.red : "#3B82F6"}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <circle cx="475" cy="80" r="2.5" fill={C.brownText} />
+        <text x="475" y="110" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">druk in</text>
+        <text x="475" y="120" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">het kanaal</text>
+      </g>
+
+      {/* toestel met aansluiting bovenop en 90-gradenbocht naar het kanaal */}
+      <path d="M105 156 V120 H352" fill="none" stroke={C.brownText} strokeWidth="16" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M105 156 V120 H352" fill="none" stroke="#B7BFC4" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M105 150 V120 H374" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" style={flowUp} />
+      <ellipse cx="354" cy="120" rx="4.5" ry="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+
+      {/* terugslagklep: alleen verplicht (en getoond) bij overdruk */}
+      {over && (
+        <g>
+          <circle cx="240" cy="120" r="10" fill={C.greenLight} stroke={C.green} strokeWidth="2.5" />
+          <line x1="234" y1="126" x2="246" y2="114" stroke={C.green} strokeWidth="2.5" />
+          <text x="240" y="100" fontSize="8.5" fontWeight="700" fill={C.green} textAnchor="middle">terugslagklep verplicht</text>
+        </g>
+      )}
+
+      <rect x="96" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="60" y="170" width="90" height="100" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      {/* vlam */}
+      <circle cx="88" cy="225" r="10" fill="none" stroke={C.red} strokeWidth="2" />
+      <path d="M83 228 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.7" />
+      {/* ventilator (draait bij overdruk) */}
+      <circle cx="124" cy="200" r="11" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <g
+        stroke={over ? C.red : C.beigeMid}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        style={over ? { transformOrigin: "124px 200px", animation: "spinFan 0.7s linear infinite" } : undefined}
+      >
+        <line x1="124" y1="200" x2="124" y2="192" />
+        <line x1="124" y1="200" x2="131" y2="204" />
+        <line x1="124" y1="200" x2="117" y2="204" />
+      </g>
+      <text x="105" y="258" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">
+        {over ? "HR-KETEL" : "VR-KETEL"}
+      </text>
+
+      {/* kier in de schachtwand: wat gebeurt er bij een lek? */}
+      <rect x="349" y="232" width="10" height="14" fill="white" />
+      <line x1="350" y1="232" x2="358" y2="232" stroke={C.brownText} strokeWidth="1.5" strokeDasharray="2 2" />
+      <line x1="350" y1="246" x2="358" y2="246" stroke={C.brownText} strokeWidth="1.5" strokeDasharray="2 2" />
+      {over ? (
+        <g>
+          <path d="M356 239 L322 239" fill="none" stroke={C.red} strokeWidth="3" style={flowUp} />
+          <path d="M330 234 L320 239 L330 244" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="305" cy="239" r="9" fill={C.red} opacity="0.15" style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }} />
+          <text x="288" y="226" fontSize="8.5" fontWeight="700" fill={C.red} textAnchor="end">rookgas drukt</text>
+          <text x="288" y="236" fontSize="8.5" fontWeight="700" fill={C.red} textAnchor="end">naar buiten!</text>
+        </g>
+      ) : (
+        <g>
+          <path d="M324 239 L352 239" fill="none" stroke="#3B82F6" strokeWidth="2.5" style={flowUp} />
+          <path d="M344 234 L354 239 L344 244" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="316" y="226" fontSize="8.5" fontWeight="600" fill="#3B82F6" textAnchor="end">lucht zuigt</text>
+          <text x="316" y="236" fontSize="8.5" fontWeight="600" fill="#3B82F6" textAnchor="end">naar binnen</text>
+        </g>
+      )}
+
+      {/* condensafvoer: 2 sifons (onderdruk) of 3 sifons (overdruk) */}
+      <g fill="none" stroke={C.brownText} strokeWidth="2.5">
+        <path d={`M390 336 V342 ${sifonLoops.map((x) => `C${x} 356 ${x + 14} 356 ${x + 14} 342`).join(" ")} H${drainEndX} V374`} />
+      </g>
+      <text x={drainEndX + 8} y="352" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="start">
+        {sifonLoops.length} sifons
+      </text>
+
+      {/* max 1 toestel per verdieping (alleen overdruk) */}
+      {over && (
+        <text x="20" y="60" fontSize="9" fontWeight="700" fill={C.brownText}>
+          max. 1 toestel per verdieping
+        </text>
+      )}
+    </svg>
+  );
+}
+
 function Ronde2({ addScore, onDone }) {
-  const [stap, setStap] = useState(0); // 0=materiaal, 1=afschot, 2=beugels, 3=klaar
+  const [stap, setStap] = useState(0); // 0 = materiaalkeuze, 1 = drukverkenner
   const [hint, setHint] = useState(null);
-  const [afschot, setAfschot] = useState(0);
-  const [afschotVast, setAfschotVast] = useState(false);
-  const [beugels, setBeugels] = useState([]); // posities in meters (1, 2)
+  const [modus, setModus] = useState("onderdruk");
+  const [seen, setSeen] = useState({ onderdruk: true, overdruk: false });
+  const [placed, setPlaced] = useState({});
+
+  const bothSeen = seen.onderdruk && seen.overdruk;
+  const allPlaced = R2B_KAARTJES.every((k) => placed[k.id]);
 
   // STAP A: materiaal
   const dropMateriaal = (payload, point) => {
@@ -568,7 +756,7 @@ function Ronde2({ addScore, onDone }) {
     if (mat.correct) {
       addScore(5, point);
       setHint(null);
-      setStap(1);
+      setTimeout(() => setStap(1), 700);
       playSound("drop");
       return "correct";
     }
@@ -579,214 +767,188 @@ function Ronde2({ addScore, onDone }) {
     return "wrong";
   };
 
-  // STAP B: afschot vastzetten bij loslaten van de schuif
-  const handleAfschotRelease = () => {
-    if (afschotVast || stap !== 1) return;
-    if (afschot === 5) {
-      addScore(5);
-      setAfschotVast(true);
-      setHint(null);
-      setTimeout(() => setStap(2), 600);
-    } else {
-      addScore(-5);
-      setHint(
-        afschot < 0
-          ? "Verkeerde richting! Het afschot moet áflopen richting het toestel, zodat condens naar de ketelsifon stroomt."
-          : `Niet vastgeklikt op ${afschot} cm/m — het afschot moet precies 5 cm per meter richting het toestel zijn.`
-      );
-      setAfschot(0);
-    }
+  // STAP B: drukverkenner
+  const handleModus = (m) => {
+    setModus(m);
+    setSeen((prev) => ({ ...prev, [m]: true }));
   };
 
-  // STAP C: beugels
-  const dropBeugel = (positie, correct) => (payload, point) => {
-    if (stap !== 2 || beugels.includes(positie)) return undefined;
-    if (correct) {
-      setBeugels((prev) => {
-        const next = [...prev, positie];
-        if (next.length === 2) setTimeout(() => setStap(3), 500);
-        return next;
-      });
+  const dropIn = (col) => (payload, point) => {
+    const kaart = R2B_KAARTJES.find((k) => k.id === payload);
+    if (!kaart || placed[kaart.id]) return undefined;
+    if (kaart.col === col) {
+      setPlaced((prev) => ({ ...prev, [kaart.id]: col }));
       addScore(5, point);
       setHint(null);
       playSound("drop");
       return "correct";
     }
     addScore(-5, point);
-    setHint("Daar hoort geen beugel: horizontaal beugel je elke meter — dus op 1 m en 2 m vanaf het toestel.");
+    setHint(
+      col === "onderdruk"
+        ? "Hint: bij onderdruk werkt het kanaal op natuurlijke trek met 2 sifons. De extra veiligheidseisen horen bij overdruk."
+        : "Hint: overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons en max. 1 toestel per verdieping."
+    );
     return "wrong";
   };
+
+  const kolom = (col, titel, sub) => (
+    <DropTarget id={`r2b-${col}`} onDropItem={dropIn(col)} className="flex-1">
+      {({ isHover, flash }) => (
+        <div
+          className="rounded-2xl border-2 p-3 min-h-[160px] transition-colors"
+          style={{
+            borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.brownText,
+            backgroundColor: flash === "wrong" ? C.redLight : isHover ? C.oliveLight : C.bgCard,
+            borderStyle: "dashed",
+          }}
+        >
+          <div className="text-center font-bold italic text-sm" style={{ color: C.brownText }}>
+            {titel}
+          </div>
+          <div className="text-center text-[10px] mb-2" style={{ color: C.brown }}>
+            {sub}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {R2B_KAARTJES.filter((k) => placed[k.id] === col).map((k) => (
+              <div
+                key={k.id}
+                className="rounded-lg px-2 py-1.5 text-xs font-semibold border-2 flex items-center gap-1"
+                style={{ backgroundColor: C.greenLight, borderColor: C.green, color: C.green }}
+              >
+                <CheckCircle className="w-3 h-3 shrink-0" />
+                {k.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </DropTarget>
+  );
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
-        Ronde 2: Het toestel aansluiten
+        Ronde 2: Aansluiten — onderdruk of overdruk?
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        {stap === 0 && "Stap A: kies de juiste leiding. Let op: de schacht is van RVS!"}
-        {stap === 1 && "Stap B: zet het afschot van de leiding goed met de schuif en laat los om vast te klikken."}
-        {stap === 2 && "Stap C: sleep de beugels naar de juiste posities. Horizontaal: elke meter. Gebruik de meetlat!"}
-        {stap === 3 && "De verbindingsleiding zit er netjes in!"}
+        {stap === 0
+          ? "Stap A: kies de juiste leiding. Let op: de schacht is van RVS!"
+          : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en het aantal sifons."}
       </p>
 
-      <div className="relative w-full" style={{ maxWidth: 520 }}>
-        <AansluitSVG stap={stap} afschot={afschotVast || stap > 1 ? 5 : afschot} beugels={beugels} />
-
-        {/* dropzone leiding-gat (stap A) */}
-        {stap === 0 && (
-          <DropTarget
-            id="leiding-gat"
-            onDropItem={dropMateriaal}
-            className="absolute"
-            style={{ left: `${(128 / 520) * 100}%`, top: `${(63 / 260) * 100}%`, width: `${(280 / 520) * 100}%`, height: `${(34 / 260) * 100}%` }}
-          >
-            {({ isHover, flash }) => (
-              <div
-                className="w-full h-full rounded-full border-2 transition-colors flex items-center justify-center text-[10px] font-bold"
-                style={{
-                  borderStyle: "dashed",
-                  borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
-                  backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.2)" : isHover ? "rgba(92,107,46,0.15)" : "transparent",
-                  color: C.brown,
-                }}
-              >
-                sleep de juiste leiding hierheen
-              </div>
-            )}
-          </DropTarget>
-        )}
-
-        {/* dropzones beugels (stap C): correct op 1 m en 2 m, afleider op 0,5 m */}
-        {stap === 2 &&
-          [
-            { pos: 0.5, correct: false },
-            { pos: 1, correct: true },
-            { pos: 2, correct: true },
-            { pos: 2.5, correct: false },
-          ].map(({ pos, correct }) => (
+      {stap === 0 && (
+        <>
+          <div className="relative w-full" style={{ maxWidth: 520 }}>
+            <AansluitSVG stap={0} afschot={0} beugels={[]} />
             <DropTarget
-              key={pos}
-              id={`beugel-${pos}`}
-              onDropItem={dropBeugel(pos, correct)}
+              id="leiding-gat"
+              onDropItem={dropMateriaal}
               className="absolute"
-              style={{
-                left: `${((128 + pos * 93.3 - 20) / 520) * 100}%`,
-                top: `${(46 / 260) * 100}%`,
-                width: `${(40 / 520) * 100}%`,
-                height: `${(34 / 260) * 100}%`,
-              }}
+              style={{ left: `${(128 / 520) * 100}%`, top: `${(63 / 260) * 100}%`, width: `${(280 / 520) * 100}%`, height: `${(34 / 260) * 100}%` }}
             >
               {({ isHover, flash }) => (
                 <div
-                  className="w-full h-full rounded-lg border-2 transition-colors"
+                  className="w-full h-full rounded-full border-2 transition-colors flex items-center justify-center text-[10px] font-bold"
                   style={{
                     borderStyle: "dashed",
-                    borderColor: beugels.includes(pos)
-                      ? "transparent"
-                      : flash === "wrong"
-                      ? C.red
-                      : isHover
-                      ? C.olive
-                      : C.beigeMid,
+                    borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
                     backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.2)" : isHover ? "rgba(92,107,46,0.15)" : "transparent",
+                    color: C.brown,
                   }}
-                />
+                >
+                  sleep de juiste leiding hierheen
+                </div>
               )}
             </DropTarget>
-          ))}
-      </div>
+          </div>
 
-      {hint && (
-        <p className="text-xs text-center italic mb-2 mt-1 font-medium max-w-md" style={{ color: C.red }}>
-          {hint}
-        </p>
+          {hint && (
+            <p className="text-xs text-center italic mb-2 mt-1 font-medium max-w-md" style={{ color: C.red }}>
+              {hint}
+            </p>
+          )}
+
+          <div className="flex gap-4 mt-3">
+            {MATERIALEN.map((mat) => (
+              <Draggable key={mat.id} payload={mat.id} ghost={<LeidingKaart mat={mat} />}>
+                <LeidingKaart mat={mat} />
+              </Draggable>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* STAP A: materiaalkeuze */}
-      {stap === 0 && (
-        <div className="flex gap-4 mt-3">
-          {MATERIALEN.map((mat) => (
-            <Draggable key={mat.id} payload={mat.id} ghost={<LeidingKaart mat={mat} />}>
-              <LeidingKaart mat={mat} />
-            </Draggable>
-          ))}
-        </div>
-      )}
-
-      {/* STAP B: afschot-schuif */}
       {stap === 1 && (
-        <div className="flex flex-col items-center gap-1 mt-3 w-full max-w-sm">
-          <div className="flex justify-between w-full text-[10px] font-semibold" style={{ color: C.brown }}>
-            <span>← richting kanaal</span>
-            <span>richting toestel →</span>
+        <>
+          <div className="flex flex-col lg:flex-row gap-6 w-full max-w-3xl items-center lg:items-start">
+            <div className="w-full max-w-md">
+              <div
+                className="rounded-xl px-4 py-2 mb-2 text-center font-bold italic border-2"
+                style={{ backgroundColor: modus === "onderdruk" ? C.oliveLight : "#FFF0D6", borderColor: C.brownText, color: C.brownText }}
+              >
+                {modus === "onderdruk" ? "Concentrisch CLV met onderdruk (VR)" : "Concentrisch CLV met overdruk (HR)"}
+              </div>
+              <DrukSysteemSVG modus={modus} />
+            </div>
+            <div className="flex flex-col gap-3 items-center lg:pt-14">
+              <DrukSchuif modus={modus} onChange={handleModus} />
+              <ul className="text-xs max-w-[230px] flex flex-col gap-1.5 italic" style={{ color: C.brown }}>
+                {modus === "onderdruk" ? (
+                  <>
+                    <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
+                    <li>• Druk in het kanaal is lager dan in de woning</li>
+                    <li>• Condensafvoer met 2 sifons</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• De ventilator van het toestel zet druk op het kanaal</li>
+                    <li>• Druk in het kanaal is hóger dan in de woning — terugslagklep verplicht</li>
+                    <li>• Condensafvoer met 3 sifons, max. 1 toestel per verdieping</li>
+                  </>
+                )}
+              </ul>
+              {!bothSeen && (
+                <p className="text-xs font-bold" style={{ color: C.olive }}>
+                  Bekijk ook de andere stand →
+                </p>
+              )}
+            </div>
           </div>
-          <input
-            type="range"
-            min="-10"
-            max="10"
-            step="1"
-            value={afschot}
-            onChange={(e) => setAfschot(Number(e.target.value))}
-            onPointerUp={handleAfschotRelease}
-            onKeyUp={(e) => {
-              if (e.key === "Enter") handleAfschotRelease();
-            }}
-            className="w-full"
-            style={{ accentColor: C.olive }}
-          />
-          <div
-            className="text-sm font-bold italic"
-            style={{ color: afschot === 5 ? C.green : C.brownText }}
-          >
-            {afschot === 0
-              ? "0 cm/m — waterpas"
-              : `${Math.abs(afschot)} cm/m richting ${afschot > 0 ? "toestel" : "kanaal"}`}
-            {afschot === 5 ? " ✓" : ""}
-          </div>
-          <p className="text-[10px] italic" style={{ color: C.brown }}>
-            Laat de schuif los op de juiste stand om de leiding vast te klikken.
-          </p>
-        </div>
-      )}
 
-      {/* STAP C: beugels */}
-      {stap === 2 && (
-        <div className="flex gap-4 mt-3 items-center">
-          {Array.from({ length: 2 - beugels.length }).map((_, i) => (
-            <Draggable key={i} payload={`beugel${i}`} ghost={<BeugelVisual />}>
-              <BeugelVisual />
-            </Draggable>
-          ))}
-          <span className="text-xs italic font-medium" style={{ color: C.brown }}>
-            ← sleep de beugels naar de leiding
-          </span>
-        </div>
+          {bothSeen && (
+            <div className="w-full max-w-3xl mt-5">
+              <div className="text-sm font-bold italic mb-2 text-center" style={{ color: C.brownText }}>
+                Mini-opdracht: sleep elke eigenschap naar het juiste systeem
+              </div>
+              <div className="flex gap-4 mb-3 flex-col sm:flex-row">
+                {kolom("onderdruk", "Onderdruk-CLV", "natuurlijke trek (VR)")}
+                {kolom("overdruk", "Overdruk-CLV", "ventilatordruk (HR)")}
+              </div>
+              {hint && (
+                <p className="text-xs text-center italic mb-2 font-medium" style={{ color: C.red }}>
+                  {hint}
+                </p>
+              )}
+              <div className="flex gap-2 flex-wrap justify-center">
+                {R2B_KAARTJES.filter((k) => !placed[k.id]).map((k) => (
+                  <Draggable key={k.id} payload={k.id} ghost={<DragCard label={k.label} small />}>
+                    <DragCard label={k.label} small />
+                  </Draggable>
+                ))}
+              </div>
+              {allPlaced && (
+                <div className="flex justify-center mt-4">
+                  <GameButton onClick={onDone} variant="green">
+                    Naar de controlevraag
+                  </GameButton>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
-
-      {stap === 3 && (
-        <div className="flex flex-col items-center gap-2 mt-3">
-          <p className="text-sm font-bold italic" style={{ color: C.green }}>
-            RVS-leiding, 5 cm/m afschot richting toestel en correct gebeugeld!
-          </p>
-          <GameButton onClick={onDone} variant="green">
-            Naar de controlevraag
-          </GameButton>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BeugelVisual() {
-  return (
-    <div className="flex flex-col items-center select-none">
-      <svg width="40" height="36" viewBox="0 0 40 36">
-        <path d="M8 24 a12 12 0 0 1 24 0" fill="none" stroke={C.olive} strokeWidth="5" />
-        <line x1="20" y1="12" x2="20" y2="2" stroke={C.oliveDark} strokeWidth="4" />
-        <line x1="6" y1="26" x2="34" y2="26" stroke={C.oliveDark} strokeWidth="3" />
-      </svg>
-      <span className="text-[9px] font-bold" style={{ color: C.brownText }}>Beugel</span>
     </div>
   );
 }
