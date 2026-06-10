@@ -421,9 +421,11 @@ function LeidingKaart({ mat }) {
 }
 
 function AansluitSVG({ stap, afschot, beugels }) {
-  // toestel links, schachtstomp rechts; horizontale leiding ~3 m
+  // toestel links (afvoer bovenop), schachtstomp rechts; horizontale leiding ~3 m
   const leidingY = 120;
-  const tilt = -afschot * 0.9; // visuele kanteling in graden (positief afschot = laag bij het toestel)
+  // positief afschot = leiding loopt af richting het toestel (linkerkant lager)
+  const leftY = leidingY + afschot * 2.2;
+  const pipeAt = (x) => leftY + (leidingY - leftY) * ((x - 132) / (408 - 132));
   const flowUp = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
 
@@ -455,30 +457,47 @@ function AansluitSVG({ stap, afschot, beugels }) {
       <rect x="412" y={leidingY - 12} width="22" height="24" fill="white" stroke={C.brownText} strokeWidth="2" />
       <ellipse cx="412" cy={leidingY} rx="5" ry="14" fill="white" stroke={C.brownText} strokeWidth="2" />
 
-      {/* toestel links */}
-      <rect x="40" y={leidingY - 20} width="80" height="110" fill="white" stroke={C.brownText} strokeWidth="2.5" />
-      <circle cx="80" cy={leidingY + 38} r="13" fill="none" stroke={C.red} strokeWidth="2" />
-      <path d={`M74 ${leidingY + 42} q6 -14 12 0 q-6 8 -12 0`} fill={C.red} opacity="0.7" />
-      <text x="80" y={leidingY + 76} fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">HR-KETEL</text>
-      {/* toestel-uitgang */}
-      <rect x="112" y={leidingY - 12} width="16" height="24" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      {/* toestel links, met de rookgasaansluiting bovenop */}
+      <rect x="50" y="140" width="76" height="94" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      <circle cx="88" cy="184" r="13" fill="none" stroke={C.red} strokeWidth="2" />
+      <path d="M82 188 q6 -14 12 0 q-6 8 -12 0" fill={C.red} opacity="0.7" />
+      <text x="88" y="222" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">HR-KETEL</text>
+      {/* aansluitstub bovenop het toestel */}
+      <rect x="79" y="126" width="18" height="14" fill="white" stroke={C.brownText} strokeWidth="2.5" />
 
-      {/* leiding (na stap A) */}
+      {/* leiding (na stap A): bocht omhoog vanaf de ketel + horizontaal deel met afschot */}
       {stap > 0 && (
-        <g transform={`rotate(${tilt} 268 ${leidingY})`}>
-          <rect x="128" y={leidingY - 9} width="280" height="18" rx="9" fill="#B7BFC4" stroke={C.brownText} strokeWidth="2.5" />
-          <line x1="140" y1={leidingY - 3} x2="396" y2={leidingY - 3} stroke="white" strokeWidth="2.5" opacity="0.7" />
+        <g>
+          {/* bocht van de aansluitstub naar de horizontale leiding */}
+          <path d={`M88 136 V${leftY} H134`} fill="none" stroke={C.brownText} strokeWidth="20" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={`M88 136 V${leftY} H134`} fill="none" stroke="#B7BFC4" strokeWidth="15" strokeLinejoin="round" strokeLinecap="round" />
+          {/* horizontale leiding (linkerkant zakt mee met het afschot) */}
+          <polygon
+            points={`132,${leftY - 9} 408,${leidingY - 9} 408,${leidingY + 9} 132,${leftY + 9}`}
+            fill="#B7BFC4"
+            stroke={C.brownText}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          <line x1="142" y1={leftY - 3 + (leidingY - leftY) * (10 / 276)} x2="396" y2={leidingY - 3 - (leidingY - leftY) * (12 / 276)} stroke="white" strokeWidth="2.5" opacity="0.7" />
           {/* beugels op de leiding */}
-          {beugels.map((pos) => (
-            <g key={pos}>
-              <rect x={128 + pos * 93.3 - 5} y={leidingY - 16} width="10" height="8" rx="2" fill={C.olive} stroke={C.oliveDark} strokeWidth="1.5" />
-              <line x1={128 + pos * 93.3} y1={leidingY - 16} x2={128 + pos * 93.3} y2={leidingY - 26} stroke={C.oliveDark} strokeWidth="3" />
-            </g>
-          ))}
+          {beugels.map((pos) => {
+            const bx = 128 + pos * 93.3;
+            const by = pipeAt(bx);
+            return (
+              <g key={pos}>
+                <rect x={bx - 5} y={by - 16} width="10" height="8" rx="2" fill={C.olive} stroke={C.oliveDark} strokeWidth="1.5" />
+                <line x1={bx} y1={by - 16} x2={bx} y2={by - 26} stroke={C.oliveDark} strokeWidth="3" />
+              </g>
+            );
+          })}
         </g>
       )}
       {stap === 0 && (
-        <rect x="128" y={leidingY - 9} width="280" height="18" rx="9" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
+        <g>
+          <path d="M88 136 V120 H132" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
+          <rect x="132" y={leidingY - 9} width="276" height="18" rx="9" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
+        </g>
       )}
 
       {/* meetlat (stap C) */}
