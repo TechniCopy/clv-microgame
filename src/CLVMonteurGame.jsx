@@ -123,56 +123,89 @@ function RecircSVG({ closed }) {
   const bothClosed = closed.rookgas && closed.lucht;
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
   const flowSlow = { strokeDasharray: "8 6", animation: "flowDash 1.2s linear infinite" };
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
 
   return (
     <svg viewBox="0 0 520 430" className="w-full h-auto select-none">
-      {/* gebouw met 2 woningen */}
-      <rect x="60" y="70" width="330" height="330" fill="#FBF7EE" stroke={C.brownText} strokeWidth="3" />
-      <line x1="60" y1="235" x2="390" y2="235" stroke={C.brownText} strokeWidth="2.5" />
-      <rect x="50" y="58" width="350" height="14" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2.5" />
-      <line x1="30" y1="400" x2="490" y2="400" stroke={C.brownText} strokeWidth="3" />
+      <defs>
+        <pattern id="hatchM1" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+        <pattern id="dotsM1" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1.1" fill={C.brownText} />
+        </pattern>
+      </defs>
 
-      {/* schacht rechts */}
-      <rect x="390" y="30" width="56" height="370" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2.5" />
-      <rect x="406" y="22" width="24" height="378" fill="#FBE9E5" stroke={C.brownText} strokeWidth="2" />
-      {/* hoofdstroom rookgas omhoog */}
-      <path d="M418 390 L418 16" fill="none" stroke={C.red} strokeWidth="5" strokeLinecap="round" style={flow} />
-      <path d="M410 12 L418 0 L426 12" fill="none" stroke={C.red} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* maaiveld */}
+      <rect x="20" y="400" width="480" height="14" fill="url(#hatchM1)" stroke={C.brownText} strokeWidth="2" />
+      {/* gevel links */}
+      <rect x="60" y="84" width="14" height="316" fill="url(#hatchM1)" stroke={C.brownText} strokeWidth="2" />
+      {/* dak (loopt tot de schacht) */}
+      <rect x="60" y="70" width="330" height="14" fill="url(#hatchM1)" stroke={C.brownText} strokeWidth="2" />
+      {/* verdiepingsvloer tussen de woningen */}
+      <rect x="74" y="228" width="316" height="11" fill="url(#hatchM1)" stroke={C.brownText} strokeWidth="1.5" />
+
+      {/* schachtwanden rechts */}
+      <rect x="390" y="64" width="8" height="336" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="438" y="64" width="8" height="336" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* binnenste rookgaskanaal */}
+      <line x1="410" y1="30" x2="410" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="426" y1="30" x2="426" y2="395" stroke={C.brownText} strokeWidth="2" />
+
+      {/* dakdoorvoer (NEN, compact): flens, lichaam, rooster, kap */}
+      <rect x="394" y="58" width="48" height="6" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <polygon points="400,58 436,58 433,42 403,42" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="398" y="28" width="40" height="14" fill="url(#dotsM1)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="394" y="22" width="48" height="6" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="412" y="10" width="12" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <path d="M418 8 V2 M414 5 L418 0 L422 5" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* rookgas omhoog in het binnenkanaal */}
+      <path d="M418 390 L418 32" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flow} />
+      {/* lucht omlaag in de ringspleet */}
+      <path d="M403 46 L403 390" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+      <path d="M433 46 L433 390" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
 
       {/* ONDERSTE WONING: werkend toestel */}
-      <rect x="120" y="290" width="70" height="60" rx="6" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      <rect x="120" y="290" width="70" height="60" fill="white" stroke={C.brownText} strokeWidth="2.5" />
       <circle cx="155" cy="313" r="11" fill="none" stroke={C.red} strokeWidth="2" />
       <path d="M150 316 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />
       <text x="155" y="342" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">KETEL AAN</text>
-      {/* aansluiting naar schacht */}
-      <path d="M190 305 L406 305" fill="none" stroke={C.red} strokeWidth="4" style={flow} />
-      <path d="M398 322 L190 322" fill="none" stroke="#3B82F6" strokeWidth="3.5" style={flowSlow} />
+      {/* concentrische aansluiting naar de schacht */}
+      <path d="M190 305 L410 305" fill="none" stroke={C.red} strokeWidth="4" style={flow} />
+      <path d="M403 322 L190 322" fill="none" stroke="#3B82F6" strokeWidth="3" style={flowSlow} />
 
       {/* BOVENSTE WONING: gedemonteerd toestel */}
-      <rect x="115" y="120" width="80" height="66" rx="6" fill="none" stroke={C.beigeMid} strokeWidth="2" strokeDasharray="6 5" />
+      <rect x="115" y="120" width="80" height="66" fill="none" stroke={C.beigeMid} strokeWidth="2" strokeDasharray="6 5" />
       <text x="155" y="150" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">toestel</text>
       <text x="155" y="162" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">gedemonteerd</text>
 
-      {/* open stompen door de schachtwand (rookgas boven, lucht onder) */}
-      {/* rookgasstomp */}
-      <rect x="358" y="128" width="34" height="22" rx="3" fill={closed.rookgas ? C.greenLight : "#3B1E0A"} stroke={closed.rookgas ? C.green : C.brownText} strokeWidth="2.5" />
-      {closed.rookgas && <circle cx="375" cy="139" r="7" fill={C.green} stroke="white" strokeWidth="2" />}
-      {/* luchtstomp */}
-      <rect x="358" y="168" width="34" height="22" rx="3" fill={closed.lucht ? C.greenLight : "#3B1E0A"} stroke={closed.lucht ? C.green : C.brownText} strokeWidth="2.5" />
-      {closed.lucht && <circle cx="375" cy="179" r="7" fill={C.green} stroke="white" strokeWidth="2" />}
-      <text x="352" y="142" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="end">rookgas</text>
-      <text x="352" y="182" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="end">lucht</text>
+      {/* open aansluitstompen door de schachtwand (met flens, zoals in de norm) */}
+      {[
+        { id: "rookgas", y: 128 },
+        { id: "lucht", y: 168 },
+      ].map(({ id, y }) => {
+        const dicht = closed[id];
+        return (
+          <g key={id}>
+            <rect x="364" y={y + 2} width="28" height="18" fill="white" stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
+            <ellipse cx="364" cy={y + 11} rx="4.5" ry="11" fill={dicht ? C.greenLight : "#3B1E0A"} stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
+            {dicht && <circle cx="364" cy={y + 11} r="5" fill={C.green} stroke="white" strokeWidth="1.5" />}
+            <text x="356" y={y + 14} fontSize="8" fontWeight="600" fill={C.brown} textAnchor="end">{id}</text>
+          </g>
+        );
+      })}
 
       {/* recirculatie: rookgas stroomt de woning in zolang een stomp open is */}
       {!closed.rookgas && (
         <>
-          <path d="M406 139 L358 139 L300 139 Q250 139 235 160 Q225 175 240 190" fill="none" stroke={C.red} strokeWidth="4" style={flow} opacity="0.9" />
+          <path d="M410 139 L364 139 L300 139 Q250 139 235 160 Q225 175 240 190" fill="none" stroke={C.red} strokeWidth="4" style={flow} opacity="0.9" />
           <path d="M232 184 L240 196 L248 186" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
       {!closed.lucht && (
         <>
-          <path d="M406 179 L358 179 L305 179 Q275 179 268 200" fill="none" stroke={C.red} strokeWidth="3.5" style={flowSlow} opacity="0.8" />
+          <path d="M410 179 L364 179 L305 179 Q275 179 268 200" fill="none" stroke={C.red} strokeWidth="3.5" style={flowSlow} opacity="0.8" />
           <path d="M261 195 L268 207 L276 197" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
@@ -391,24 +424,44 @@ function AansluitSVG({ stap, afschot, beugels }) {
   // toestel links, schachtstomp rechts; horizontale leiding ~3 m
   const leidingY = 120;
   const tilt = -afschot * 0.9; // visuele kanteling in graden (positief afschot = laag bij het toestel)
+  const flowUp = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
 
   return (
     <svg viewBox="0 0 520 260" className="w-full h-auto select-none">
-      {/* muur + schacht rechts */}
-      <rect x="430" y="20" width="60" height="220" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2.5" />
-      <rect x="448" y="14" width="24" height="226" fill="#FBE9E5" stroke={C.brownText} strokeWidth="2" />
-      <text x="460" y="135" fontSize="10" fontWeight="700" fill={C.brown} transform="rotate(-90 460 135)" textAnchor="middle">
+      <defs>
+        <pattern id="hatchM2" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+      </defs>
+
+      {/* vloer */}
+      <rect x="20" y="234" width="480" height="12" fill="url(#hatchM2)" stroke={C.brownText} strokeWidth="2" />
+
+      {/* schachtwanden rechts (doorsnede) */}
+      <rect x="430" y="14" width="8" height="220" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="482" y="14" width="8" height="220" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* binnenste rookgaskanaal */}
+      <line x1="452" y1="14" x2="452" y2="234" stroke={C.brownText} strokeWidth="2" />
+      <line x1="468" y1="14" x2="468" y2="234" stroke={C.brownText} strokeWidth="2" />
+      {/* stromen in het kanaal */}
+      <path d="M460 230 L460 18" fill="none" stroke={C.red} strokeWidth="3.5" strokeLinecap="round" style={flowUp} />
+      <path d="M444 18 L444 230" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
+      <path d="M476 18 L476 230" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
+      <text x="460" y="10" fontSize="9" fontWeight="700" fill={C.brown} textAnchor="middle">
         RVS CLV-KANAAL
       </text>
-      {/* stomp */}
-      <rect x="408" y={leidingY - 14} width="26" height="28" rx="3" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      {/* aansluitstomp met flens door de schachtwand */}
+      <rect x="412" y={leidingY - 12} width="22" height="24" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <ellipse cx="412" cy={leidingY} rx="5" ry="14" fill="white" stroke={C.brownText} strokeWidth="2" />
 
       {/* toestel links */}
-      <rect x="40" y={leidingY - 20} width="80" height="110" rx="8" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      <rect x="40" y={leidingY - 20} width="80" height="110" fill="white" stroke={C.brownText} strokeWidth="2.5" />
       <circle cx="80" cy={leidingY + 38} r="13" fill="none" stroke={C.red} strokeWidth="2" />
+      <path d={`M74 ${leidingY + 42} q6 -14 12 0 q-6 8 -12 0`} fill={C.red} opacity="0.7" />
       <text x="80" y={leidingY + 76} fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">HR-KETEL</text>
       {/* toestel-uitgang */}
-      <rect x="112" y={leidingY - 12} width="16" height="24" rx="3" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+      <rect x="112" y={leidingY - 12} width="16" height="24" fill="white" stroke={C.brownText} strokeWidth="2.5" />
 
       {/* leiding (na stap A) */}
       {stap > 0 && (
@@ -698,43 +751,64 @@ const CONTROLEPUNTEN = [
 ];
 
 function ControleSVG({ checked, running }) {
-  const hl = (id) => (checked.includes(id) ? C.green : C.beigeMid);
+  const hl = (id) => (checked.includes(id) ? C.green : C.brownText);
+  const fillOk = (id) => (checked.includes(id) ? C.greenLight : "white");
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
 
   return (
-    <svg viewBox="0 0 260 360" className="w-full h-auto select-none">
-      {/* schacht */}
-      <rect x="170" y="20" width="56" height="320" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2.5" />
-      <rect x="186" y="12" width="24" height="328" fill="#FBE9E5" stroke={C.brownText} strokeWidth="2" />
-      {running && <path d="M198 330 L198 8" fill="none" stroke={C.red} strokeWidth="4.5" strokeLinecap="round" style={flow} />}
+    <svg viewBox="0 0 260 385" className="w-full h-auto select-none">
+      <defs>
+        <pattern id="hatchM3" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+      </defs>
 
-      {/* schoorsteenplaat bovenaan */}
-      <rect x="160" y="2" width="46" height="16" rx="3" fill="white" stroke={hl("plaat")} strokeWidth="2.5" />
-      <line x1="166" y1="8" x2="200" y2="8" stroke={hl("plaat")} strokeWidth="1.5" />
-      <line x1="166" y1="13" x2="192" y2="13" stroke={hl("plaat")} strokeWidth="1.5" />
+      {/* vloer (met sparing voor de rioolaansluiting) */}
+      <rect x="8" y="358" width="230" height="12" fill="url(#hatchM3)" stroke={C.brownText} strokeWidth="1.5" />
 
-      {/* toestel + typeplaat + terugslagklep */}
-      <rect x="30" y="90" width="70" height="90" rx="7" fill="white" stroke={hl("typeplaat")} strokeWidth="2.5" />
-      <rect x="40" y="100" width="34" height="18" rx="2" fill={checked.includes("typeplaat") ? C.greenLight : "white"} stroke={hl("typeplaat")} strokeWidth="1.5" />
-      <text x="57" y="112" fontSize="7" fontWeight="700" fill={C.brownText} textAnchor="middle">C43</text>
-      <circle cx="65" cy="150" r="11" fill="none" stroke={running ? C.red : C.beigeMid} strokeWidth="2" />
-      {running && <path d="M60 153 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />}
-      {/* verbindingsleiding met terugslagklep */}
-      <rect x="100" y="116" width="86" height="14" rx="7" fill="#B7BFC4" stroke={C.brownText} strokeWidth="2" />
-      <circle cx="143" cy="123" r="9" fill="white" stroke={hl("klep")} strokeWidth="2.5" />
-      <line x1="138" y1="128" x2="148" y2="118" stroke={hl("klep")} strokeWidth="2.5" />
+      {/* schachtwanden (doorsnede) */}
+      <rect x="170" y="28" width="8" height="330" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="218" y="28" width="8" height="330" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* binnenste rookgaskanaal + opvangbak */}
+      <line x1="192" y1="28" x2="192" y2="320" stroke={C.brownText} strokeWidth="2" />
+      <line x1="206" y1="28" x2="206" y2="320" stroke={C.brownText} strokeWidth="2" />
+      <path d="M190 320 H208 V327 Q208 334 199 334 Q190 334 190 327 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {running && <path d="M199 316 L199 30" fill="none" stroke={C.red} strokeWidth="3.5" strokeLinecap="round" style={flow} />}
 
-      {/* inspectieluik */}
-      <rect x="130" y="270" width="34" height="34" rx="3" fill={checked.includes("luik") ? C.greenLight : "white"} stroke={hl("luik")} strokeWidth="2.5" />
-      <circle cx="158" cy="287" r="2.5" fill={hl("luik")} />
+      {/* schoorsteenplaat (gegevensplaat aan de schachtwand) */}
+      <rect x="152" y="6" width="46" height="20" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
+      <line x1="158" y1="13" x2="192" y2="13" stroke={hl("plaat")} strokeWidth="1.5" />
+      <line x1="158" y1="19" x2="184" y2="19" stroke={hl("plaat")} strokeWidth="1.5" />
 
-      {/* condensafvoer + sifons */}
-      <path d="M198 340 l0 6 q0 8 8 8 q8 0 8 -8 l0 -2 q0 -7 7 -7 q7 0 7 7 l0 4 q0 8 8 8 H246" fill="none" stroke={hl("sifon")} strokeWidth="3" />
+      {/* toestel + typeplaat + vlam */}
+      <rect x="28" y="90" width="70" height="90" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
+      <rect x="38" y="100" width="34" height="18" fill={fillOk("typeplaat")} stroke={hl("typeplaat")} strokeWidth={checked.includes("typeplaat") ? 2.5 : 1.5} />
+      <text x="55" y="112" fontSize="7" fontWeight="700" fill={C.brownText} textAnchor="middle">C43</text>
+      <circle cx="63" cy="150" r="11" fill="none" stroke={running ? C.red : C.beigeMid} strokeWidth="2" />
+      {running && <path d="M58 153 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />}
+      {/* verbindingsleiding met terugslagklep, op de stomp met flens */}
+      <rect x="98" y="116" width="66" height="14" fill="#B7BFC4" stroke={C.brownText} strokeWidth="2" />
+      <ellipse cx="166" cy="123" rx="4" ry="11" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <circle cx="132" cy="123" r="9" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
+      <line x1="127" y1="128" x2="137" y2="118" stroke={hl("klep")} strokeWidth="2.5" />
 
-      {/* CO-melder aan het plafond van de opstellingsruimte */}
-      <circle cx="60" cy="50" r="11" fill="white" stroke={hl("melder")} strokeWidth="2.5" />
-      <circle cx="60" cy="50" r="4" fill={hl("melder")} />
-      <text x="60" y="74" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
+      {/* inspectieluik in de schachtwand */}
+      <rect x="158" y="258" width="20" height="34" fill={fillOk("luik")} stroke={hl("luik")} strokeWidth={checked.includes("luik") ? 3 : 2} />
+      <line x1="162" y1="264" x2="174" y2="264" stroke={hl("luik")} strokeWidth="1.5" />
+      <line x1="162" y1="286" x2="174" y2="286" stroke={hl("luik")} strokeWidth="1.5" />
+
+      {/* condensafvoer: sifon, open verbinding, tweede sifon, naar riool */}
+      <g fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5}>
+        <path d="M199 334 V340 C199 351 213 351 213 340 V352 H224" />
+        <path d="M228 346 H238 M230 349 L233 353 L236 349" />
+        <path d="M233 353 V355 H240 C240 367 254 367 254 355 V372" />
+      </g>
+      <text x="246" y="382" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
+
+      {/* CO-melder in de opstellingsruimte */}
+      <circle cx="58" cy="48" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
+      <circle cx="58" cy="48" r="4" fill={hl("melder")} />
+      <text x="58" y="72" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
     </svg>
   );
 }

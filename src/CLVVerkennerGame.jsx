@@ -126,97 +126,118 @@ const POOL_R3 = [
 
 function FlatDoorsnede({ stand }) {
   const isDak = stand === "dak";
-  const floors = [
-    { yTop: 110, yBot: 210 },
-    { yTop: 210, yBot: 310 },
-    { yTop: 310, yBot: 410 },
-  ];
-  const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const flowUp = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
+  // drie woningen boven elkaar (NEN-stijl doorsnede)
+  const ketels = [158, 263, 372];
 
   return (
-    <svg viewBox="0 0 520 450" className="w-full h-auto select-none">
-      {/* lucht (gebouw-omtrek) */}
-      <rect x="70" y="90" width="380" height="320" fill="#FBF7EE" stroke={C.brownText} strokeWidth="3" />
-      {/* dak */}
-      <rect x="60" y="78" width="400" height="14" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2.5" />
-      {/* verdiepingsvloeren */}
-      {floors.map((f, i) => (
-        <line key={i} x1="70" y1={f.yTop} x2="450" y2={f.yTop} stroke={C.brownText} strokeWidth="2" />
-      ))}
+    <svg viewBox="0 0 520 470" className="w-full h-auto select-none">
+      <defs>
+        <pattern id="hatchA" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+        <pattern id="dotsA" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1.1" fill={C.brownText} />
+        </pattern>
+      </defs>
+
       {/* maaiveld */}
-      <line x1="40" y1="410" x2="480" y2="410" stroke={C.brownText} strokeWidth="3" />
+      <rect x="20" y="424" width="480" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      {/* gevel (links) en buitenmuur (rechts) */}
+      <rect x="70" y="110" width="14" height="314" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="446" y="110" width="14" height="314" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      {/* dak (doorbroken door de schacht) */}
+      <rect x="70" y="96" width="170" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="320" y="96" width="140" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      {/* verdiepingsvloeren */}
+      {[205, 310].map((y) => (
+        <g key={y}>
+          <rect x="84" y={y} width="156" height="11" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="1.5" />
+          <rect x="320" y={y} width="126" height="11" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="1.5" />
+        </g>
+      ))}
 
-      {/* schacht */}
-      <rect x="235" y="40" width="50" height="370" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2.5" />
+      {/* schachtwanden */}
+      <rect x="240" y="96" width="10" height="328" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="310" y="96" width="10" height="328" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
       {/* binnenste rookgaskanaal */}
-      <rect x="250" y="34" width="20" height="376" fill="#FBE9E5" stroke={C.brownText} strokeWidth="2" />
+      <line x1="270" y1="54" x2="270" y2="415" stroke={C.brownText} strokeWidth="2" />
+      <line x1="290" y1="54" x2="290" y2="415" stroke={C.brownText} strokeWidth="2" />
 
-      {/* rookgasstroom (rood, omhoog) */}
-      <path d="M260 400 L260 26" fill="none" stroke={C.red} strokeWidth="6" strokeLinecap="round" style={flow} />
-      <path d="M252 22 L260 8 L268 22" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      {/* dakdoorvoer (NEN): flens, taps lichaam, rooster, kap met uitstroomstomp */}
+      <rect x="250" y="90" width="60" height="6" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="253" y="85" width="7" height="5" fill={C.brownText} />
+      <rect x="300" y="85" width="7" height="5" fill={C.brownText} />
+      <polygon points="260,90 300,90 296,66 264,66" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="258" y="48" width="44" height="18" fill="url(#dotsA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="252" y="40" width="56" height="8" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="272" y="26" width="16" height="14" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* rookgas naar buiten */}
+      <g stroke={C.red} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M280 24 V8 M275 13 L280 7 L285 13" />
+        <path d="M273 24 L264 12 M264 19 L263 10 L271 13" />
+        <path d="M287 24 L296 12 M289 13 L297 10 L296 19" />
+      </g>
 
-      {/* luchtkanaal in schacht (alleen CLV-stand actief) */}
+      {/* rookgasstroom omhoog in het binnenkanaal */}
+      <path d="M280 408 L280 56" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
+
+      {/* luchttoevoer: via het dak (CLV) of per woning via de gevel (half-CLV) */}
       {isDak ? (
         <>
-          <path d="M242 44 L242 395" fill="none" stroke="#3B82F6" strokeWidth="5" strokeLinecap="round" style={flow} />
-          <path d="M278 44 L278 395" fill="none" stroke="#3B82F6" strokeWidth="5" strokeLinecap="round" style={flow} />
-          {/* instroom op het dak */}
-          <path d="M214 56 L240 56" fill="none" stroke="#3B82F6" strokeWidth="4" style={flow} />
-          <path d="M306 56 L280 56" fill="none" stroke="#3B82F6" strokeWidth="4" style={flow} />
-          <ArrowDownMarker x={228} y={48} />
-          <ArrowDownMarker x={292} y={48} />
+          {/* lucht het rooster in */}
+          <g stroke="#3B82F6" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="4 3">
+            <path d="M236 46 L256 55" />
+            <path d="M324 46 L304 55" />
+          </g>
+          {/* omlaag in de ringspleet */}
+          <path d="M258 64 L258 408" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+          <path d="M302 64 L302 408" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
         </>
       ) : (
-        <>
-          {/* leeg buitenkanaal in gevel-stand */}
-          <text x="243" y="230" fontSize="10" fill={C.brown} transform="rotate(-90 243 230)" textAnchor="middle" fontStyle="italic">
-            niet in gebruik
-          </text>
-        </>
+        <text x="261" y="250" fontSize="9" fill={C.brown} transform="rotate(-90 261 250)" textAnchor="middle" fontStyle="italic">
+          niet in gebruik
+        </text>
       )}
 
-      {/* per woning: ketel + aansluiting + (gevel-stand) eigen luchtinlaat */}
-      {floors.map((f, i) => {
-        const yMid = (f.yTop + f.yBot) / 2;
-        return (
-          <g key={i}>
-            {/* ketel */}
-            <rect x="120" y={yMid - 26} width="64" height="52" rx="6" fill="white" stroke={C.brownText} strokeWidth="2.5" />
-            <circle cx="152" cy={yMid - 4} r="10" fill="none" stroke={C.red} strokeWidth="2" />
-            <path d={`M148 ${yMid - 1} q4 -10 8 0 q-4 6 -8 0`} fill={C.red} opacity="0.7" />
-            <text x="152" y={yMid + 18} fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">
-              KETEL
-            </text>
-            {/* rookgas van ketel naar schacht */}
-            <path d={`M184 ${yMid - 12} L250 ${yMid - 12}`} fill="none" stroke={C.red} strokeWidth="4" style={flow} />
-            {/* luchttoevoer naar ketel */}
-            {isDak ? (
-              <path d={`M242 ${yMid + 10} L184 ${yMid + 10}`} fill="none" stroke="#3B82F6" strokeWidth="4" style={flow} />
-            ) : (
-              <>
-                <path d={`M70 ${yMid + 10} L120 ${yMid + 10}`} fill="none" stroke="#3B82F6" strokeWidth="4" style={flow} />
-                {/* gevelrooster */}
-                <rect x="62" y={yMid + 2} width="8" height="16" fill="#3B82F6" opacity="0.8" />
-              </>
-            )}
-          </g>
-        );
-      })}
+      {/* per woning: ketel + concentrische aansluiting */}
+      {ketels.map((yMid, i) => (
+        <g key={i}>
+          <rect x="120" y={yMid - 26} width="64" height="52" fill="white" stroke={C.brownText} strokeWidth="2" />
+          <circle cx="152" cy={yMid - 5} r="10" fill="none" stroke={C.red} strokeWidth="2" />
+          <path d={`M148 ${yMid - 2} q4 -10 8 0 q-4 6 -8 0`} fill={C.red} opacity="0.7" />
+          <text x="152" y={yMid + 17} fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">
+            KETEL
+          </text>
+          {/* rookgas van ketel naar het binnenkanaal */}
+          <path d={`M184 ${yMid - 12} L270 ${yMid - 12}`} fill="none" stroke={C.red} strokeWidth="3.5" style={flowUp} />
+          {/* luchttoevoer naar ketel */}
+          {isDak ? (
+            <path d={`M250 ${yMid + 10} L184 ${yMid + 10}`} fill="none" stroke="#3B82F6" strokeWidth="3" style={flowDown} />
+          ) : (
+            <>
+              <path d={`M84 ${yMid + 10} L120 ${yMid + 10}`} fill="none" stroke="#3B82F6" strokeWidth="3" style={flowDown} />
+              {/* gevelrooster */}
+              <rect x="68" y={yMid + 1} width="18" height="18" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+              {[5, 9, 13].map((dy) => (
+                <line key={dy} x1="70" y1={yMid + dy} x2="84" y2={yMid + dy} stroke={C.brownText} strokeWidth="1.2" />
+              ))}
+            </>
+          )}
+        </g>
+      ))}
 
       {/* legenda */}
-      <g transform="translate(330, 110)">
-        <rect x="0" y="0" width="112" height="46" rx="8" fill="white" stroke={C.brownText} strokeWidth="1.5" opacity="0.95" />
-        <line x1="10" y1="15" x2="34" y2="15" stroke={C.red} strokeWidth="4" strokeDasharray="6 4" />
-        <text x="40" y="19" fontSize="10" fontWeight="600" fill={C.brownText}>rookgas</text>
-        <line x1="10" y1="33" x2="34" y2="33" stroke="#3B82F6" strokeWidth="4" strokeDasharray="6 4" />
-        <text x="40" y="37" fontSize="10" fontWeight="600" fill={C.brownText}>lucht</text>
+      <g transform="translate(334, 122)">
+        <rect x="0" y="0" width="108" height="44" fill="white" stroke={C.brownText} strokeWidth="1.5" opacity="0.95" />
+        <line x1="10" y1="14" x2="34" y2="14" stroke={C.red} strokeWidth="3.5" strokeDasharray="6 4" />
+        <text x="40" y="18" fontSize="10" fontWeight="600" fill={C.brownText}>rookgas</text>
+        <line x1="10" y1="31" x2="34" y2="31" stroke="#3B82F6" strokeWidth="3" strokeDasharray="4 3" />
+        <text x="40" y="35" fontSize="10" fontWeight="600" fill={C.brownText}>lucht</text>
       </g>
     </svg>
   );
-}
-
-function ArrowDownMarker({ x, y }) {
-  return <path d={`M${x - 6} ${y} L${x} ${y + 10} L${x + 6} ${y}`} fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
 }
 
 // ─── SCHUIFKNOP LUCHTTOEVOER ───
@@ -637,20 +658,38 @@ const R3_BAKKEN = [
 function BakIcoon({ type }) {
   const flow = { strokeDasharray: "5 4", animation: "flowDash 0.8s linear infinite" };
   return (
-    <svg viewBox="0 0 80 64" className="w-20 h-16 mx-auto">
-      <rect x="30" y="8" width="20" height="48" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2" />
-      <path d="M40 52 L40 12" fill="none" stroke={C.red} strokeWidth="3.5" style={flow} />
-      {type === "onderdruk" && <path d="M36 10 L40 2 L44 10" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" />}
+    <svg viewBox="0 0 80 70" className="w-20 h-16 mx-auto">
+      {/* schachtwanden (doorsnede) */}
+      <rect x="30" y="12" width="4" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.5" />
+      <rect x="46" y="12" width="4" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.5" />
+      {/* gearceerde vloer */}
+      <line x1="8" y1="60" x2="30" y2="60" stroke={C.brownText} strokeWidth="2" />
+      <line x1="50" y1="60" x2="72" y2="60" stroke={C.brownText} strokeWidth="2" />
+      {[12, 18, 24, 56, 62, 68].map((x) => (
+        <line key={x} x1={x} y1="60" x2={x - 4} y2="66" stroke={C.brownText} strokeWidth="1" />
+      ))}
+      {/* rookgas omhoog */}
+      <path d="M40 54 L40 12" fill="none" stroke={C.red} strokeWidth="3" style={flow} />
+      <path d="M36 12 L40 4 L44 12" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {type === "onderdruk" && (
+        /* natuurlijke trek: open uitmonding, golfjes warme lucht */
+        <path d="M30 8 q3 -3 6 0 M44 8 q3 -3 6 0" fill="none" stroke={C.brown} strokeWidth="1.5" strokeLinecap="round" />
+      )}
       {type === "half" && (
         <>
-          <path d="M8 30 L26 30" fill="none" stroke="#3B82F6" strokeWidth="3" style={flow} />
-          <rect x="4" y="25" width="5" height="10" fill="#3B82F6" />
+          {/* eigen luchtinlaat via gevelrooster */}
+          <rect x="4" y="28" width="10" height="12" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+          {[31, 34, 37].map((y) => (
+            <line key={y} x1="5" y1={y} x2="13" y2={y} stroke={C.brownText} strokeWidth="1" />
+          ))}
+          <path d="M16 34 L28 34" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeDasharray="4 3" style={flow} />
         </>
       )}
       {type === "overdruk" && (
         <>
-          <circle cx="40" cy="58" r="5" fill="none" stroke={C.brownText} strokeWidth="1.5" />
-          <path d="M37 58 h6 M40 55 v6" stroke={C.brownText} strokeWidth="1.5" />
+          {/* ventilator onderin het kanaal */}
+          <circle cx="40" cy="50" r="6" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+          <path d="M40 50 L40 45 M40 50 L44 53 M40 50 L36 53" stroke={C.brownText} strokeWidth="1.5" strokeLinecap="round" />
         </>
       )}
     </svg>
