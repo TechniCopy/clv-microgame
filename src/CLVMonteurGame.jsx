@@ -663,22 +663,32 @@ function DrukSysteemSVG({ modus }) {
         <text x="475" y="120" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">het kanaal</text>
       </g>
 
-      {/* toestel met aansluiting bovenop en 90-gradenbocht naar het kanaal */}
-      <path d="M105 156 V120 H352" fill="none" stroke={C.brownText} strokeWidth="16" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M105 156 V120 H352" fill="none" stroke="#B7BFC4" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M105 150 V120 H374" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" style={flowUp} />
-      <ellipse cx="354" cy="120" rx="4.5" ry="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* parallelle aansluiting: aparte rookgasafvoer- en luchttoevoerleiding */}
+      {/* rookgasafvoerleiding: van het toestel naar het BINNENKANAAL */}
+      <path d="M95 160 V110 H380" fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M95 160 V110 H380" fill="none" stroke="#B7BFC4" strokeWidth="8.5" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M95 154 V110 H386" fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" style={flowUp} />
+      <ellipse cx="380" cy="110" rx="4" ry="10" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <text x="165" y="101" fontSize="8" fontWeight="600" fill={C.brown}>rookgasafvoer</text>
+      {/* luchttoevoerleiding: van de RINGSPLEET naar het toestel */}
+      <path d="M362 140 H120 V160" fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M362 140 H120 V160" fill="none" stroke="#B7BFC4" strokeWidth="8.5" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M364 140 H120 V154" fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeLinecap="round" style={flowDown} />
+      <ellipse cx="362" cy="140" rx="4" ry="10" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <text x="165" y="157" fontSize="8" fontWeight="600" fill={C.brown}>luchttoevoer</text>
 
-      {/* terugslagklep: alleen verplicht (en getoond) bij overdruk */}
+      {/* terugslagklep in de rookgasafvoer: alleen verplicht (en getoond) bij overdruk */}
       {over && (
         <g>
-          <circle cx="240" cy="120" r="10" fill={C.greenLight} stroke={C.green} strokeWidth="2.5" />
-          <line x1="234" y1="126" x2="246" y2="114" stroke={C.green} strokeWidth="2.5" />
-          <text x="240" y="100" fontSize="8.5" fontWeight="700" fill={C.green} textAnchor="middle">terugslagklep verplicht</text>
+          <circle cx="240" cy="110" r="9" fill={C.greenLight} stroke={C.green} strokeWidth="2.5" />
+          <line x1="235" y1="115" x2="245" y2="105" stroke={C.green} strokeWidth="2.5" />
+          <text x="240" y="92" fontSize="8.5" fontWeight="700" fill={C.green} textAnchor="middle">terugslagklep verplicht</text>
         </g>
       )}
 
-      <rect x="96" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* aansluitstubs bovenop het toestel: rookgas (links) en lucht (rechts) */}
+      <rect x="86" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <rect x="111" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
       <rect x="60" y="170" width="90" height="100" fill="white" stroke={C.brownText} strokeWidth="2.5" />
       {/* vlam */}
       <circle cx="88" cy="225" r="10" fill="none" stroke={C.red} strokeWidth="2" />
@@ -1009,22 +1019,26 @@ function ControleSVG({ checked, running }) {
       <line x1="110" y1="260" x2="132" y2="260" stroke={hl("plaat")} strokeWidth="1.5" />
 
       {/* CO-melder in de opstellingsruimte */}
-      <circle cx="50" cy="42" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
-      <circle cx="50" cy="42" r="4" fill={hl("melder")} />
-      <text x="50" y="66" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
+      <circle cx="50" cy="30" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
+      <circle cx="50" cy="30" r="4" fill={hl("melder")} />
+      <text x="50" y="54" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">CO-melder</text>
 
-      {/* verbindingsleiding: verticaal op de ketel, 90 graden bocht naar het kanaal */}
-      <path d="M60 112 V80 H156" fill="none" stroke={C.brownText} strokeWidth="16" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M60 112 V80 H156" fill="none" stroke="#B7BFC4" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
-      {running && <path d="M60 108 V80 H172" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" style={flow} />}
-      {/* flens op de aansluitstomp */}
-      <ellipse cx="158" cy="80" rx="4.5" ry="12" fill="white" stroke={C.brownText} strokeWidth="2" />
-      {/* terugslagklep in het horizontale deel */}
-      <circle cx="118" cy="80" r="9" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
-      <line x1="113" y1="85" x2="123" y2="75" stroke={hl("klep")} strokeWidth="2.5" />
+      {/* parallelle aansluiting: rookgasafvoer naar het binnenkanaal, lucht naar de ringspleet */}
+      <path d="M46 112 V70 H182" fill="none" stroke={C.brownText} strokeWidth="12" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M46 112 V70 H182" fill="none" stroke="#B7BFC4" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round" />
+      {running && <path d="M46 106 V70 H188" fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" style={flow} />}
+      <ellipse cx="182" cy="70" rx="3.5" ry="9" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <path d="M170 92 H74 V112" fill="none" stroke={C.brownText} strokeWidth="12" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M170 92 H74 V112" fill="none" stroke="#B7BFC4" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round" />
+      {running && <path d="M172 92 H74 V106" fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeLinecap="round" style={flowDown} />}
+      <ellipse cx="170" cy="92" rx="3.5" ry="9" fill="white" stroke={C.brownText} strokeWidth="2" />
+      {/* terugslagklep in de rookgasafvoer */}
+      <circle cx="118" cy="70" r="8.5" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
+      <line x1="113" y1="75" x2="123" y2="65" stroke={hl("klep")} strokeWidth="2.5" />
 
-      {/* toestel met aansluitstub bovenop + typeplaat + vlam */}
-      <rect x="52" y="108" width="16" height="12" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
+      {/* toestel met aparte stubs (rookgas links, lucht rechts) + typeplaat + vlam */}
+      <rect x="38" y="108" width="16" height="12" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
+      <rect x="66" y="108" width="16" height="12" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
       <rect x="20" y="120" width="80" height="100" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
       <rect x="30" y="132" width="36" height="18" fill={fillOk("typeplaat")} stroke={hl("typeplaat")} strokeWidth={checked.includes("typeplaat") ? 2.5 : 1.5} />
       <text x="48" y="144" fontSize="7" fontWeight="700" fill={C.brownText} textAnchor="middle">C43</text>
