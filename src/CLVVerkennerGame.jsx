@@ -393,67 +393,139 @@ function Ronde1({ addScore, onDone }) {
 
 // ─── RONDE 2: ONDERDELEN VAN HET CLV-SYSTEEM ───
 
+// Tekening volgens de NEN-normfiguren (dakdoorvoer + onderzijde CLV) die ook
+// op het examen worden gebruikt. Elk dropvlak heeft een verwijslijn (leader)
+// naar het bijbehorende onderdeel in de tekening.
+const R2_W = 560;
+const R2_H = 500;
+const R2_ZONE = { w: 165, h: 34 };
+
 const R2_ONDERDELEN = [
-  { id: "instroming", label: "Instromingsconstructie", x: 96, y: 16, w: 150, hint: "De instromingsconstructie zit bovenaan: daar komt de lucht het dak binnen." },
-  { id: "uitstroming", label: "Uitstromingsconstructie", x: 396, y: 16, w: 150, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak." },
-  { id: "stomp", label: "Aansluitstompen", x: 420, y: 180, w: 140, hint: "Aansluitstompen steken per verdieping door de schachtwand." },
-  { id: "drukver", label: "Drukvereffeningsconstructie", x: 246, y: 332, w: 170, hint: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen." },
-  { id: "condens", label: "Condensaatafvoer + sifon", x: 420, y: 408, w: 160, hint: "De condensaatafvoer met dubbele sifon zit onderaan, richting de riolering." },
-  { id: "luik", label: "Inspectieluik", x: 76, y: 408, w: 120, hint: "Het inspectieluik (min. 50x50 cm) zit onderaan in de schachtwand." },
+  { id: "instroming", label: "Instromingsconstructie", side: "left", zone: { x: 5, y: 63 }, anchor: { x: 254, y: 103 }, hint: "De instromingsconstructie zit bovenaan: via het rooster onder de kap komt de lucht binnen." },
+  { id: "uitstroming", label: "Uitstromingsconstructie", side: "right", zone: { x: 390, y: 30 }, anchor: { x: 298, y: 60 }, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak." },
+  { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand." },
+  { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand." },
+  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 276, y: 426 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering." },
+  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 252, y: 456 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal." },
 ];
 
 function SchachtOnderdelen({ placed }) {
-  const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const flowUp = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
   const ok = (id) => placed[id];
-  const mark = (id) => (ok(id) ? C.green : C.beigeMid);
+  const mark = (id) => (ok(id) ? C.green : C.brownText);
+  const fillOk = (id) => (ok(id) ? C.greenLight : "white");
 
   return (
-    <svg viewBox="0 0 520 470" className="w-full h-auto select-none">
-      {/* dak */}
-      <rect x="40" y="56" width="440" height="12" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      {/* schacht */}
-      <rect x="195" y="40" width="130" height="350" fill="#EDE4D2" stroke={C.brownText} strokeWidth="2.5" />
-      <rect x="237" y="30" width="46" height="360" fill="#FBE9E5" stroke={C.brownText} strokeWidth="2" />
-      {/* stromen */}
-      <path d="M260 380 L260 24" fill="none" stroke={C.red} strokeWidth="5" strokeLinecap="round" style={flow} />
-      <path d="M214 52 L214 380" fill="none" stroke="#3B82F6" strokeWidth="4" strokeLinecap="round" style={flow} />
-      <path d="M306 52 L306 380" fill="none" stroke="#3B82F6" strokeWidth="4" strokeLinecap="round" style={flow} />
+    <svg viewBox={`0 0 ${R2_W} ${R2_H}`} className="w-full h-auto select-none">
+      <defs>
+        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
+        </pattern>
+        <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1.1" fill={C.brownText} />
+        </pattern>
+      </defs>
 
-      {/* instromingsconstructie (boven, lucht) */}
-      <g opacity={ok("instroming") ? 1 : 0.85}>
-        <rect x="186" y="20" width="44" height="22" rx="4" fill={ok("instroming") ? C.greenLight : "white"} stroke={mark("instroming")} strokeWidth="2.5" />
-        <path d="M196 26 L208 26 M196 32 L208 32" stroke={mark("instroming")} strokeWidth="2" />
+      {/* verwijslijnen van dropvlak naar onderdeel */}
+      {R2_ONDERDELEN.map((o) => {
+        const x1 = o.side === "left" ? o.zone.x + R2_ZONE.w : o.zone.x;
+        const y1 = o.zone.y + R2_ZONE.h / 2;
+        return (
+          <g key={`lijn-${o.id}`}>
+            <line x1={x1} y1={y1} x2={o.anchor.x} y2={o.anchor.y} stroke={ok(o.id) ? C.green : C.brown} strokeWidth="1.5" strokeDasharray="4 3" />
+            <circle cx={o.anchor.x} cy={o.anchor.y} r="3.5" fill={ok(o.id) ? C.green : C.brown} />
+          </g>
+        );
+      })}
+
+      {/* dakvlak (gearceerd, doorbroken door de schacht) */}
+      <rect x="50" y="150" width="190" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="320" y="150" width="190" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+
+      {/* vloer onderaan (gearceerd, met sparing voor de rioolaansluiting) */}
+      <rect x="50" y="470" width="398" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="478" y="470" width="32" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+
+      {/* schachtwanden */}
+      <rect x="240" y="168" width="10" height="294" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="310" y="168" width="10" height="294" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+
+      {/* binnenste rookgaskanaal (RGAB) */}
+      <line x1="270" y1="88" x2="270" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="290" y1="88" x2="290" y2="395" stroke={C.brownText} strokeWidth="2" />
+      {/* opvangbak onderaan het rookgaskanaal */}
+      <path d="M268 395 H292 V404 Q292 412 280 412 Q268 412 268 404 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+
+      {/* DAKDOORVOER (NEN-figuur): flens, taps lichaam, rooster, kap */}
+      <g>
+        {/* flens op het dak met bouten */}
+        <rect x="250" y="143" width="60" height="7" fill="white" stroke={C.brownText} strokeWidth="2" />
+        <rect x="253" y="138" width="7" height="5" fill={C.brownText} />
+        <rect x="300" y="138" width="7" height="5" fill={C.brownText} />
+        {/* taps toelopend lichaam */}
+        <polygon points="260,143 300,143 296,116 264,116" fill="white" stroke={C.brownText} strokeWidth="2" />
+        {/* geperforeerd rooster = instroming */}
+        <rect x="258" y="94" width="44" height="22" fill="url(#dots)" stroke={mark("instroming")} strokeWidth={ok("instroming") ? 3 : 2} />
+        {ok("instroming") && <rect x="258" y="94" width="44" height="22" fill={C.green} opacity="0.18" />}
+        {/* kapplaat + uitstroomstomp = uitstroming */}
+        <rect x="252" y="86" width="56" height="8" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
+        <rect x="272" y="72" width="16" height="14" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
+        {/* rookgas naar buiten (drie pijlen) */}
+        <g stroke={C.red} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M280 70 V52 M275 57 L280 51 L285 57" />
+          <path d="M273 70 L264 58 M264 65 L263 56 L271 59" />
+          <path d="M287 70 L296 58 M289 59 L297 56 L296 65" />
+        </g>
+        {/* lucht naar binnen via het rooster (gestippelde pijlen) */}
+        <g stroke="#3B82F6" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="4 3">
+          <path d="M238 92 L256 102" />
+          <path d="M322 92 L304 102" />
+        </g>
       </g>
-      {/* uitstromingsconstructie (boven, rookgas) */}
-      <g opacity={ok("uitstroming") ? 1 : 0.85}>
-        <rect x="242" y="6" width="36" height="20" rx="4" fill={ok("uitstroming") ? C.greenLight : "white"} stroke={mark("uitstroming")} strokeWidth="2.5" />
-        <path d="M252 16 L260 8 L268 16" fill="none" stroke={mark("uitstroming")} strokeWidth="2.5" strokeLinecap="round" />
-      </g>
-      {/* aansluitstompen per verdieping */}
-      {[140, 220, 300].map((y) => (
-        <g key={y} opacity={ok("stomp") ? 1 : 0.85}>
-          <rect x="325" y={y} width="40" height="22" rx="3" fill={ok("stomp") ? C.greenLight : "white"} stroke={mark("stomp")} strokeWidth="2.5" />
-          <circle cx="358" cy={y + 11} r="6" fill="none" stroke={mark("stomp")} strokeWidth="2" />
+
+      {/* luchtstroom omlaag in de ringspleet */}
+      <path d="M259 180 L259 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M254 408 L259 418 L264 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M301 180 L301 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M296 408 L301 418 L306 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* rookgasstroom omhoog in het binnenkanaal */}
+      <path d="M280 388 L280 100" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
+
+      {/* AANSLUITSTOMPEN per verdieping (rechts door de schachtwand) */}
+      {[200, 260, 320].map((y) => (
+        <g key={y}>
+          <rect x="316" y={y} width="38" height="18" fill={fillOk("stomp")} stroke={mark("stomp")} strokeWidth={ok("stomp") ? 3 : 2} />
+          <ellipse cx="354" cy={y + 9} rx="4" ry="9" fill="white" stroke={mark("stomp")} strokeWidth="2" />
         </g>
       ))}
-      {/* drukvereffeningsconstructie */}
-      <g opacity={ok("drukver") ? 1 : 0.85}>
-        <rect x="214" y="352" width="92" height="20" rx="4" fill={ok("drukver") ? C.greenLight : "white"} stroke={mark("drukver")} strokeWidth="2.5" />
-        <path d="M226 362 H294" stroke={mark("drukver")} strokeWidth="2" strokeDasharray="4 3" />
+
+      {/* INSPECTIELUIK (bouwkundig, in de rechterwand onderaan) */}
+      <g>
+        <rect x="312" y="375" width="18" height="30" fill={fillOk("luik")} stroke={mark("luik")} strokeWidth={ok("luik") ? 3 : 2} />
+        <line x1="316" y1="380" x2="326" y2="380" stroke={mark("luik")} strokeWidth="1.5" />
+        <line x1="316" y1="400" x2="326" y2="400" stroke={mark("luik")} strokeWidth="1.5" />
       </g>
-      {/* condensaatafvoer + dubbele sifon */}
-      <g opacity={ok("condens") ? 1 : 0.85}>
-        <path d="M280 390 L280 412 q0 12 12 12 q12 0 12 -12 l0 -4 q0 -10 10 -10 q10 0 10 10 l0 8 q0 12 12 12 H352" fill="none" stroke={mark("condens")} strokeWidth="3.5" />
-        <text x="352" y="434" fontSize="9" fontWeight="600" fill={C.brown}>riool</text>
+
+      {/* CONDENSAATAFVOER: sifon binnen, open verbinding, tweede sifon, naar riool */}
+      <g fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5}>
+        {/* afvoer uit de opvangbak + eerste sifon */}
+        <path d="M280 412 V418 C280 432 296 432 296 418 V440 H346" />
+        {/* open verbinding: trechter met onderbreking */}
+        <path d="M352 433 H364 M354 436 L358 441 L362 436" strokeDasharray="none" />
+        <path d="M358 441 V443 H378" />
+        {/* tweede sifon (regen- en condenswater) */}
+        <path d="M378 443 C378 458 398 458 398 443 H462 V470" />
       </g>
-      {/* inspectieluik */}
-      <g opacity={ok("luik") ? 1 : 0.85}>
-        <rect x="160" y="340" width="36" height="36" rx="3" fill={ok("luik") ? C.greenLight : "white"} stroke={mark("luik")} strokeWidth="2.5" />
-        <circle cx="190" cy="358" r="2.5" fill={mark("luik")} />
-        <text x="178" y="390" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">50x50</text>
+      <text x="462" y="495" fontSize="10" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
+
+      {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerde bodemplaat */}
+      <g>
+        <rect x="250" y="448" width="60" height="14" fill={fillOk("drukver")} stroke={mark("drukver")} strokeWidth={ok("drukver") ? 3 : 2} />
+        {[262, 280, 298].map((cx) => (
+          <circle key={cx} cx={cx} cy="455" r="4" fill="none" stroke={mark("drukver")} strokeWidth="1.8" />
+        ))}
       </g>
-      {/* maaiveld */}
-      <line x1="30" y1="390" x2="490" y2="390" stroke={C.brownText} strokeWidth="3" />
     </svg>
   );
 }
@@ -488,9 +560,9 @@ function Ronde2({ addScore, onDone }) {
         Sleep elk label naar het juiste onderdeel in de tekening.
       </p>
 
-      <div className="relative w-full" style={{ maxWidth: 520 }}>
+      <div className="relative w-full" style={{ maxWidth: R2_W }}>
         <SchachtOnderdelen placed={placed} />
-        {/* dropzones als overlay (posities in % van de 520x470 viewBox) */}
+        {/* dropvlakken als overlay, elk met een verwijslijn (in de SVG) naar het onderdeel */}
         {R2_ONDERDELEN.map((o) => (
           <DropTarget
             key={o.id}
@@ -498,10 +570,10 @@ function Ronde2({ addScore, onDone }) {
             onDropItem={dropOn(o)}
             className="absolute"
             style={{
-              left: `${((o.x - o.w / 2) / 520) * 100}%`,
-              top: `${(o.y / 470) * 100}%`,
-              width: `${(o.w / 520) * 100}%`,
-              height: `${(34 / 470) * 100}%`,
+              left: `${(o.zone.x / R2_W) * 100}%`,
+              top: `${(o.zone.y / R2_H) * 100}%`,
+              width: `${(R2_ZONE.w / R2_W) * 100}%`,
+              height: `${(R2_ZONE.h / R2_H) * 100}%`,
             }}
           >
             {({ isHover, flash }) => (
@@ -510,7 +582,7 @@ function Ronde2({ addScore, onDone }) {
                 style={{
                   borderStyle: placed[o.id] ? "solid" : "dashed",
                   borderColor: placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
-                  backgroundColor: placed[o.id] ? C.greenLight : flash === "wrong" ? C.redLight : isHover ? C.oliveLight : "rgba(255,252,245,0.9)",
+                  backgroundColor: placed[o.id] ? C.greenLight : flash === "wrong" ? C.redLight : isHover ? C.oliveLight : "rgba(255,252,245,0.95)",
                   color: placed[o.id] ? C.green : C.brown,
                 }}
               >
