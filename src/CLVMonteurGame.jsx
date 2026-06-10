@@ -120,7 +120,6 @@ const POOL_R3 = [
 // ─── RONDE 1: RECIRCULATIE VOORKOMEN ───
 
 function RecircSVG({ closed }) {
-  const bothClosed = closed.rookgas && closed.lucht;
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
   const flowSlow = { strokeDasharray: "8 6", animation: "flowDash 1.2s linear infinite" };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
@@ -196,22 +195,23 @@ function RecircSVG({ closed }) {
         );
       })}
 
-      {/* recirculatie: rookgas stroomt de woning in zolang een stomp open is */}
+      {/* open rookgasstomp: rookgas (CO) stroomt de woning in */}
       {!closed.rookgas && (
         <>
           <path d="M410 139 L364 139 L300 139 Q250 139 235 160 Q225 175 240 190" fill="none" stroke={C.red} strokeWidth="4" style={flow} opacity="0.9" />
           <path d="M232 184 L240 196 L248 186" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
+      {/* open luchtstomp: hier blaast alleen lucht uit het toevoerkanaal */}
       {!closed.lucht && (
         <>
-          <path d="M410 179 L364 179 L305 179 Q275 179 268 200" fill="none" stroke={C.red} strokeWidth="3.5" style={flowSlow} opacity="0.8" />
-          <path d="M261 195 L268 207 L276 197" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M403 179 L364 179 L324 179" fill="none" stroke="#3B82F6" strokeWidth="3" style={flowSlow} opacity="0.8" />
+          <path d="M332 174 L322 179 L332 184" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
 
-      {/* gevaarwolkjes in de bovenwoning */}
-      {!bothClosed && (
+      {/* gevaarwolkjes in de bovenwoning (alleen door het rookgas) */}
+      {!closed.rookgas && (
         <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
           <circle cx="250" cy="210" r="14" fill={C.red} opacity="0.15" />
           <circle cx="285" cy="200" r="10" fill={C.red} opacity="0.15" />
@@ -258,11 +258,12 @@ function Ronde1({ addScore, onDone }) {
 
   const bothClosed = closed.rookgas && closed.lucht;
 
-  // CO-meter loopt op zolang er een stomp open staat, en daalt daarna naar 0
+  // CO komt alleen uit de open rookgasstomp: de meter loopt op zolang die
+  // open staat, en daalt zodra hij is afgedopt (de luchtstomp geeft geen CO)
   useEffect(() => {
     const timer = setInterval(() => {
       setCo((prev) => {
-        const open = !(closedRef.current.rookgas && closedRef.current.lucht);
+        const open = !closedRef.current.rookgas;
         const target = open ? 600 : 0;
         const next = prev + (target - prev) * (open ? 0.012 : 0.08);
         return Math.abs(next - target) < 1 ? target : next;
