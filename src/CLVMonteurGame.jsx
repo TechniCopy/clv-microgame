@@ -22,7 +22,7 @@ const MAX_SCORE = 145;
 
 const POOL_R1 = [
   {
-    question: "[EXAMENVRAAG] Waarop moet je extra letten bij het demonteren van een toestel dat is aangesloten op een CLV-systeem?",
+    question: "Waarop moet je extra letten bij het demonteren van een toestel dat is aangesloten op een CLV-systeem?",
     options: [
       "Dat de aansluitstompen (rookgas én lucht) direct worden afgesloten.",
       "Dat ramen en deuren open staan voor verse lucht.",
@@ -34,7 +34,7 @@ const POOL_R1 = [
     feedbackWrong: "Denk aan de animatie: de open stomp liet rookgas binnen. Altijd beide stompen direct afsluiten bij demontage.",
   },
   {
-    question: "[EXAMENVRAAG] Een HR-toestel wordt aangesloten op een CLV-kanaal op overdruk. Wat moet er in het toestel aanwezig zijn om rookgas-recirculatie te voorkomen?",
+    question: "Een HR-toestel wordt aangesloten op een CLV-kanaal op overdruk. Wat moet er in het toestel aanwezig zijn om rookgas-recirculatie te voorkomen?",
     options: ["Een rookgaskeerklep (terugslagklep)", "Een TTB (thermische terugslagbeveiliging)", "Een rookgasdop", "Een rookgassensor"],
     correct: 0,
     feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel (voorschriften CLV C(10)-toepassingen, bijlage D).",
@@ -56,7 +56,7 @@ const POOL_R1 = [
 
 const POOL_R2 = [
   {
-    question: "[EXAMENVRAAG] Je sluit een nieuw toestel aan op een bestaand inpandig RVS CLV-systeem. Met welk materiaal mag de verbindingsleiding worden gemaakt?",
+    question: "Je sluit een nieuw toestel aan op een bestaand inpandig RVS CLV-systeem. Met welk materiaal mag de verbindingsleiding worden gemaakt?",
     options: ["RVS", "Kunststof", "Dikwandig aluminium", "Dunwandig aluminium"],
     correct: 0,
     feedbackCorrect: "Correct! Bij een RVS-systeem alleen RVS gebruiken — anders ontstaat galvanische corrosie en verschil in uitzetting.",
@@ -102,7 +102,7 @@ const POOL_R2 = [
 
 const POOL_R3 = [
   {
-    question: "[EXAMENVRAAG] Wat is de minimale afmeting van het inspectieluik bij een CLV-systeem?",
+    question: "Wat is de minimale afmeting van het inspectieluik bij een CLV-systeem?",
     options: ["50 x 50 cm", "30 x 30 cm", "60 x 60 cm", "100 x 100 cm"],
     correct: 0,
     feedbackCorrect: "Klopt! Minimaal 50 x 50 cm, brandwerend, en maximaal 50 cm van het hart van het CLV-systeem (NPR 3378-40, art. 5.1.5).",

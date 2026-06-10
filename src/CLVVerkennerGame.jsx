@@ -22,7 +22,7 @@ const MAX_SCORE = 105;
 
 const POOL_R1 = [
   {
-    question: "[EXAMENVRAAG] Wat is het verschil tussen een CLV-systeem en een half-CLV-systeem?",
+    question: "Wat is het verschil tussen een CLV-systeem en een half-CLV-systeem?",
     options: [
       "Bij een half-CLV-systeem is alleen de rookgasafvoer gemeenschappelijk; de lucht komt individueel via de gevel.",
       "Bij een CLV-systeem is alleen de rookgasafvoer gemeenschappelijk.",
@@ -95,14 +95,14 @@ const POOL_R2 = [
 
 const POOL_R3 = [
   {
-    question: "[EXAMENVRAAG] Hoeveel toestellen mogen er per verdieping worden aangesloten op een concentrisch C(10) overdruk-CLV-systeem?",
+    question: "Hoeveel toestellen mogen er per verdieping worden aangesloten op een concentrisch C(10) overdruk-CLV-systeem?",
     options: ["2 toestellen", "1 toestel", "3 toestellen", "4 toestellen"],
     correct: 0,
     feedbackCorrect: "Correct! Bij een C(10) overdruk-CLV mogen maximaal 2 toestellen per verdieping worden aangesloten (voorschriften CLV C(10)-toepassingen, hoofdstuk 8).",
     feedbackWrong: "Volgens de voorschriften voor C(10)-toepassingen (hoofdstuk 8, Dimensionering) mogen er maximaal 2 toestellen per verdieping op een overdruk-CLV worden aangesloten.",
   },
   {
-    question: "[EXAMENVRAAG] Een concentrisch CLV-systeem werkt op natuurlijke trek. Welk type toestel mag hierop worden aangesloten?",
+    question: "Een concentrisch CLV-systeem werkt op natuurlijke trek. Welk type toestel mag hierop worden aangesloten?",
     options: ["C43 toestel", "C53 toestel", "C33 toestel", "C83 toestel"],
     correct: 0,
     feedbackCorrect: "Juist! C42 en C43 zijn de types voor een concentrisch onderdruk-CLV (NPR 3378-40).",
