@@ -255,19 +255,23 @@ export function useGameJuice() {
   return { triggerCorrect, triggerWrong, triggerLevelUp, shaking, streak, JuiceOverlay };
 }
 
-// ─── POINTER-BASED DRAG & DROP (desktop + tablet) ───
+// ─── POINTER-BASED DRAG & DROP + TIK-OM-TE-PLAATSEN (desktop, tablet, mobiel) ───
 //
 // HTML5 drag events werken niet op touch devices; daarom een eigen systeem
-// op pointer events. Draggable rendert een ghost die de vinger/cursor volgt;
-// bij loslaten wordt op dropzone-rects getest.
+// op pointer events. Slepen: een ghost volgt de vinger/cursor en bij loslaten
+// wordt op dropzone-rects getest. Tikken (mobielvriendelijk): tik op een
+// kaartje om het te selecteren, tik daarna op een dropvlak om het te plaatsen.
 
 const DragCtx = createContext(null);
+
+const TAP_DREMPEL = 8; // px beweging voordat een aanraking als slepen telt
 
 export function DragProvider({ children }) {
   const zonesRef = useRef(new Map());
   const ghostRef = useRef(null);
   const [ghost, setGhost] = useState(null);
   const [hoverZone, setHoverZone] = useState(null);
+  const [selected, setSelected] = useState(null); // { payload } bij tik-selectie
 
   const findZone = useCallback((x, y) => {
     let found = null;
@@ -281,11 +285,13 @@ export function DragProvider({ children }) {
   const api = {
     hoverZone,
     dragging: !!ghost,
+    selected,
     registerZone(id, getRect, onDrop) {
       zonesRef.current.set(id, { getRect, onDrop });
       return () => zonesRef.current.delete(id);
     },
     begin(payload, render, x, y) {
+      setSelected(null);
       ghostRef.current = { payload, render, x, y };
       setGhost(ghostRef.current);
     },
@@ -310,6 +316,12 @@ export function DragProvider({ children }) {
       setGhost(null);
       setHoverZone(null);
     },
+    toggleSelect(payload) {
+      setSelected((s) => (s && s.payload === payload ? null : { payload }));
+    },
+    clearSelect() {
+      setSelected(null);
+    },
   };
 
   return (
@@ -321,6 +333,14 @@ export function DragProvider({ children }) {
           style={{ left: ghost.x, top: ghost.y, transform: "translate(-50%, -50%) scale(1.05)", opacity: 0.9 }}
         >
           {ghost.render}
+        </div>
+      )}
+      {selected && !ghost && (
+        <div
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center"
+          style={{ backgroundColor: C.olive, color: "white", borderColor: C.oliveDark, maxWidth: "90vw" }}
+        >
+          Tik op de plek waar dit hoort — of tik nogmaals op het kaartje om te annuleren
         </div>
       )}
     </DragCtx.Provider>
@@ -335,6 +355,14 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
   const api = useContext(DragCtx);
   const [dragging, setDragging] = useState(false);
   const draggingRef = useRef(false);
+  const pressedRef = useRef(false);
+  const startRef = useRef({ x: 0, y: 0 });
+  const renderRef = useRef(null);
+  useEffect(() => {
+    renderRef.current = ghost ?? children;
+  }, [ghost, children]);
+
+  const isSelected = api.selected?.payload === payload;
 
   return (
     <div
@@ -346,27 +374,53 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
         } catch {
           /* synthetic events hebben geen actieve pointer */
         }
-        draggingRef.current = true;
-        setDragging(true);
-        api.begin(payload, ghost ?? children, e.clientX, e.clientY);
+        pressedRef.current = true;
+        startRef.current = { x: e.clientX, y: e.clientY };
       }}
       onPointerMove={(e) => {
-        if (draggingRef.current) api.move(e.clientX, e.clientY);
+        if (!pressedRef.current) return;
+        if (!draggingRef.current) {
+          const dx = e.clientX - startRef.current.x;
+          const dy = e.clientY - startRef.current.y;
+          if (Math.hypot(dx, dy) < TAP_DREMPEL) return;
+          // genoeg beweging: dit is slepen, geen tik
+          draggingRef.current = true;
+          setDragging(true);
+          api.begin(payload, renderRef.current, e.clientX, e.clientY);
+        }
+        api.move(e.clientX, e.clientY);
       }}
       onPointerUp={(e) => {
-        if (!draggingRef.current) return;
-        draggingRef.current = false;
-        setDragging(false);
-        api.end(e.clientX, e.clientY);
+        if (!pressedRef.current) return;
+        pressedRef.current = false;
+        if (draggingRef.current) {
+          draggingRef.current = false;
+          setDragging(false);
+          api.end(e.clientX, e.clientY);
+        } else {
+          // tik: (de)selecteer dit kaartje voor tik-om-te-plaatsen
+          api.toggleSelect(payload);
+        }
       }}
       onPointerCancel={() => {
+        pressedRef.current = false;
         if (!draggingRef.current) return;
         draggingRef.current = false;
         setDragging(false);
         api.cancel();
       }}
       className={className}
-      style={{ touchAction: "none", userSelect: "none", opacity: dragging ? 0.3 : 1, cursor: disabled ? "default" : "grab", ...style }}
+      style={{
+        touchAction: "none",
+        userSelect: "none",
+        opacity: dragging ? 0.3 : 1,
+        cursor: disabled ? "default" : "grab",
+        outline: isSelected ? `3px solid ${C.olive}` : "none",
+        outlineOffset: 2,
+        borderRadius: 12,
+        boxShadow: isSelected ? "0 0 0 6px rgba(92,107,46,0.2)" : "none",
+        ...style,
+      }}
     >
       {children}
     </div>
@@ -375,7 +429,8 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
 
 // DropTarget: onDropItem(payload, point) => "correct" | "wrong" | undefined.
 // "wrong" geeft een korte rode flash (terugveer-effect: de ghost verdwijnt en
-// het origineel staat nog op zijn plek).
+// het origineel staat nog op zijn plek). Werkt voor slepen én voor tikken:
+// is er een kaartje geselecteerd, dan plaatst een tik op het vlak het kaartje.
 export function DropTarget({ id, onDropItem, children, className = "", style, render }) {
   const api = useContext(DragCtx);
   const ref = useRef(null);
@@ -385,28 +440,49 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
   }, [onDropItem]);
   const [flash, setFlash] = useState(null);
 
+  const handleResult = useCallback((result) => {
+    if (result === "wrong" || result === "correct") {
+      setFlash(result);
+      setTimeout(() => setFlash(null), 450);
+    }
+  }, []);
+
   useEffect(() => {
     return api.registerZone(
       id,
       () => ref.current?.getBoundingClientRect(),
-      (payload, point) => {
-        const result = cbRef.current?.(payload, point);
-        if (result === "wrong") {
-          setFlash("wrong");
-          setTimeout(() => setFlash(null), 450);
-        } else if (result === "correct") {
-          setFlash("correct");
-          setTimeout(() => setFlash(null), 450);
-        }
-      }
+      (payload, point) => handleResult(cbRef.current?.(payload, point))
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const handleTap = (e) => {
+    if (!api.selected) return;
+    const result = cbRef.current?.(api.selected.payload, { clientX: e.clientX, clientY: e.clientY });
+    handleResult(result);
+    if (result === "correct") api.clearSelect();
+  };
+
   const isHover = api.hoverZone === id && api.dragging;
-  if (render) return <div ref={ref} className={className} style={style}>{render({ isHover, flash })}</div>;
+  const armedStyle = api.selected
+    ? { outline: `2px dashed ${C.olive}`, outlineOffset: 3, borderRadius: 14, cursor: "pointer" }
+    : {};
+
+  if (render)
+    return (
+      <div ref={ref} className={className} style={{ ...armedStyle, ...style }} onClick={handleTap}>
+        {render({ isHover, flash })}
+      </div>
+    );
   return (
-    <div ref={ref} className={className} style={style} data-hover={isHover || undefined} data-flash={flash || undefined}>
+    <div
+      ref={ref}
+      className={className}
+      style={{ ...armedStyle, ...style }}
+      onClick={handleTap}
+      data-hover={isHover || undefined}
+      data-flash={flash || undefined}
+    >
       {typeof children === "function" ? children({ isHover, flash }) : children}
     </div>
   );
