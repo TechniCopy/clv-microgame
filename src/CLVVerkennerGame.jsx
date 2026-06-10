@@ -156,15 +156,15 @@ function FlatDoorsnede({ stand }) {
       </defs>
 
       {/* maaiveld */}
-      <rect x="20" y="424" width="480" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="20" y="424" width="440" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
       {/* dak (doorbroken door de schacht) */}
       <rect x="36" y="96" width="49" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
-      <rect x="155" y="96" width="299" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="155" y="96" width="239" height="14" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
       {/* gevel rechts */}
-      <rect x="440" y="110" width="14" height="314" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="380" y="110" width="14" height="314" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
       {/* verdiepingsvloeren (tussen schacht en gevel) */}
       {[205, 310].map((y) => (
-        <rect key={y} x="155" y={y} width="285" height="11" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="1.5" />
+        <rect key={y} x="155" y={y} width="225" height="11" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="1.5" />
       ))}
 
       {/* schachtwanden links */}
@@ -230,14 +230,14 @@ function FlatDoorsnede({ stand }) {
             ) : (
               <>
                 {/* half-CLV: lucht via het rooster hoog in de gevel */}
-                <Pipe d={`M442 ${yC} L296 ${yC} L296 ${kt - 6}`} color="#3B82F6" anim={flowDown} />
+                <Pipe d={`M382 ${yC} L296 ${yC} L296 ${kt - 6}`} color="#3B82F6" anim={flowDown} />
                 {/* luchttoevoerrooster in de gevel */}
-                <rect x="436" y={yC - 11} width="20" height="22" fill="white" stroke={C.brownText} strokeWidth="2" />
+                <rect x="376" y={yC - 11} width="20" height="22" fill="white" stroke={C.brownText} strokeWidth="2" />
                 {[yC - 5, yC, yC + 5].map((ly) => (
-                  <line key={ly} x1="439" y1={ly} x2="453" y2={ly} stroke={C.brownText} strokeWidth="1.2" />
+                  <line key={ly} x1="379" y1={ly} x2="393" y2={ly} stroke={C.brownText} strokeWidth="1.2" />
                 ))}
                 {/* buitenlucht naar binnen */}
-                <path d={`M478 ${yC} L460 ${yC} M466 ${yC - 5} L459 ${yC} L466 ${yC + 5}`} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d={`M418 ${yC} L400 ${yC} M406 ${yC - 5} L399 ${yC} L406 ${yC + 5}`} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </>
             )}
             {/* cv-ketel */}
@@ -254,14 +254,14 @@ function FlatDoorsnede({ stand }) {
       {/* label bij het bovenste gevelrooster (half-CLV) */}
       {!isDak && (
         <>
-          <text x="470" y="100" fontSize="8" fontWeight="600" fill={C.brownText} textAnchor="middle">luchttoevoer-</text>
-          <text x="470" y="110" fontSize="8" fontWeight="600" fill={C.brownText} textAnchor="middle">rooster</text>
-          <line x1="463" y1="113" x2="452" y2="120" stroke={C.brownText} strokeWidth="1" />
+          <text x="445" y="92" fontSize="8" fontWeight="600" fill={C.brownText} textAnchor="middle">luchttoevoer-</text>
+          <text x="445" y="102" fontSize="8" fontWeight="600" fill={C.brownText} textAnchor="middle">rooster</text>
+          <line x1="436" y1="106" x2="400" y2="119" stroke={C.brownText} strokeWidth="1" />
         </>
       )}
 
-      {/* legenda (links van de ketel, onder de plafondleidingen) */}
-      <g transform="translate(162, 156)">
+      {/* legenda (rechts naast het gebouw) */}
+      <g transform="translate(424, 250)">
         <rect x="0" y="0" width="84" height="40" fill="white" stroke={C.brownText} strokeWidth="1.5" opacity="0.95" />
         <line x1="8" y1="13" x2="26" y2="13" stroke={C.red} strokeWidth="3" strokeDasharray="5 4" />
         <text x="31" y="17" fontSize="9" fontWeight="600" fill={C.brownText}>rookgas</text>
