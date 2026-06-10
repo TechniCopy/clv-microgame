@@ -16,7 +16,7 @@ import {
   playSound,
 } from "./shared.jsx";
 
-const MAX_SCORE = 105;
+const MAX_SCORE = 135;
 
 // ─── VRAGENPOOLS ───
 
@@ -115,6 +115,40 @@ const POOL_R3 = [
     feedbackCorrect: "Correct! Na circa 15 jaar moet je het CLV beoordelen. Tijdelijk doorgebruik kan, maar alleen met CO-melders, vervangingsplan en periodieke metingen.",
     feedbackWrong: "De levensduur is circa 15 jaar. Bij vervanging van een toestel in gestapelde bouw altijd controleren of het CLV-systeem nog geschikt is.",
   },
+  {
+    question: "Je opent tijdens een onderhoudsbeurt het inspectieluik van de rookgasafvoer (RGA). Waar moet je op bedacht zijn?",
+    options: [
+      "Waterophoping achter het luik.",
+      "Overdruk die het luik eruit blaast.",
+      "Dat het luik daarna niet meer terug mag worden geplaatst.",
+      "Roetaanslag die het luik vastplakt.",
+    ],
+    correct: 0,
+    feedbackCorrect: "Klopt! Achter het RGA-inspectieluik kan zich condenswater hebben opgehoopt — pas op als je het opent.",
+    feedbackWrong: "Bij het openen van het RGA-luik moet je bedacht zijn op waterophoping: er kan condenswater achter het luik staan.",
+  },
+  {
+    question: "Welke onderdelen reinig je bij een onderhoudsbeurt van een CLV-systeem?",
+    options: [
+      "De rookgasafvoer, de sifons (ook de rioleringssifon, met water gevuld) en het luchttoevoerdeel.",
+      "Alleen de rookgasafvoer; de rest is onderhoudsvrij.",
+      "Alleen de sifons; de kanalen reinigen zichzelf door de trek.",
+      "De buitenzijde van de schacht en het dak.",
+    ],
+    correct: 0,
+    feedbackCorrect: "Juist! Je reinigt de rookgasafvoer, beide sifons (en vult ze met water terug) én het luchttoevoerdeel.",
+    feedbackWrong: "Volgens de onderhoudsvoorschriften reinig je drie dingen: de rookgasafvoer, de sifons (met water, ook de rioleringssifon) en het luchttoevoerdeel.",
+  },
+];
+
+// Onderhoudsvoorschriften CLV (uit de lesstof): in deze volgorde afwerken
+const ONDERHOUD_STAPPEN = [
+  { id: "s1", label: "Open het toegangsluik in de wand — het CLV-kanaal is nu zichtbaar" },
+  { id: "s2", label: "Open de inspectieluiken: eerst luchttoevoer, dan RGA (pas op waterophoping!)" },
+  { id: "s3", label: "Controleer of het typeplaatje zichtbaar op het CLV-kanaal is gemonteerd" },
+  { id: "s4", label: "Reinig de rookgasafvoer, de sifons (met water, ook de rioleringssifon) en het luchttoevoerdeel" },
+  { id: "s5", label: "Plaats de inspectiedeksels terug en controleer of de afdichting goed zit" },
+  { id: "s6", label: "Plaats het toegangsluik terug" },
 ];
 
 // ─── RONDE 1: RECIRCULATIE VOORKOMEN ───
@@ -855,9 +889,13 @@ function Ronde3({ addScore, onDone }) {
   const [checked, setChecked] = useState([]); // ids in 'gecontroleerd'
   const [hint, setHint] = useState(null);
   const [running, setRunning] = useState(false);
+  const [fase, setFase] = useState("oplever"); // oplever -> onderhoud
+  const [gedaan, setGedaan] = useState([]); // uitgevoerde onderhoudsstappen, op volgorde
+  const [kaarten] = useState(() => [...ONDERHOUD_STAPPEN].sort(() => Math.random() - 0.5));
 
   const verplichteIds = CONTROLEPUNTEN.filter((p) => p.verplicht).map((p) => p.id);
   const alleVerplicht = verplichteIds.every((id) => checked.includes(id));
+  const onderhoudKlaar = gedaan.length === ONDERHOUD_STAPPEN.length;
 
   const dropControle = (payload, point) => {
     const punt = CONTROLEPUNTEN.find((p) => p.id === payload);
@@ -885,7 +923,28 @@ function Ronde3({ addScore, onDone }) {
   const startToestel = () => {
     setRunning(true);
     playSound("levelup");
-    setTimeout(onDone, 2200);
+    setTimeout(() => {
+      setFase("onderhoud");
+      setHint(null);
+    }, 2200);
+  };
+
+  // onderhoudsbeurt: stappen in de juiste volgorde naar het stappenplan slepen
+  const dropStap = (payload, point) => {
+    const verwacht = ONDERHOUD_STAPPEN[gedaan.length];
+    if (!verwacht || gedaan.includes(payload)) return undefined;
+    if (payload === verwacht.id) {
+      setGedaan((prev) => [...prev, payload]);
+      addScore(5, point);
+      setHint(null);
+      playSound("drop");
+      return "correct";
+    }
+    addScore(-5, point);
+    setHint(
+      "Let op de volgorde van de onderhoudsvoorschriften: eerst alles openen (van buiten naar binnen), dan controleren en reinigen, en daarna alles weer terugplaatsen."
+    );
+    return "wrong";
   };
 
   return (
@@ -895,68 +954,137 @@ function Ronde3({ addScore, onDone }) {
         Ronde 3: Inbedrijfstellen &amp; Onderhoud
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        Werk het opleverformulier af: sleep elk verplicht controlepunt naar &lsquo;Gecontroleerd&rsquo;. Pas op — er zitten
-        punten tussen die er niet bij horen!
+        {fase === "oplever"
+          ? "Werk het opleverformulier af: sleep elk verplicht controlepunt naar ‘Gecontroleerd’. Pas op — er zitten punten tussen die er niet bij horen!"
+          : "Het toestel draait! Nu de onderhoudsbeurt van het CLV-systeem zelf: sleep de onderhoudsvoorschriften in de juiste volgorde naar het stappenplan."}
       </p>
 
       <div className="flex flex-col md:flex-row gap-4 w-full max-w-3xl items-start">
-        {/* opleverformulier */}
-        <div className="flex-1 w-full">
-          <div className="rounded-2xl border-2 p-3 mb-3" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
-            <div className="flex items-center gap-2 mb-2">
-              <ClipboardCheck className="w-4 h-4" style={{ color: C.olive }} />
-              <span className="font-bold italic text-sm" style={{ color: C.brownText }}>
-                Opleverformulier — te controleren
-              </span>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).map((p) => (
-                <Draggable key={p.id} payload={p.id} ghost={<DragCard label={p.label} small />}>
-                  <div
-                    className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 bg-white"
-                    style={{ borderColor: C.beigeMid, color: C.brownText }}
-                  >
-                    {p.label}
-                  </div>
-                </Draggable>
-              ))}
-              {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).length === 0 && (
-                <span className="text-xs italic" style={{ color: C.brown }}>
-                  (leeg)
+        {fase === "oplever" ? (
+          /* opleverformulier */
+          <div className="flex-1 w-full">
+            <div className="rounded-2xl border-2 p-3 mb-3" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
+              <div className="flex items-center gap-2 mb-2">
+                <ClipboardCheck className="w-4 h-4" style={{ color: C.olive }} />
+                <span className="font-bold italic text-sm" style={{ color: C.brownText }}>
+                  Opleverformulier — te controleren
                 </span>
-              )}
-            </div>
-          </div>
-
-          <DropTarget id="gecontroleerd" onDropItem={dropControle}>
-            {({ isHover, flash }) => (
-              <div
-                className="rounded-2xl border-2 p-3 min-h-[110px] transition-colors"
-                style={{
-                  borderStyle: "dashed",
-                  borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.green,
-                  backgroundColor: flash === "wrong" ? C.redLight : isHover ? C.oliveLight : C.greenLight,
-                }}
-              >
-                <span className="font-bold italic text-sm" style={{ color: C.green }}>
-                  Gecontroleerd ✓ ({checked.length}/6)
-                </span>
-                <div className="flex flex-col gap-1.5 mt-2">
-                  {CONTROLEPUNTEN.filter((p) => checked.includes(p.id)).map((p) => (
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).map((p) => (
+                  <Draggable key={p.id} payload={p.id} ghost={<DragCard label={p.label} small />}>
                     <div
-                      key={p.id}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 flex items-center gap-1.5"
-                      style={{ backgroundColor: "white", borderColor: C.green, color: C.green }}
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 bg-white"
+                      style={{ borderColor: C.beigeMid, color: C.brownText }}
                     >
-                      <CheckCircle className="w-3 h-3 shrink-0" />
                       {p.label}
                     </div>
-                  ))}
-                </div>
+                  </Draggable>
+                ))}
+                {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).length === 0 && (
+                  <span className="text-xs italic" style={{ color: C.brown }}>
+                    (leeg)
+                  </span>
+                )}
               </div>
-            )}
-          </DropTarget>
-        </div>
+            </div>
+
+            <DropTarget id="gecontroleerd" onDropItem={dropControle}>
+              {({ isHover, flash }) => (
+                <div
+                  className="rounded-2xl border-2 p-3 min-h-[110px] transition-colors"
+                  style={{
+                    borderStyle: "dashed",
+                    borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.green,
+                    backgroundColor: flash === "wrong" ? C.redLight : isHover ? C.oliveLight : C.greenLight,
+                  }}
+                >
+                  <span className="font-bold italic text-sm" style={{ color: C.green }}>
+                    Gecontroleerd ✓ ({checked.length}/6)
+                  </span>
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    {CONTROLEPUNTEN.filter((p) => checked.includes(p.id)).map((p) => (
+                      <div
+                        key={p.id}
+                        className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 flex items-center gap-1.5"
+                        style={{ backgroundColor: "white", borderColor: C.green, color: C.green }}
+                      >
+                        <CheckCircle className="w-3 h-3 shrink-0" />
+                        {p.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DropTarget>
+          </div>
+        ) : (
+          /* onderhoudsbeurt: stappenplan in de juiste volgorde */
+          <div className="flex-1 w-full">
+            <DropTarget id="stappenplan" onDropItem={dropStap}>
+              {({ isHover, flash }) => (
+                <div
+                  className="rounded-2xl border-2 p-3 mb-3 min-h-[150px] transition-colors"
+                  style={{
+                    borderStyle: "dashed",
+                    borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.brownText,
+                    backgroundColor: flash === "wrong" ? C.redLight : isHover ? C.oliveLight : C.bgCard,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClipboardCheck className="w-4 h-4" style={{ color: C.olive }} />
+                    <span className="font-bold italic text-sm" style={{ color: C.brownText }}>
+                      Stappenplan onderhoudsbeurt ({gedaan.length}/{ONDERHOUD_STAPPEN.length})
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {gedaan.map((id, i) => {
+                      const stapInfo = ONDERHOUD_STAPPEN.find((s) => s.id === id);
+                      return (
+                        <div
+                          key={id}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 flex items-center gap-2"
+                          style={{ backgroundColor: "white", borderColor: C.green, color: C.green }}
+                        >
+                          <span
+                            className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: C.green }}
+                          >
+                            {i + 1}
+                          </span>
+                          {stapInfo?.label}
+                        </div>
+                      );
+                    })}
+                    {!onderhoudKlaar && (
+                      <div
+                        className="rounded-lg px-2.5 py-1.5 text-xs italic border-2 border-dashed"
+                        style={{ borderColor: C.beigeMid, color: C.brown }}
+                      >
+                        {gedaan.length + 1}. Sleep hier de volgende stap heen...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </DropTarget>
+
+            <div className="flex flex-col gap-1.5">
+              {kaarten
+                .filter((s) => !gedaan.includes(s.id))
+                .map((s) => (
+                  <Draggable key={s.id} payload={s.id} ghost={<DragCard label={s.label} small />}>
+                    <div
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 bg-white"
+                      style={{ borderColor: C.beigeMid, color: C.brownText }}
+                    >
+                      {s.label}
+                    </div>
+                  </Draggable>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* tekening */}
         <div className="w-full md:w-[240px] shrink-0">
@@ -971,15 +1099,26 @@ function Ronde3({ addScore, onDone }) {
       )}
 
       <div className="mt-4">
-        {running ? (
-          <p className="text-sm font-bold italic" style={{ color: C.green }}>
-            Het toestel start op... rookgasafvoer loopt — alles in orde!
-          </p>
-        ) : (
-          <GameButton onClick={startToestel} disabled={!alleVerplicht} variant="green">
-            <Power className="w-4 h-4" />
-            Toestel in bedrijf stellen
-          </GameButton>
+        {fase === "oplever" &&
+          (running ? (
+            <p className="text-sm font-bold italic" style={{ color: C.green }}>
+              Het toestel start op... rookgasafvoer loopt — alles in orde!
+            </p>
+          ) : (
+            <GameButton onClick={startToestel} disabled={!alleVerplicht} variant="green">
+              <Power className="w-4 h-4" />
+              Toestel in bedrijf stellen
+            </GameButton>
+          ))}
+        {fase === "onderhoud" && onderhoudKlaar && (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm font-bold italic" style={{ color: C.green }}>
+              Onderhoudsbeurt compleet — het systeem is schoon en weer netjes afgesloten!
+            </p>
+            <GameButton onClick={onDone} variant="green">
+              Naar de controlevraag
+            </GameButton>
+          </div>
         )}
       </div>
     </div>
