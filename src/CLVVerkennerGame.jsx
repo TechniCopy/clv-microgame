@@ -359,12 +359,12 @@ function Ronde1({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 1: CLV of half-CLV?"
-        intro="Twee systemen die op elkaar lijken. Het verschil zit in de lucht."
+        intro="De drie soorten kort op een rij:"
         onStart={() => setGestart(true)}
       >
         <UitlegItem term="CLV">lucht en rookgas gaan samen door het dak.</UitlegItem>
         <UitlegItem term="Half-CLV">alleen het rookgas gaat samen. De lucht komt apart via de gevel.</UitlegItem>
-        <UitlegItem term="Altijd hetzelfde">het rookgas is altijd gedeeld. Een fout raakt dus ook de buren.</UitlegItem>
+        <UitlegItem term="Hoge druk CLV">lucht en rookgas gaan samen, met een ventilator die het rookgas wegduwt.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
           Schuif straks tussen DAK en GEVEL. Let op wat verandert en wat hetzelfde blijft.
         </p>
