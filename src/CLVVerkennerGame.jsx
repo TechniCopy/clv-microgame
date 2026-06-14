@@ -534,49 +534,54 @@ function SchachtOnderdelen({ placed }) {
       <rect x="50" y="470" width="398" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
       <rect x="478" y="470" width="32" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* schachtwanden met houtnerf */}
-      <rect x="234" y="168" width="16" height="294" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
-      <rect x="310" y="168" width="16" height="294" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      {/* schachtwanden met houtnerf (lopen door tot het dak) */}
+      <rect x="234" y="150" width="16" height="312" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="310" y="150" width="16" height="312" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      {/* dak dicht rond de pijp: deksegmenten tussen schachtwand en doorvoer */}
+      <rect x="250" y="150" width="14" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="296" y="150" width="14" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* binnenste rookgaskanaal (RGAB): smalle pijp in het hart, lucht in de ringspleet */}
-      <line x1="272" y1="88" x2="272" y2="395" stroke={C.brownText} strokeWidth="2" />
-      <line x1="288" y1="88" x2="288" y2="395" stroke={C.brownText} strokeWidth="2" />
+      {/* concentrische pijp: buitenwand (264/296) en binnenpijp voor rookgas (272/288) */}
+      <line x1="264" y1="120" x2="264" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="296" y1="120" x2="296" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="272" y1="106" x2="272" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="288" y1="106" x2="288" y2="395" stroke={C.brownText} strokeWidth="2" />
       {/* opvangbak onderaan het rookgaskanaal */}
       <path d="M270 395 H290 V404 Q290 412 280 412 Q270 412 270 404 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
 
-      {/* DAKDOORVOER (NEN-figuur): flens, taps lichaam, rooster, kap */}
+      {/* DAKDOORVOER: de concentrische pijp steekt door het dak en eindigt in de kap */}
       <g>
-        {/* flens op het dak met bouten */}
-        <rect x="250" y="143" width="60" height="7" fill="white" stroke={C.brownText} strokeWidth="2" />
-        <rect x="253" y="138" width="7" height="5" fill={C.brownText} />
-        <rect x="300" y="138" width="7" height="5" fill={C.brownText} />
-        {/* taps toelopend lichaam */}
-        <polygon points="260,143 300,143 296,116 264,116" fill="white" stroke={C.brownText} strokeWidth="2" />
-        {/* geperforeerd rooster = instroming */}
-        <rect x="258" y="94" width="44" height="22" fill="url(#dots)" stroke={mark("instroming")} strokeWidth={ok("instroming") ? 3 : 2} />
-        {ok("instroming") && <rect x="258" y="94" width="44" height="22" fill={C.green} opacity="0.18" />}
+        {/* loodslab/kraag op het dak, rond de pijp */}
+        <rect x="254" y="144" width="52" height="8" fill="white" stroke={C.brownText} strokeWidth="2" />
+        <rect x="257" y="140" width="5" height="4" fill={C.brownText} />
+        <rect x="298" y="140" width="5" height="4" fill={C.brownText} />
+        {/* taps lichaam: van de pijp naar de bredere kap */}
+        <polygon points="264,120 296,120 306,104 254,104" fill="white" stroke={C.brownText} strokeWidth="2" />
+        {/* geperforeerd rooster = instroming (luchtinlaat onder de kap) */}
+        <rect x="256" y="92" width="48" height="12" fill="url(#dots)" stroke={mark("instroming")} strokeWidth={ok("instroming") ? 3 : 2} />
+        {ok("instroming") && <rect x="256" y="92" width="48" height="12" fill={C.green} opacity="0.18" />}
         {/* kapplaat + uitstroomstomp = uitstroming */}
-        <rect x="252" y="86" width="56" height="8" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
-        <rect x="272" y="72" width="16" height="14" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
+        <rect x="248" y="82" width="64" height="10" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
+        <rect x="272" y="68" width="16" height="14" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
         {/* rookgas naar buiten (drie pijlen) */}
         <g stroke={C.red} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M280 70 V52 M275 57 L280 51 L285 57" />
-          <path d="M273 70 L264 58 M264 65 L263 56 L271 59" />
-          <path d="M287 70 L296 58 M289 59 L297 56 L296 65" />
+          <path d="M280 66 V48 M275 53 L280 47 L285 53" />
+          <path d="M273 66 L264 54 M264 61 L263 52 L271 55" />
+          <path d="M287 66 L296 54 M289 55 L297 52 L296 61" />
         </g>
         {/* lucht naar binnen via het rooster (gestippelde pijlen) */}
         <g stroke="#3B82F6" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="4 3">
-          <path d="M240 92 L258 104" />
-          <path d="M320 92 L302 104" />
+          <path d="M242 86 L256 98" />
+          <path d="M318 86 L304 98" />
         </g>
       </g>
 
       {/* concentrische stroom: rookgas (rood) in het hart, lucht (blauw) in de ringspleet */}
-      <path d="M264 180 L264 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M259 408 L264 418 L269 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M296 180 L296 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M291 408 L296 418 L301 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M280 388 L280 100" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
+      <path d="M268 124 L268 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M263 408 L268 418 L273 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M292 124 L292 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M287 408 L292 418 L297 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M280 388 L280 80" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
 
       {/* AANSLUITSTOMPEN per verdieping: concentrische aansluiting (rood rookgas + blauw lucht) */}
       {[200, 260, 320].map((y) => (
