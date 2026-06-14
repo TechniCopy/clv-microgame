@@ -506,6 +506,12 @@ function SchachtOnderdelen({ placed }) {
         <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse">
           <circle cx="3" cy="3" r="1.1" fill={C.brownText} />
         </pattern>
+        {/* verticale houtnerf voor de schachtwanden */}
+        <pattern id="grain" width="6" height="12" patternUnits="userSpaceOnUse">
+          <rect width="6" height="12" fill={C.beigeMid} />
+          <line x1="1.5" y1="0" x2="1.5" y2="12" stroke={C.brown} strokeWidth="0.7" opacity="0.45" />
+          <line x1="4" y1="0" x2="4" y2="12" stroke={C.brown} strokeWidth="0.5" opacity="0.3" />
+        </pattern>
       </defs>
 
       {/* verwijslijnen van dropvlak naar onderdeel */}
@@ -521,22 +527,22 @@ function SchachtOnderdelen({ placed }) {
       })}
 
       {/* dakvlak (gearceerd, doorbroken door de schacht) */}
-      <rect x="50" y="150" width="190" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
-      <rect x="320" y="150" width="190" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="50" y="150" width="184" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="326" y="150" width="184" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
       {/* vloer onderaan (gearceerd, met sparing voor de rioolaansluiting) */}
       <rect x="50" y="470" width="398" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
       <rect x="478" y="470" width="32" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* schachtwanden */}
-      <rect x="240" y="168" width="10" height="294" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      <rect x="310" y="168" width="10" height="294" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      {/* schachtwanden met houtnerf */}
+      <rect x="234" y="168" width="16" height="294" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="310" y="168" width="16" height="294" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* binnenste rookgaskanaal (RGAB) */}
-      <line x1="270" y1="88" x2="270" y2="395" stroke={C.brownText} strokeWidth="2" />
-      <line x1="290" y1="88" x2="290" y2="395" stroke={C.brownText} strokeWidth="2" />
+      {/* binnenste rookgaskanaal (RGAB): smalle pijp in het hart, lucht in de ringspleet */}
+      <line x1="272" y1="88" x2="272" y2="395" stroke={C.brownText} strokeWidth="2" />
+      <line x1="288" y1="88" x2="288" y2="395" stroke={C.brownText} strokeWidth="2" />
       {/* opvangbak onderaan het rookgaskanaal */}
-      <path d="M268 395 H292 V404 Q292 412 280 412 Q268 412 268 404 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <path d="M270 395 H290 V404 Q290 412 280 412 Q270 412 270 404 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
 
       {/* DAKDOORVOER (NEN-figuur): flens, taps lichaam, rooster, kap */}
       <g>
@@ -560,32 +566,37 @@ function SchachtOnderdelen({ placed }) {
         </g>
         {/* lucht naar binnen via het rooster (gestippelde pijlen) */}
         <g stroke="#3B82F6" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="4 3">
-          <path d="M238 92 L256 102" />
-          <path d="M322 92 L304 102" />
+          <path d="M240 92 L258 104" />
+          <path d="M320 92 L302 104" />
         </g>
       </g>
 
-      {/* luchtstroom omlaag in de ringspleet */}
-      <path d="M259 180 L259 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M254 408 L259 418 L264 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M301 180 L301 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M296 408 L301 418 L306 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* rookgasstroom omhoog in het binnenkanaal */}
+      {/* concentrische stroom: rookgas (rood) in het hart, lucht (blauw) in de ringspleet */}
+      <path d="M264 180 L264 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M259 408 L264 418 L269 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M296 180 L296 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M291 408 L296 418 L301 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M280 388 L280 100" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
 
-      {/* AANSLUITSTOMPEN per verdieping (rechts door de schachtwand) */}
+      {/* AANSLUITSTOMPEN per verdieping: concentrische aansluiting (rood rookgas + blauw lucht) */}
       {[200, 260, 320].map((y) => (
         <g key={y}>
-          <rect x="316" y={y} width="38" height="18" fill={fillOk("stomp")} stroke={mark("stomp")} strokeWidth={ok("stomp") ? 3 : 2} />
-          <ellipse cx="354" cy={y + 9} rx="4" ry="9" fill="white" stroke={mark("stomp")} strokeWidth="2" />
+          {/* flens/connector door de schachtwand */}
+          <rect x="306" y={y - 10} width="22" height="20" fill={fillOk("stomp")} stroke={mark("stomp")} strokeWidth={ok("stomp") ? 3 : 2} />
+          {/* concentrische stomp naar het toestel toe */}
+          <rect x="326" y={y - 9} width="48" height="18" rx="3" fill="white" stroke={mark("stomp")} strokeWidth={ok("stomp") ? 2.5 : 1.5} />
+          {/* lucht (blauw) buitenom, rookgas (rood) in het hart */}
+          <line x1="330" y1={y - 4.5} x2="372" y2={y - 4.5} stroke="#3B82F6" strokeWidth="1.6" strokeDasharray="5 4" />
+          <line x1="330" y1={y + 4.5} x2="372" y2={y + 4.5} stroke="#3B82F6" strokeWidth="1.6" strokeDasharray="5 4" />
+          <line x1="312" y1={y} x2="372" y2={y} stroke={C.red} strokeWidth="2.2" strokeDasharray="6 4" />
         </g>
       ))}
 
       {/* INSPECTIELUIK (bouwkundig, in de rechterwand onderaan) */}
       <g>
-        <rect x="312" y="375" width="18" height="30" fill={fillOk("luik")} stroke={mark("luik")} strokeWidth={ok("luik") ? 3 : 2} />
-        <line x1="316" y1="380" x2="326" y2="380" stroke={mark("luik")} strokeWidth="1.5" />
-        <line x1="316" y1="400" x2="326" y2="400" stroke={mark("luik")} strokeWidth="1.5" />
+        <rect x="310" y="375" width="18" height="30" fill={fillOk("luik")} stroke={mark("luik")} strokeWidth={ok("luik") ? 3 : 2} />
+        <line x1="314" y1="380" x2="324" y2="380" stroke={mark("luik")} strokeWidth="1.5" />
+        <line x1="314" y1="400" x2="324" y2="400" stroke={mark("luik")} strokeWidth="1.5" />
       </g>
 
       {/* CONDENSAATAFVOER: sifon binnen, open verbinding, tweede sifon, naar riool */}
