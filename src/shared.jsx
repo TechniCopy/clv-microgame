@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { CheckCircle, XCircle, Star, ArrowRight, RotateCcw, Heart } from "lucide-react";
+import { CheckCircle, XCircle, Star, ArrowRight, RotateCcw, Heart, Lightbulb, ChevronDown, ChevronUp } from "lucide-react";
 
 // ─── THEME COLORS (huisstijl Studium CLV-microgames) ───
 
@@ -809,20 +809,110 @@ export function EndScreen({ score, maxScore, lives, text, onRestart, onExit, exi
   );
 }
 
-// ─── STAP-BANNER (INTERACTIE / MC-CONTROLE) ───
+// ─── STAP-BANNER (UITLEG / INTERACTIE / MC-CONTROLE) ───
 
 export function StepBanner({ step }) {
-  const isInteract = step === 1;
+  const map = {
+    0: { txt: "Uitleg vooraf", bg: C.beigeLight, border: C.brown, color: C.brown },
+    1: { txt: "Stap 1 — Interactie", bg: C.oliveLight, border: C.olive, color: C.oliveDark },
+    2: { txt: "Stap 2 — Controle", bg: "#FFF0D6", border: C.brown, color: C.brown },
+  };
+  const s = map[step] ?? map[1];
   return (
     <div
       className="rounded-lg px-3 py-1 mb-3 text-[11px] font-bold uppercase tracking-widest border"
-      style={{
-        backgroundColor: isInteract ? C.oliveLight : "#FFF0D6",
-        borderColor: isInteract ? C.olive : C.brown,
-        color: isInteract ? C.oliveDark : C.brown,
-      }}
+      style={{ backgroundColor: s.bg, borderColor: s.border, color: s.color }}
     >
-      {isInteract ? "Stap 1 — Interactie" : "Stap 2 — Controle"}
+      {s.txt}
     </div>
   );
+}
+
+// ─── UITLEG-KAART VOORAF ("Voordat je begint") ───
+//
+// Toont eerst een korte uitleg met de kern van wat de cursist zo gaat
+// ontdekken, zodat de interactie begeleid ontdekken wordt i.p.v. gokken.
+
+export function RondeIntro({ title, intro, children, onStart, buttonText = "Aan de slag" }) {
+  return (
+    <div className="flex-1 flex flex-col items-center p-6">
+      <StepBanner step={0} />
+      <h2 className="text-xl font-bold italic mb-1 text-center" style={{ color: C.brownText }}>{title}</h2>
+      {intro && (
+        <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
+          {intro}
+        </p>
+      )}
+      <div
+        className="border-2 rounded-2xl p-5 max-w-lg w-full mb-5"
+        style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
+      >
+        {children}
+      </div>
+      <GameButton onClick={onStart}>
+        {buttonText}
+        <ArrowRight className="w-4 h-4" />
+      </GameButton>
+    </div>
+  );
+}
+
+// Rij in een uitleg-kaart: term (vet) + korte functie-omschrijving.
+export function UitlegItem({ term, children }) {
+  return (
+    <div className="flex gap-2 mb-2 last:mb-0">
+      <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: C.olive }} />
+      <p className="text-sm leading-snug" style={{ color: C.brownText }}>
+        <span className="font-bold">{term}</span>
+        {term && children ? " — " : ""}
+        {children}
+      </p>
+    </div>
+  );
+}
+
+// ─── MEELOPEND SPIEKBRIEFJE (begeleiding tijdens de interactie) ───
+//
+// Compacte, inklapbare uitleg die in beeld blijft terwijl de cursist sleept,
+// zodat hij de net geleerde feiten kan toepassen met de uitleg bij de hand.
+
+export function UitlegStrook({ title = "Spiekbriefje", children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="w-full max-w-lg mb-3 rounded-xl border-2 overflow-hidden" style={{ borderColor: C.brown, backgroundColor: "#FBF6EA" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold"
+        style={{ color: C.brown }}
+      >
+        <span className="flex items-center gap-1.5">
+          <Lightbulb className="w-3.5 h-3.5" />
+          {title}
+        </span>
+        {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-2.5 pt-0.5 text-[11px] leading-snug" style={{ color: C.brownText }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── "EERSTE MISSER IS GRATIS" ───
+//
+// Geeft elke ronde één foutloze poging: de eerste verkeerde sleepactie kost
+// geen punt (alleen een uitleg-hint), daarna pas -5. Maakt ontdekken minder
+// straffend voor een cursist die de stof nog niet kent.
+
+export function useEersteFoutVrij() {
+  const ref = useRef(true);
+  return useCallback(() => {
+    if (ref.current) {
+      ref.current = false;
+      return true;
+    }
+    return false;
+  }, []);
 }

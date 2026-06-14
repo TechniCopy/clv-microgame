@@ -13,6 +13,9 @@ import {
   MCControle,
   EndScreen,
   StepBanner,
+  RondeIntro,
+  UitlegItem,
+  useEersteFoutVrij,
   playSound,
 } from "./shared.jsx";
 
@@ -293,10 +296,12 @@ function COMeter({ value }) {
 }
 
 function Ronde1({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [closed, setClosed] = useState({ rookgas: false, lucht: false });
   const [kappenOver, setKappenOver] = useState(2);
   const [hint, setHint] = useState(null);
   const [co, setCo] = useState(0);
+  const gratisFout = useEersteFoutVrij();
   const closedRef = useRef(closed);
   useEffect(() => {
     closedRef.current = closed;
@@ -329,10 +334,38 @@ function Ronde1({ addScore, onDone }) {
   };
 
   const dropFout = (foutHint) => (payload, point) => {
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${foutHint} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
     addScore(-5, point);
     setHint(foutHint);
     return "wrong";
   };
+
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 1: Recirculatie voorkomen"
+        intro="Het grootste gevaar bij een CLV-systeem. Even waarom het zo riskant is:"
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="Recirculatie">
+          rookgas van een ander toestel komt via een open opening de woning weer in.
+        </UitlegItem>
+        <UitlegItem term="Waarom levensgevaarlijk">
+          het rookgas verdringt de zuurstof in de verbrandingslucht → onvolledige verbranding → giftig koolmonoxide (CO).
+        </UitlegItem>
+        <UitlegItem term="Bij demontage">
+          de aansluitstompen staan open. Beide — rookgas én lucht — moeten direct worden afgedopt.
+        </UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          Kijk zo hoe het rookgas binnenstroomt en de CO-meter oploopt — en stop het op tijd.
+        </p>
+      </RondeIntro>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -749,11 +782,13 @@ function DrukSysteemSVG({ modus }) {
 }
 
 function Ronde2({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [stap, setStap] = useState(0); // 0 = materiaalkeuze, 1 = drukverkenner
   const [hint, setHint] = useState(null);
   const [modus, setModus] = useState("onderdruk");
   const [seen, setSeen] = useState({ onderdruk: true, overdruk: false });
   const [placed, setPlaced] = useState({});
+  const gratisFout = useEersteFoutVrij();
 
   const bothSeen = seen.onderdruk && seen.overdruk;
   const allPlaced = R2B_KAARTJES.every((k) => placed[k.id]);
@@ -770,10 +805,14 @@ function Ronde2({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
+    const uitleg = `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`;
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
     addScore(-5, point);
-    setHint(
-      `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`
-    );
+    setHint(uitleg);
     return "wrong";
   };
 
@@ -793,12 +832,17 @@ function Ronde2({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
-    addScore(-5, point);
-    setHint(
+    const uitleg =
       col === "onderdruk"
-        ? "Hint: bij onderdruk werkt het kanaal op natuurlijke trek met 2 sifons. De extra veiligheidseisen horen bij overdruk."
-        : "Hint: overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons (bij een niet-inregenvrije kap) en max. 2 toestellen per verdieping."
-    );
+        ? "Bij onderdruk werkt het kanaal op natuurlijke trek met 2 sifons. De extra veiligheidseisen horen bij overdruk."
+        : "Overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons (bij een niet-inregenvrije kap) en max. 2 toestellen per verdieping.";
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
+    addScore(-5, point);
+    setHint(uitleg);
     return "wrong";
   };
 
@@ -836,6 +880,31 @@ function Ronde2({ addScore, onDone }) {
     </DropTarget>
   );
 
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 2: Aansluiten — onderdruk of overdruk?"
+        intro="Eerst de leiding kiezen, daarna het grote verschil tussen de twee systeemtypes ontdekken."
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="Materiaal">
+          op een RVS-systeem maak je de verbindingsleiding ook van RVS — anders ontstaat galvanische corrosie.
+        </UitlegItem>
+        <UitlegItem term="Onderdruk (VR)">
+          werkt op natuurlijke trek: warme rookgassen stijgen vanzelf op. Condensafvoer met 2 sifons.
+        </UitlegItem>
+        <UitlegItem term="Overdruk (HR)">
+          de ventilator van het toestel zet druk op het kanaal. Daarom is een terugslagklep verplicht (en 3 sifons bij een
+          niet-inregenvrije kap).
+        </UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          Zet zo de schuif op ONDERDRUK en OVERDRUK en kijk wat er verandert: drukmeter, kier in de wand, terugslagklep en
+          sifons.
+        </p>
+      </RondeIntro>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col items-center p-6">
       <StepBanner step={1} />
@@ -844,7 +913,7 @@ function Ronde2({ addScore, onDone }) {
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
         {stap === 0
-          ? "Stap A: kies de juiste leiding. Let op: de schacht is van RVS!"
+          ? "Stap A: kies (sleep of tik) de juiste leiding. Let op: de schacht is van RVS!"
           : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en het aantal sifons."}
       </p>
 
@@ -1062,12 +1131,15 @@ function ControleSVG({ checked, running }) {
 }
 
 function Ronde3({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [checked, setChecked] = useState([]); // ids in 'gecontroleerd'
   const [hint, setHint] = useState(null);
   const [running, setRunning] = useState(false);
   const [fase, setFase] = useState("oplever"); // oplever -> onderhoud
   const [gedaan, setGedaan] = useState([]); // uitgevoerde onderhoudsstappen, op volgorde
   const [kaarten] = useState(() => [...ONDERHOUD_STAPPEN].sort(() => Math.random() - 0.5));
+  const gratisFoutOplever = useEersteFoutVrij();
+  const gratisFoutStap = useEersteFoutVrij();
 
   const verplichteIds = CONTROLEPUNTEN.filter((p) => p.verplicht).map((p) => p.id);
   const alleVerplicht = verplichteIds.every((id) => checked.includes(id));
@@ -1091,8 +1163,14 @@ function Ronde3({ addScore, onDone }) {
       }
       return "correct";
     }
+    const uitleg = `"${punt.label}" hoort niet bij de verplichte controles van een CLV-systeem. Laat dit punt staan.`;
+    if (gratisFoutOplever()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
     addScore(-5, point);
-    setHint(`"${punt.label}" hoort niet bij de verplichte controles van een CLV-systeem. Laat dit punt staan.`);
+    setHint(uitleg);
     return "wrong";
   };
 
@@ -1116,12 +1194,42 @@ function Ronde3({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
+    const uitleg =
+      "Let op de volgorde van de onderhoudsvoorschriften: eerst alles openen (van buiten naar binnen), dan controleren en reinigen, en daarna alles weer terugplaatsen.";
+    if (gratisFoutStap()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
     addScore(-5, point);
-    setHint(
-      "Let op de volgorde van de onderhoudsvoorschriften: eerst alles openen (van buiten naar binnen), dan controleren en reinigen, en daarna alles weer terugplaatsen."
-    );
+    setHint(uitleg);
     return "wrong";
   };
+
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 3: Inbedrijfstellen & Onderhoud"
+        intro="Twee taken van de monteur: het systeem opleveren en het later onderhouden."
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="Opleveren">
+          loop een vaste checklist langs: typeplaat, terugslagklep, inspectieluik, condensafvoer met gevulde sifons,
+          schoorsteenplaat en een CO-melder in de ruimte.
+        </UitlegItem>
+        <UitlegItem term="Pas op">
+          er staan ook punten op het formulier die er níet bij horen — die laat je staan.
+        </UitlegItem>
+        <UitlegItem term="Onderhoud">
+          open het systeem van buiten naar binnen, controleer en reinig, en sluit daarna alles weer netjes af — in die
+          volgorde.
+        </UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          Werk zo eerst het opleverformulier af; daarna stel je het toestel in bedrijf en doe je de onderhoudsbeurt.
+        </p>
+      </RondeIntro>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -1375,12 +1483,15 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
           {screen === "start" && <StartScreen onStart={() => setScreen("intro")} />}
 
           {screen === "intro" && (
-            <IntroScreen
-              title="Missie: de monteur"
-              text={'"Jij bent de monteur. Meerdere toestellen op één kanaal — dat vraagt om opletten. Je leert recirculatie voorkomen, het toestel correct aansluiten en het systeem controleren."'}
-              buttonText="Aan de slag"
-              onNext={() => setScreen("r1")}
-            />
+            <IntroScreen title="Missie: de monteur" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
+              <div className="leading-relaxed" style={{ color: C.brownText }}>
+                <p className="mb-2">
+                  Jij bent de monteur. Een <strong>CLV-systeem</strong> (Combinatie Luchttoevoer en Verbrandingsgasafvoer)
+                  heeft meerdere toestellen op één kanaal — dat vraagt om opletten.
+                </p>
+                <p>Je leert recirculatie voorkomen, het toestel correct aansluiten en het systeem controleren.</p>
+              </div>
+            </IntroScreen>
           )}
 
           {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} />}

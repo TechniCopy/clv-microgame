@@ -13,6 +13,10 @@ import {
   MCControle,
   EndScreen,
   StepBanner,
+  RondeIntro,
+  UitlegItem,
+  UitlegStrook,
+  useEersteFoutVrij,
   playSound,
 } from "./shared.jsx";
 
@@ -313,10 +317,12 @@ const R1_KAARTJES = [
 ];
 
 function Ronde1({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [stand, setStand] = useState("dak");
   const [seen, setSeen] = useState({ dak: true, gevel: false });
   const [placed, setPlaced] = useState({}); // id -> kolom
   const [hint, setHint] = useState(null);
+  const gratisFout = useEersteFoutVrij();
 
   const bothSeen = seen.dak && seen.gevel;
   const allPlaced = R1_KAARTJES.every((k) => placed[k.id]);
@@ -335,14 +341,43 @@ function Ronde1({ addScore, onDone }) {
       setHint(null);
       return "correct";
     }
-    addScore(-5, point);
-    setHint(
+    const uitleg =
       col === "clv"
-        ? "Hint: bij een CLV-systeem gaan lucht én rookgas via het gezamenlijke kanaal door het dak."
-        : "Hint: bij een half-CLV is alléén de rookgasafvoer gemeenschappelijk; lucht komt per woning via de gevel."
-    );
+        ? "Bij een CLV-systeem gaan lucht én rookgas via het gezamenlijke kanaal door het dak."
+        : "Bij een half-CLV is alléén de rookgasafvoer gemeenschappelijk; lucht komt per woning via de gevel.";
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee — probeer opnieuw)`);
+      return "wrong";
+    }
+    addScore(-5, point);
+    setHint(uitleg);
     return "wrong";
   };
+
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 1: CLV of half-CLV?"
+        intro="Twee systemen die op elkaar lijken — het verschil zit in de lucht."
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="CLV-systeem">
+          lucht én rookgas zijn gemeenschappelijk. De lucht komt via een gezamenlijk kanaal door het dak naar binnen.
+        </UitlegItem>
+        <UitlegItem term="Half-CLV-systeem">
+          alleen de rookgasafvoer is gemeenschappelijk. Elke woning haalt zijn eigen lucht, meestal via een rooster in de
+          gevel.
+        </UitlegItem>
+        <UitlegItem term="Altijd hetzelfde">
+          de rookgasafvoer is bij beide gemeenschappelijk — daar zit het gevaar: een fout raakt ook de buren.
+        </UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          Zet zo de schuif op DAK en op GEVEL en let op wat verandert — en wat hetzelfde blijft.
+        </p>
+      </RondeIntro>
+    );
+  }
 
   const kolom = (col, titel) => (
     <DropTarget id={`r1-${col}`} onDropItem={dropIn(col)} className="flex-1">
@@ -584,8 +619,10 @@ function SchachtOnderdelen({ placed }) {
 }
 
 function Ronde2({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
+  const gratisFout = useEersteFoutVrij();
   const allPlaced = R2_ONDERDELEN.every((o) => placed[o.id]);
 
   const dropOn = (target) => (payload, point) => {
@@ -598,10 +635,37 @@ function Ronde2({ addScore, onDone }) {
       return "correct";
     }
     const dragged = R2_ONDERDELEN.find((o) => o.id === payload);
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${dragged?.hint ?? "Kijk nog eens naar de tekening."} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
     addScore(-5, point);
     setHint(dragged?.hint ?? null);
     return "wrong";
   };
+
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 2: De onderdelen van een CLV-systeem"
+        intro="Elk CLV-systeem bestaat uit zes vaste onderdelen. Lees ze even door — daarna sleep je ze op hun plek."
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="Instromingsconstructie">bovenaan; hier komt de verse lucht het systeem binnen.</UitlegItem>
+        <UitlegItem term="Uitstromingsconstructie">bovenaan; hier verlaat het rookgas het dak.</UitlegItem>
+        <UitlegItem term="Aansluitstompen">per verdieping; hierop sluit elk toestel aan, door de schachtwand.</UitlegItem>
+        <UitlegItem term="Drukvereffeningsconstructie">
+          onderaan; verbindt lucht- en rookgaskanaal zodat de druk in balans blijft.
+        </UitlegItem>
+        <UitlegItem term="Condensaatafvoer + sifon">onderaan; voert condenswater met dubbele sifon af naar het riool.</UitlegItem>
+        <UitlegItem term="Inspectieluik">onderaan in de schachtwand; min. 50×50 cm, om te inspecteren en reinigen.</UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          Geen zorgen als je het nog niet allemaal onthoudt — het lijstje blijft tijdens het slepen in beeld.
+        </p>
+      </RondeIntro>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -609,9 +673,15 @@ function Ronde2({ addScore, onDone }) {
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 2: De onderdelen van een CLV-systeem
       </h2>
-      <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        Sleep elk label naar het juiste onderdeel in de tekening.
+      <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
+        Sleep (of tik) elk label naar het juiste onderdeel in de tekening.
       </p>
+
+      <UitlegStrook title="Spiekbriefje — wat doet elk onderdeel?">
+        <p className="mb-0.5"><strong>Instromingsconstructie</strong>: lucht binnen (boven) · <strong>Uitstromingsconstructie</strong>: rookgas eruit (boven)</p>
+        <p className="mb-0.5"><strong>Aansluitstompen</strong>: toestelaansluiting per verdieping · <strong>Inspectieluik</strong>: min. 50×50 cm (onder)</p>
+        <p><strong>Drukvereffeningsconstructie</strong>: druk in balans (onder) · <strong>Condensaatafvoer + sifon</strong>: condens naar riool (onder)</p>
+      </UitlegStrook>
 
       <div className="relative w-full" style={{ maxWidth: R2_W }}>
         <SchachtOnderdelen placed={placed} />
@@ -729,8 +799,10 @@ function BakIcoon({ type }) {
 }
 
 function Ronde3({ addScore, onDone }) {
+  const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({}); // toestelId -> bakId
   const [hint, setHint] = useState(null);
+  const gratisFout = useEersteFoutVrij();
   const allPlaced = R3_TOESTELLEN.every((t) => placed[t.id]);
 
   const dropIn = (bakId) => (payload, point) => {
@@ -743,16 +815,39 @@ function Ronde3({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
-    addScore(-5, point);
-    setHint(
+    const uitleg =
       toestel.id === "C103"
-        ? "Hint: C(10) is het overdruk-systeem."
+        ? "C(10) is het overdruk-systeem (ventilatordruk)."
         : toestel.bak === "onderdruk"
-        ? "Hint: C42 en C43 horen bij het concentrische onderdruk-CLV (natuurlijke trek)."
-        : "Hint: C82 en C83 halen hun lucht individueel — dat past bij half-CLV."
-    );
+        ? "C4. (C42/C43) hoort bij het concentrische onderdruk-CLV (natuurlijke trek)."
+        : "C8. (C82/C83) haalt de lucht individueel via de gevel — dat past bij half-CLV.";
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
+    addScore(-5, point);
+    setHint(uitleg);
     return "wrong";
   };
+
+  if (!gestart) {
+    return (
+      <RondeIntro
+        title="Ronde 3: Welk toestel op welk systeem?"
+        intro="De code op de typeplaat verraadt op welk systeem een toestel mag. Even de code lezen:"
+        onStart={() => setGestart(true)}
+      >
+        <UitlegItem term="C4. → onderdruk-CLV">natuurlijke trek. Codes: C42 en C43.</UitlegItem>
+        <UitlegItem term="C8. → half-CLV">lucht via de gevel. Codes: C82 en C83.</UitlegItem>
+        <UitlegItem term="C(10). → overdruk-CLV">ventilatordruk. Code: C(10)3.</UitlegItem>
+        <UitlegItem term="Het laatste cijfer">zegt waar de ventilator zit: 2 = in de rookgasafvoer, 3 = in de luchttoevoer.</UitlegItem>
+        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
+          De decoder blijft tijdens het sorteren in beeld — onthouden hoeft niet meteen.
+        </p>
+      </RondeIntro>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -760,9 +855,14 @@ function Ronde3({ addScore, onDone }) {
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 3: Welk toestel op welk systeem?
       </h2>
-      <p className="text-sm mb-5 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        Sleep elke toestelcodering naar het systeem waarop hij mag worden aangesloten.
+      <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
+        Sleep (of tik) elke toestelcodering naar het systeem waarop hij mag worden aangesloten.
       </p>
+
+      <UitlegStrook title="Spiekbriefje — de toestelcodes">
+        <p className="mb-0.5"><strong>C4.</strong> (C42/C43) → onderdruk-CLV · <strong>C8.</strong> (C82/C83) → half-CLV · <strong>C(10).</strong> → overdruk-CLV</p>
+        <p>Laatste cijfer: <strong>2</strong> = ventilator in de rookgasafvoer · <strong>3</strong> = in de luchttoevoer</p>
+      </UitlegStrook>
 
       <div className="flex gap-3 w-full max-w-3xl mb-4 flex-col sm:flex-row">
         {R3_BAKKEN.map((bak) => (
@@ -902,12 +1002,21 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
           {screen === "start" && <StartScreen onStart={() => setScreen("intro")} />}
 
           {screen === "intro" && (
-            <IntroScreen
-              title="Missie: het CLV-systeem"
-              text={'"In een flat delen meerdere woningen dezelfde leidingen voor rookgas en lucht: een CLV-systeem. Een fout treft niet alleen jouw woning, maar ook die van de buren. In deze missie leer je hoe het werkt."'}
-              buttonText="Aan de slag"
-              onNext={() => setScreen("r1")}
-            />
+            <IntroScreen title="Missie: het CLV-systeem" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
+              <div className="leading-relaxed" style={{ color: C.brownText }}>
+                <p className="mb-2">
+                  <strong>CLV</strong> staat voor <strong>C</strong>ombinatie <strong>L</strong>uchttoevoer en <strong>V</strong>erbrandingsgasafvoer.
+                </p>
+                <p className="mb-2">
+                  In een flat delen meerdere woningen dezelfde leidingen voor rookgas en lucht: een CLV-systeem. Eén
+                  schacht, meerdere ketels.
+                </p>
+                <p>
+                  Een fout treft daardoor niet alleen jouw woning, maar ook die van de buren. In deze missie leer je hoe
+                  het werkt.
+                </p>
+              </div>
+            </IntroScreen>
           )}
 
           {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} />}
