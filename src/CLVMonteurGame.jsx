@@ -46,14 +46,14 @@ const POOL_R1 = [
   {
     question: "Waarom is rookgas-recirculatie levensgevaarlijk?",
     options: [
-      "Het verlaagt het zuurstofgehalte van de verbrandingslucht, waardoor koolmonoxide kan ontstaan.",
+      "Rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding — dat giftige gas adem je dan in.",
       "Het verhoogt de temperatuur in de schacht te veel.",
       "Het veroorzaakt corrosie aan de binnenzijde van het kanaal.",
       "Het zorgt voor te veel trek in het systeem.",
     ],
     correct: 0,
-    feedbackCorrect: "Juist! Minder zuurstof in de verbrandingslucht = onvolledige verbranding = koolmonoxide (CO).",
-    feedbackWrong: "De kern: rookgas in de verbrandingslucht verdringt zuurstof. Met te weinig zuurstof ontstaat het giftige CO.",
+    feedbackCorrect: "Juist! Rookgas bevat koolmonoxide (CO) — en bij een onvolledige verbranding veel meer. Via recirculatie adem je dat giftige, reukloze gas in.",
+    feedbackWrong: "De kern: rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding. Via recirculatie komt dat giftige gas de woning in.",
   },
 ];
 
@@ -355,7 +355,7 @@ function Ronde1({ addScore, onDone }) {
           rookgas van een ander toestel komt via een open opening de woning weer in.
         </UitlegItem>
         <UitlegItem term="Waarom levensgevaarlijk">
-          het rookgas verdringt de zuurstof in de verbrandingslucht → onvolledige verbranding → giftig koolmonoxide (CO).
+          rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding. Dat giftige, reukloze gas adem je dan in.
         </UitlegItem>
         <UitlegItem term="Bij demontage">
           de aansluitstompen staan open. Beide — rookgas én lucht — moeten direct worden afgedopt.
