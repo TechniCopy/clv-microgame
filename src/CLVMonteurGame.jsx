@@ -27,7 +27,7 @@ const POOL_R1 = [
   {
     question: "Waarop moet je extra letten bij het demonteren van een toestel dat is aangesloten op een CLV-systeem?",
     options: [
-      "Dat de aansluitstompen (rookgas én lucht) direct worden afgesloten.",
+      "Dat de aansluitstompen (rookgas en lucht) direct worden afgesloten.",
       "Dat ramen en deuren open staan voor verse lucht.",
       "Dat de bewoner niet aanwezig is tijdens het werk.",
       "Dat de schachtwand wordt aangeheeld.",
@@ -87,18 +87,18 @@ const POOL_R2 = [
     ],
     correct: 0,
     feedbackCorrect: "Correct! Bij overdruk staat het kanaal onder druk. Een stilstaand toestel zonder terugslagklep wordt dan een open route voor rookgas de woning in (voorschriften CLV C(10)-toepassingen, bijlage D).",
-    feedbackWrong: "Kern: bij overdruk is de druk in het kanaal hóger dan in de woning. Zonder terugslagklep drukt het rookgas zich via een stilstaand toestel naar binnen.",
+    feedbackWrong: "Bij overdruk is de druk in het kanaal hoger dan in de woning. Zonder terugslagklep duwt het rookgas zich via een stilstaand toestel naar binnen.",
   },
   {
     question: "Mag je voor de aansluitleiding onderdelen van twee verschillende merken combineren?",
     options: [
-      "Nee, gebruik altijd materiaal van één fabrikant.",
+      "Nee, gebruik altijd materiaal van dezelfde fabrikant.",
       "Ja, als beide merken een QA-keur hebben.",
       "Ja, dat is geen probleem.",
       "Alleen bij metalen leidingen mag dat.",
     ],
     correct: 0,
-    feedbackCorrect: "Juist! Eén merk/fabrikant voor de hele aansluitleiding — afdichtingen en maatvoering zijn op elkaar afgestemd.",
+    feedbackCorrect: "Juist! Hetzelfde merk voor de hele aansluitleiding — afdichtingen en maten passen dan op elkaar.",
     feedbackWrong: "Verschillende merken combineren mag niet: afdichtingsringen en maatvoering verschillen net, met lekkage als risico.",
   },
 ];
@@ -151,7 +151,7 @@ const POOL_R3 = [
       "De buitenzijde van de schacht en het dak.",
     ],
     correct: 0,
-    feedbackCorrect: "Juist! Je reinigt de rookgasafvoer, beide sifons (en vult ze met water terug) én het luchttoevoerdeel.",
+    feedbackCorrect: "Juist! Je reinigt de rookgasafvoer, beide sifons (en vult ze met water terug) en het luchttoevoerdeel.",
     feedbackWrong: "Volgens de onderhoudsvoorschriften reinig je drie dingen: de rookgasafvoer, de sifons (met water, ook de rioleringssifon) en het luchttoevoerdeel.",
   },
 ];
@@ -348,20 +348,16 @@ function Ronde1({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 1: Recirculatie voorkomen"
-        intro="Het grootste gevaar bij een CLV-systeem. Even waarom het zo riskant is:"
+        intro="Het grootste gevaar bij een CLV-systeem. Even kort waarom:"
         onStart={() => setGestart(true)}
       >
-        <UitlegItem term="Recirculatie">
-          rookgas van een ander toestel komt via een open opening de woning weer in.
+        <UitlegItem term="Recirculatie">rookgas van een ander toestel komt jouw woning binnen.</UitlegItem>
+        <UitlegItem term="Waarom gevaarlijk">
+          rookgas bevat koolmonoxide (CO), vooral bij onvolledige verbranding. Een giftig gas dat je niet ruikt.
         </UitlegItem>
-        <UitlegItem term="Waarom levensgevaarlijk">
-          rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding. Dat giftige, reukloze gas adem je dan in.
-        </UitlegItem>
-        <UitlegItem term="Bij demontage">
-          de aansluitstompen staan open. Beide — rookgas én lucht — moeten direct worden afgedopt.
-        </UitlegItem>
+        <UitlegItem term="Bij demontage">de stompen staan open. Dop ze allebei (rookgas en lucht) meteen af.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Kijk zo hoe het rookgas binnenstroomt en de CO-meter oploopt — en stop het op tijd.
+          Kijk hoe het rookgas binnenstroomt en de CO-meter oploopt. Stop het op tijd.
         </p>
       </RondeIntro>
     );
@@ -884,22 +880,14 @@ function Ronde2({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 2: Aansluiten — onderdruk of overdruk?"
-        intro="Eerst de leiding kiezen, daarna het grote verschil tussen de twee systeemtypes ontdekken."
+        intro="Eerst de juiste leiding kiezen. Daarna het verschil tussen onderdruk en overdruk."
         onStart={() => setGestart(true)}
       >
-        <UitlegItem term="Materiaal">
-          op een RVS-systeem maak je de verbindingsleiding ook van RVS — anders ontstaat galvanische corrosie.
-        </UitlegItem>
-        <UitlegItem term="Onderdruk (VR)">
-          werkt op natuurlijke trek: warme rookgassen stijgen vanzelf op. Condensafvoer met 2 sifons.
-        </UitlegItem>
-        <UitlegItem term="Overdruk (HR)">
-          de ventilator van het toestel zet druk op het kanaal. Daarom is een terugslagklep verplicht (en 3 sifons bij een
-          niet-inregenvrije kap).
-        </UitlegItem>
+        <UitlegItem term="Materiaal">RVS-systeem? Dan ook een RVS-leiding. Anders gaat het roesten (galvanische corrosie).</UitlegItem>
+        <UitlegItem term="Onderdruk (VR)">natuurlijke trek: warm rookgas stijgt vanzelf op. 2 sifons.</UitlegItem>
+        <UitlegItem term="Overdruk (HR)">de ventilator duwt het rookgas door het kanaal. Daarom een terugslagklep verplicht.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Zet zo de schuif op ONDERDRUK en OVERDRUK en kijk wat er verandert: drukmeter, kier in de wand, terugslagklep en
-          sifons.
+          Schuif tussen ONDERDRUK en OVERDRUK. Let op de drukmeter, de kier, de klep en de sifons.
         </p>
       </RondeIntro>
     );
@@ -977,13 +965,13 @@ function Ronde2({ addScore, onDone }) {
                 {modus === "onderdruk" ? (
                   <>
                     <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
-                    <li>• Druk in het rookgaskanaal is lager dan in de luchttoevoer én de woning (NPR 3378-40)</li>
+                    <li>• Druk in het kanaal is lager dan in de luchttoevoer (NPR 3378-40)</li>
                     <li>• Condensafvoer met 2 sifons</li>
                   </>
                 ) : (
                   <>
                     <li>• De ventilator van het toestel zet druk op het kanaal</li>
-                    <li>• Druk in het kanaal is hóger dan in de woning — terugslagklep verplicht</li>
+                    <li>• Druk in het kanaal is hoger dan in de woning — terugslagklep verplicht</li>
                     <li>• Condensafvoer met 3 sifons (als de kap niet inregenvrij is), max. 2 toestellen per verdieping</li>
                   </>
                 )}
@@ -1210,22 +1198,18 @@ function Ronde3({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 3: Inbedrijfstellen & Onderhoud"
-        intro="Twee taken van de monteur: het systeem opleveren en het later onderhouden."
+        intro="Twee taken van de monteur: opleveren en onderhouden."
         onStart={() => setGestart(true)}
       >
         <UitlegItem term="Opleveren">
-          loop een vaste checklist langs: typeplaat, terugslagklep, inspectieluik, condensafvoer met gevulde sifons,
-          schoorsteenplaat en een CO-melder in de ruimte.
+          check de vaste punten: typeplaat, terugslagklep, inspectieluik, sifons gevuld, schoorsteenplaat en een CO-melder.
         </UitlegItem>
-        <UitlegItem term="Pas op">
-          er staan ook punten op het formulier die er níet bij horen — die laat je staan.
-        </UitlegItem>
+        <UitlegItem term="Let op">sommige punten op het formulier horen er niet bij. Die laat je staan.</UitlegItem>
         <UitlegItem term="Onderhoud">
-          open het systeem van buiten naar binnen, controleer en reinig, en sluit daarna alles weer netjes af — in die
-          volgorde.
+          open van buiten naar binnen, controleer en reinig, sluit daarna alles weer af. In die volgorde.
         </UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Werk zo eerst het opleverformulier af; daarna stel je het toestel in bedrijf en doe je de onderhoudsbeurt.
+          Eerst het opleverformulier. Daarna in bedrijf stellen en de onderhoudsbeurt.
         </p>
       </RondeIntro>
     );
@@ -1486,10 +1470,9 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
             <IntroScreen title="Missie: de monteur" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
               <div className="leading-relaxed" style={{ color: C.brownText }}>
                 <p className="mb-2">
-                  Jij bent de monteur. Een <strong>CLV-systeem</strong> (Combinatie Luchttoevoer en Verbrandingsgasafvoer)
-                  heeft meerdere toestellen op één kanaal — dat vraagt om opletten.
+                  Jij bent de monteur. Een CLV-systeem heeft meerdere toestellen op 1 kanaal. Dat vraagt om opletten.
                 </p>
-                <p>Je leert recirculatie voorkomen, het toestel correct aansluiten en het systeem controleren.</p>
+                <p>Je leert recirculatie voorkomen, een toestel aansluiten en het systeem controleren.</p>
               </div>
             </IntroScreen>
           )}

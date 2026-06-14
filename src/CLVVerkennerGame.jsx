@@ -47,7 +47,7 @@ const POOL_R1 = [
     ],
     correct: 0,
     feedbackCorrect: "Klopt! Bij half-CLV is alleen de afvoer gemeenschappelijk; elk toestel heeft een eigen luchtinlaat, meestal via de gevel.",
-    feedbackWrong: "Bij half-CLV is er géén gezamenlijk luchtkanaal. Elk toestel haalt individueel lucht, bijvoorbeeld via de gevel.",
+    feedbackWrong: "Bij half-CLV is er geen gezamenlijk luchtkanaal. Elk toestel haalt zelf lucht, via de gevel.",
   },
   {
     question: "Welk onderdeel is bij zowel een CLV- als een half-CLV-systeem gemeenschappelijk?",
@@ -87,13 +87,13 @@ const POOL_R2 = [
     question: "Waarom heeft de condensaatafvoer van een CLV-systeem een dubbele sifon nodig?",
     options: [
       "De eerste sifon houdt rookgas tegen, de tweede is een stankafsluiter tegen rioolgas.",
-      "Eén sifon kan de hoeveelheid condenswater niet aan.",
+      "1 sifon kan al het condenswater niet aan.",
       "De tweede sifon is reserve voor als de eerste verstopt raakt.",
       "Dat is alleen nodig bij half-CLV-systemen.",
     ],
     correct: 0,
-    feedbackCorrect: "Precies! Twee sifons met een open verbinding ertussen: één tegen rookgas, één tegen rioolgas. De aansluiting op de riolering moet voldoen aan NEN 3287 (zie NPR 3378-40, art. 5.6).",
-    feedbackWrong: "Denk aan de twee gevaren: rookgas uit het systeem én rioolgas uit de riolering. Elke sifon vangt er één af.",
+    feedbackCorrect: "Precies! Twee sifons met een open verbinding ertussen: een tegen rookgas, een tegen rioolgas (aansluiting op de riolering volgens NEN 3287).",
+    feedbackWrong: "Twee gevaren: rookgas uit het systeem en rioolgas uit de riolering. Elke sifon houdt er een tegen.",
   },
 ];
 
@@ -343,8 +343,8 @@ function Ronde1({ addScore, onDone }) {
     }
     const uitleg =
       col === "clv"
-        ? "Bij een CLV-systeem gaan lucht én rookgas via het gezamenlijke kanaal door het dak."
-        : "Bij een half-CLV is alléén de rookgasafvoer gemeenschappelijk; lucht komt per woning via de gevel.";
+        ? "Bij CLV gaan lucht en rookgas samen door het dak."
+        : "Bij half-CLV is alleen het rookgas gedeeld; de lucht komt apart via de gevel.";
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee — probeer opnieuw)`);
@@ -359,21 +359,14 @@ function Ronde1({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 1: CLV of half-CLV?"
-        intro="Twee systemen die op elkaar lijken — het verschil zit in de lucht."
+        intro="Twee systemen die op elkaar lijken. Het verschil zit in de lucht."
         onStart={() => setGestart(true)}
       >
-        <UitlegItem term="CLV-systeem">
-          lucht én rookgas zijn gemeenschappelijk. De lucht komt via een gezamenlijk kanaal door het dak naar binnen.
-        </UitlegItem>
-        <UitlegItem term="Half-CLV-systeem">
-          alleen de rookgasafvoer is gemeenschappelijk. Elke woning haalt zijn eigen lucht, meestal via een rooster in de
-          gevel.
-        </UitlegItem>
-        <UitlegItem term="Altijd hetzelfde">
-          de rookgasafvoer is bij beide gemeenschappelijk — daar zit het gevaar: een fout raakt ook de buren.
-        </UitlegItem>
+        <UitlegItem term="CLV">lucht en rookgas gaan samen door het dak.</UitlegItem>
+        <UitlegItem term="Half-CLV">alleen het rookgas gaat samen. De lucht komt apart via de gevel.</UitlegItem>
+        <UitlegItem term="Altijd hetzelfde">het rookgas is altijd gedeeld. Een fout raakt dus ook de buren.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Zet zo de schuif op DAK en op GEVEL en let op wat verandert — en wat hetzelfde blijft.
+          Schuif straks tussen DAK en GEVEL. Let op wat verandert en wat hetzelfde blijft.
         </p>
       </RondeIntro>
     );
@@ -649,19 +642,17 @@ function Ronde2({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 2: De onderdelen van een CLV-systeem"
-        intro="Elk CLV-systeem bestaat uit zes vaste onderdelen. Lees ze even door — daarna sleep je ze op hun plek."
+        intro="Zes vaste onderdelen. Lees ze door en sleep ze daarna op hun plek."
         onStart={() => setGestart(true)}
       >
-        <UitlegItem term="Instromingsconstructie">bovenaan; hier komt de verse lucht het systeem binnen.</UitlegItem>
-        <UitlegItem term="Uitstromingsconstructie">bovenaan; hier verlaat het rookgas het dak.</UitlegItem>
-        <UitlegItem term="Aansluitstompen">per verdieping; hierop sluit elk toestel aan, door de schachtwand.</UitlegItem>
-        <UitlegItem term="Drukvereffeningsconstructie">
-          onderaan; verbindt lucht- en rookgaskanaal zodat de druk in balans blijft.
-        </UitlegItem>
-        <UitlegItem term="Condensaatafvoer + sifon">onderaan; voert condenswater met dubbele sifon af naar het riool.</UitlegItem>
-        <UitlegItem term="Inspectieluik">onderaan in de schachtwand; min. 50×50 cm, om te inspecteren en reinigen.</UitlegItem>
+        <UitlegItem term="Instromingsconstructie">bovenin; hier komt de lucht binnen.</UitlegItem>
+        <UitlegItem term="Uitstromingsconstructie">bovenin; hier gaat het rookgas naar buiten.</UitlegItem>
+        <UitlegItem term="Aansluitstompen">per verdieping; hierop sluit je een toestel aan.</UitlegItem>
+        <UitlegItem term="Drukvereffeningsconstructie">onderin; houdt de druk in balans.</UitlegItem>
+        <UitlegItem term="Condensaatafvoer + sifon">onderin; voert condenswater af naar het riool.</UitlegItem>
+        <UitlegItem term="Inspectieluik">onderin; min. 50x50 cm, om bij het systeem te kunnen.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Geen zorgen als je het nog niet allemaal onthoudt — het lijstje blijft tijdens het slepen in beeld.
+          Onthouden hoeft niet meteen: het lijstje blijft in beeld terwijl je sleept.
         </p>
       </RondeIntro>
     );
@@ -679,7 +670,7 @@ function Ronde2({ addScore, onDone }) {
 
       <UitlegStrook title="Spiekbriefje — wat doet elk onderdeel?">
         <p className="mb-0.5"><strong>Instromingsconstructie</strong>: lucht binnen (boven) · <strong>Uitstromingsconstructie</strong>: rookgas eruit (boven)</p>
-        <p className="mb-0.5"><strong>Aansluitstompen</strong>: toestelaansluiting per verdieping · <strong>Inspectieluik</strong>: min. 50×50 cm (onder)</p>
+        <p className="mb-0.5"><strong>Aansluitstompen</strong>: toestel aansluiten per verdieping · <strong>Inspectieluik</strong>: min. 50x50 cm (onder)</p>
         <p><strong>Drukvereffeningsconstructie</strong>: druk in balans (onder) · <strong>Condensaatafvoer + sifon</strong>: condens naar riool (onder)</p>
       </UitlegStrook>
 
@@ -835,15 +826,15 @@ function Ronde3({ addScore, onDone }) {
     return (
       <RondeIntro
         title="Ronde 3: Welk toestel op welk systeem?"
-        intro="De code op de typeplaat verraadt op welk systeem een toestel mag. Even de code lezen:"
+        intro="De code op de typeplaat zegt op welk systeem een toestel mag. Zo lees je hem:"
         onStart={() => setGestart(true)}
       >
-        <UitlegItem term="C4. → onderdruk-CLV">natuurlijke trek. Codes: C42 en C43.</UitlegItem>
-        <UitlegItem term="C8. → half-CLV">lucht via de gevel. Codes: C82 en C83.</UitlegItem>
-        <UitlegItem term="C(10). → overdruk-CLV">ventilatordruk. Code: C(10)3.</UitlegItem>
-        <UitlegItem term="Het laatste cijfer">zegt waar de ventilator zit: 2 = in de rookgasafvoer, 3 = in de luchttoevoer.</UitlegItem>
+        <UitlegItem term="C4">onderdruk-CLV (C42, C43).</UitlegItem>
+        <UitlegItem term="C8">half-CLV (C82, C83).</UitlegItem>
+        <UitlegItem term="C(10)">overdruk-CLV (C(10)3).</UitlegItem>
+        <UitlegItem term="Laatste cijfer">waar zit de ventilator? 2 = bij het rookgas, 3 = bij de lucht.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          De decoder blijft tijdens het sorteren in beeld — onthouden hoeft niet meteen.
+          De spiekbrief blijft in beeld terwijl je sorteert.
         </p>
       </RondeIntro>
     );
@@ -941,7 +932,7 @@ function StartScreen({ onStart }) {
           De CLV-Verkenner
         </h1>
         <p className="max-w-sm text-center font-medium" style={{ color: C.brown }}>
-          Ontdek hoe meerdere woningen in een flat samen één rookgasafvoer delen
+          Ontdek hoe woningen in een flat samen een rookgasafvoer delen
         </p>
         <GameButton onClick={onStart}>Start de game</GameButton>
       </div>
@@ -1005,16 +996,13 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
             <IntroScreen title="Missie: het CLV-systeem" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
               <div className="leading-relaxed" style={{ color: C.brownText }}>
                 <p className="mb-2">
-                  <strong>CLV</strong> staat voor <strong>C</strong>ombinatie <strong>L</strong>uchttoevoer en <strong>V</strong>erbrandingsgasafvoer.
+                  <strong>CLV</strong> = <strong>C</strong>ombinatie <strong>L</strong>uchttoevoer en{" "}
+                  <strong>V</strong>erbrandingsgasafvoer.
                 </p>
                 <p className="mb-2">
-                  In een flat delen meerdere woningen dezelfde leidingen voor rookgas en lucht: een CLV-systeem. Eén
-                  schacht, meerdere ketels.
+                  In een flat delen meerdere woningen dezelfde leidingen voor rookgas en lucht. 1 schacht, meerdere ketels.
                 </p>
-                <p>
-                  Een fout treft daardoor niet alleen jouw woning, maar ook die van de buren. In deze missie leer je hoe
-                  het werkt.
-                </p>
+                <p>Een fout raakt dus niet alleen jou, maar ook de buren. In deze missie leer je hoe het werkt.</p>
               </div>
             </IntroScreen>
           )}

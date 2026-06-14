@@ -429,7 +429,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
 
 // DropTarget: onDropItem(payload, point) => "correct" | "wrong" | undefined.
 // "wrong" geeft een korte rode flash (terugveer-effect: de ghost verdwijnt en
-// het origineel staat nog op zijn plek). Werkt voor slepen én voor tikken:
+// het origineel staat nog op zijn plek). Werkt voor slepen en voor tikken:
 // is er een kaartje geselecteerd, dan plaatst een tik op het vlak het kaartje.
 export function DropTarget({ id, onDropItem, children, className = "", style, render }) {
   const api = useContext(DragCtx);
@@ -902,7 +902,7 @@ export function UitlegStrook({ title = "Spiekbriefje", children, defaultOpen = t
 
 // ─── "EERSTE MISSER IS GRATIS" ───
 //
-// Geeft elke ronde één foutloze poging: de eerste verkeerde sleepactie kost
+// Geeft elke ronde 1 foutloze poging: de eerste verkeerde sleepactie kost
 // geen punt (alleen een uitleg-hint), daarna pas -5. Maakt ontdekken minder
 // straffend voor een cursist die de stof nog niet kent.
 
