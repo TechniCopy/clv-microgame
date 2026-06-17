@@ -150,7 +150,7 @@ function FlatDoorsnede({ stand }) {
   );
 
   return (
-    <svg viewBox="0 0 520 500" className="w-full h-auto select-none">
+    <svg viewBox="0 0 520 470" className="w-full h-auto select-none">
       <defs>
         <pattern id="hatchA" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
@@ -264,19 +264,6 @@ function FlatDoorsnede({ stand }) {
           <line x1="436" y1="106" x2="400" y2="119" stroke={C.brownText} strokeWidth="1" />
         </>
       )}
-
-      {/* CONDENSAFVOER onder de begane-grondvloer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
-      {/* opvangbak aan de voet van het rookgaskanaal */}
-      <path d="M111 412 H129 V419 Q129 426 120 426 Q111 426 111 419 Z" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-      {/* afvoer door de vloer naar de drainage-trein in de kruipruimte */}
-      <path d="M120 426 V448" fill="none" stroke={C.brownText} strokeWidth="2.5" strokeLinecap="round" />
-      <DrainageTrein x={120} y={448} s={1.25} stroke={C.brownText} strokeWidth={1.7} riool={false} />
-      {/* van sifon 2 naar de riolering, door de funderingsvloer */}
-      <path d="M166 455 H300 V486" fill="none" stroke={C.brownText} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* funderingsvloer / kruipruimtebodem (met sparing voor de riolering) */}
-      <rect x="20" y="486" width="272" height="12" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
-      <rect x="312" y="486" width="148" height="12" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
-      <text x="326" y="481" fontSize="9" fontWeight="600" fill={C.brown} textAnchor="start">riool</text>
 
       {/* legenda (rechts naast het gebouw) */}
       <g transform="translate(424, 250)">
