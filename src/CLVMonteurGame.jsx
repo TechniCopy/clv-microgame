@@ -16,6 +16,7 @@ import {
   RondeIntro,
   UitlegItem,
   useEersteFoutVrij,
+  DrainageTrein,
   playSound,
 } from "./shared.jsx";
 
@@ -1107,12 +1108,10 @@ function ControleSVG({ checked, running }) {
       <line x1="155" y1="246" x2="165" y2="246" stroke={hl("luik")} strokeWidth="1.5" />
       <line x1="155" y1="266" x2="165" y2="266" stroke={hl("luik")} strokeWidth="1.5" />
 
-      {/* condensafvoer (NEN): sifon, open verbinding, tweede sifon, naar riool */}
-      <g fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5}>
-        <path d="M188 316 V324 C188 336 202 336 202 324 V342 H224" />
-        <path d="M228 335 H238 M230 338 L233 342 L236 338" />
-        <path d="M233 342 V344 H242 C242 357 256 357 256 344 V370" />
-      </g>
+      {/* condensafvoer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
+      <path d="M188 316 V320 H206" fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <DrainageTrein x={206} y={320} s={1} stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 2 : 1.7} riool={false} />
+      <path d="M243 325 H262 V370" fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
       <text x="256" y="392" fontSize="8" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
     </svg>
   );

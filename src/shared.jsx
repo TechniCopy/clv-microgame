@@ -916,3 +916,37 @@ export function useEersteFoutVrij() {
     return false;
   }, []);
 }
+
+// ─── ONDERKANT-DRAINAGE volgens NPR 3378-40/41 ───
+//
+// Canonieke onderzijde van een (half-)CLV-systeem: het condenswater uit het
+// rookgaskanaal gaat via SIFON 1 (eerste waterslot) -> OPEN VERBINDING
+// (zichtbare luchtspleet) -> SIFON 2 (tweede waterslot) -> binnenriolering
+// (NEN 3287). Eén gedeelde tekening zodat alle doorsneden identiek en
+// normconform zijn. Lokale maat: ~54 breed x ~30 hoog; plaats met x/y/s.
+//
+// (0,0) lokaal = condensaat-inlaat boven sifon 1.
+export function DrainageTrein({ x, y, s = 1, stroke = C.brownText, strokeWidth = 2, riool = true }) {
+  return (
+    <g
+      transform={`translate(${x} ${y}) scale(${s})`}
+      fill="none"
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* SIFON 1 (eerste waterslot) */}
+      <path d="M0 0 V13 Q0 19 6 19 Q12 19 12 13 V3" />
+      {/* pijp omhoog en naar de open verbinding */}
+      <path d="M12 3 V0 H25" />
+      {/* OPEN VERBINDING: pijp eindigt open boven een trechter (luchtspleet) */}
+      <path d="M25 0 V4" />
+      <path d="M19 8 L25 15 L31 8" />
+      {/* SIFON 2 (tweede waterslot) */}
+      <path d="M25 15 V23 Q25 29 31 29 Q37 29 37 23 V5" />
+      {/* naar de binnenriolering (NEN 3287) */}
+      {riool && <path d="M37 5 H52" />}
+    </g>
+  );
+}

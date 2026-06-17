@@ -17,6 +17,7 @@ import {
   UitlegItem,
   UitlegStrook,
   useEersteFoutVrij,
+  DrainageTrein,
   playSound,
 } from "./shared.jsx";
 
@@ -149,7 +150,7 @@ function FlatDoorsnede({ stand }) {
   );
 
   return (
-    <svg viewBox="0 0 520 470" className="w-full h-auto select-none">
+    <svg viewBox="0 0 520 500" className="w-full h-auto select-none">
       <defs>
         <pattern id="hatchA" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
@@ -263,6 +264,19 @@ function FlatDoorsnede({ stand }) {
           <line x1="436" y1="106" x2="400" y2="119" stroke={C.brownText} strokeWidth="1" />
         </>
       )}
+
+      {/* CONDENSAFVOER onder de begane-grondvloer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
+      {/* opvangbak aan de voet van het rookgaskanaal */}
+      <path d="M111 412 H129 V419 Q129 426 120 426 Q111 426 111 419 Z" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+      {/* afvoer door de vloer naar de drainage-trein in de kruipruimte */}
+      <path d="M120 426 V448" fill="none" stroke={C.brownText} strokeWidth="2.5" strokeLinecap="round" />
+      <DrainageTrein x={120} y={448} s={1.25} stroke={C.brownText} strokeWidth={1.7} riool={false} />
+      {/* van sifon 2 naar de riolering, door de funderingsvloer */}
+      <path d="M166 455 H300 V486" fill="none" stroke={C.brownText} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* funderingsvloer / kruipruimtebodem (met sparing voor de riolering) */}
+      <rect x="20" y="486" width="272" height="12" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="312" y="486" width="148" height="12" fill="url(#hatchA)" stroke={C.brownText} strokeWidth="2" />
+      <text x="326" y="481" fontSize="9" fontWeight="600" fill={C.brown} textAnchor="start">riool</text>
 
       {/* legenda (rechts naast het gebouw) */}
       <g transform="translate(424, 250)">
@@ -486,7 +500,7 @@ const R2_ONDERDELEN = [
   { id: "uitstroming", label: "Uitstromingsconstructie", side: "right", zone: { x: 390, y: 30 }, anchor: { x: 298, y: 60 }, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak." },
   { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand." },
   { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand." },
-  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 276, y: 426 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering." },
+  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 351, y: 437 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering." },
   { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 252, y: 456 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal." },
 ];
 
@@ -604,17 +618,20 @@ function SchachtOnderdelen({ placed }) {
         <line x1="314" y1="400" x2="324" y2="400" stroke={mark("luik")} strokeWidth="1.5" />
       </g>
 
-      {/* CONDENSAATAFVOER: sifon binnen, open verbinding, tweede sifon, naar riool */}
-      <g fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5}>
-        {/* afvoer uit de opvangbak + eerste sifon */}
-        <path d="M280 412 V418 C280 432 296 432 296 418 V440 H346" />
-        {/* open verbinding: trechter met onderbreking */}
-        <path d="M352 433 H364 M354 436 L358 441 L362 436" strokeDasharray="none" />
-        <path d="M358 441 V443 H378" />
-        {/* tweede sifon (regen- en condenswater) */}
-        <path d="M378 443 C378 458 398 458 398 443 H462 V470" />
-      </g>
-      <text x="462" y="495" fontSize="10" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
+      {/* CONDENSAFVOER (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
+      {/* afvoer uit de opvangbak, door de schachtwand naar de drainage-trein */}
+      <path d="M280 412 V414 H342" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <DrainageTrein x={342} y={414} s={1.7} stroke={mark("condens")} strokeWidth={ok("condens") ? 1.7 : 1.5} riool={false} />
+      {/* van sifon 2 naar de riolering door de vloersparing */}
+      <path
+        d="M405 423 H452 V470"
+        fill="none"
+        stroke={mark("condens")}
+        strokeWidth={ok("condens") ? 3 : 2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <text x="452" y="492" fontSize="10" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
 
       {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerde bodemplaat */}
       <g>
