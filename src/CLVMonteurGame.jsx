@@ -601,8 +601,8 @@ const R2B_KAARTJES = [
   { id: "d1", label: "Werkt op natuurlijke trek", col: "onderdruk" },
   { id: "d2", label: "De ventilator van het toestel zet druk op het kanaal", col: "overdruk" },
   { id: "d3", label: "Terugslagklep in het toestel verplicht", col: "overdruk" },
-  { id: "d4", label: "Condensafvoer met 2 sifons", col: "onderdruk" },
-  { id: "d5", label: "Condensafvoer met 3 sifons", col: "overdruk" },
+  { id: "d4", label: "Dubbele sifon in serie met open verbinding", col: "onderdruk" },
+  { id: "d5", label: "Aparte condens- en regenwatersifon per kanaal", col: "overdruk" },
   { id: "d6", label: "Maximaal 2 toestellen per verdieping", col: "overdruk" },
 ];
 
@@ -639,23 +639,26 @@ function DrukSysteemSVG({ modus }) {
   const over = modus === "overdruk";
   const flowUp = { strokeDasharray: "8 6", animation: `flowDash ${over ? "0.45s" : "1.1s"} linear infinite` };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
-  const sifonLoops = over ? [390, 414, 438] : [390, 414];
-  const drainEndX = sifonLoops[sifonLoops.length - 1] + 24;
+  // U-vormige sifon (waterslot): pad van inlaatbeen xi (top yt) naar uitlaatbeen xi+w
+  const uTrap = (xi, yt, w, d) => {
+    const r = 4;
+    return `M${xi} ${yt} V${yt + d - r} Q${xi} ${yt + d} ${xi + r} ${yt + d} H${xi + w - r} Q${xi + w} ${yt + d} ${xi + w} ${yt + d - r} V${yt}`;
+  };
 
   return (
-    <svg viewBox="0 0 520 380" className="w-full h-auto select-none">
+    <svg viewBox="0 0 520 400" className="w-full h-auto select-none">
       <defs>
         <pattern id="hatchM2b" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
         </pattern>
       </defs>
 
-      {/* vloer (met sparing voor de rioolaansluiting) */}
-      <rect x="20" y="362" width="440" height="12" fill="url(#hatchM2b)" stroke={C.brownText} strokeWidth="2" />
+      {/* vloer */}
+      <rect x="20" y="380" width="440" height="12" fill="url(#hatchM2b)" stroke={C.brownText} strokeWidth="2" />
 
       {/* schachtwanden */}
-      <rect x="350" y="20" width="8" height="342" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      <rect x="422" y="20" width="8" height="342" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="350" y="20" width="8" height="360" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="422" y="20" width="8" height="360" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
       {/* binnenste rookgaskanaal + opvangbak */}
       <line x1="378" y1="20" x2="378" y2="320" stroke={C.brownText} strokeWidth="2" />
       <line x1="402" y1="20" x2="402" y2="320" stroke={C.brownText} strokeWidth="2" />
@@ -760,13 +763,40 @@ function DrukSysteemSVG({ modus }) {
         </g>
       )}
 
-      {/* condensafvoer: 2 sifons (onderdruk) of 3 sifons (overdruk) */}
-      <g fill="none" stroke={C.brownText} strokeWidth="2.5">
-        <path d={`M390 336 V342 ${sifonLoops.map((x) => `C${x} 356 ${x + 14} 356 ${x + 14} 342`).join(" ")} H${drainEndX} V374`} />
-      </g>
-      <text x={drainEndX + 8} y="352" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="start">
-        {sifonLoops.length} sifons
-      </text>
+      {/* ── condensafvoer onderaan, normconform per systeem ── */}
+      {!over ? (
+        <>
+          {/* ONDERDRUK (NPR 3378-40): drukvereffeningsopeningen + dubbele sifon in serie met open verbinding */}
+          <g fill="none" stroke={C.brownText} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            {[381, 390, 399].map((cx) => (
+              <circle key={cx} cx={cx} cy="352" r="2.6" strokeWidth="1.4" />
+            ))}
+            <path d="M390 336 V342 H436" />
+            <path d="M466 346 H492 V392" />
+          </g>
+          <DrainageTrein x={436} y={342} s={0.78} stroke={C.brownText} strokeWidth={3.1} riool={false} />
+          <text x="466" y="333" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">2 sifons in serie</text>
+          <text x="466" y="342" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">+ open verbinding</text>
+        </>
+      ) : (
+        <>
+          {/* OVERDRUK (C(10)): aparte condenssifon (rookgaskanaal) + regenwatersifon (luchtkanaal), parallel */}
+          <g fill="none" stroke={C.brownText} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            {/* condenssifon onder het rookgaskanaal */}
+            <path d="M390 336 V343" />
+            <path d={uTrap(390, 343, 15, 19)} />
+            <path d="M405 343 H414 V392" />
+            {/* regenwatersifon onder het luchtkanaal, ernaast */}
+            <path d="M416 350 V347 H446" />
+            <path d={uTrap(446, 347, 17, 22)} />
+            <path d="M463 347 V392" />
+          </g>
+          <text x="382" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">condens-</text>
+          <text x="382" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
+          <text x="460" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">regenwater-</text>
+          <text x="460" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
+        </>
+      )}
 
       {/* max 2 toestellen per verdieping (alleen overdruk, C(10)-voorschriften hfst. 8) */}
       {over && (
@@ -831,8 +861,8 @@ function Ronde2({ addScore, onDone }) {
     }
     const uitleg =
       col === "onderdruk"
-        ? "Bij onderdruk werkt het kanaal op natuurlijke trek met 2 sifons. De extra veiligheidseisen horen bij overdruk."
-        : "Overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, 3 sifons (bij een niet-inregenvrije kap) en max. 2 toestellen per verdieping.";
+        ? "Bij onderdruk werkt het kanaal op natuurlijke trek, met een dubbele sifon in serie en een open verbinding (NEN 3287). De aparte condens-/regenwatersifon hoort bij overdruk."
+        : "Overdruk = ventilatordruk op het kanaal. Daarom: terugslagklep verplicht, een aparte condens- en regenwatersifon per kanaal, en max. 2 toestellen per verdieping.";
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee)`);
@@ -885,7 +915,7 @@ function Ronde2({ addScore, onDone }) {
         onStart={() => setGestart(true)}
       >
         <UitlegItem term="Materiaal">RVS-systeem? Dan ook een RVS-leiding. Anders gaat het roesten (galvanische corrosie).</UitlegItem>
-        <UitlegItem term="Onderdruk (VR)">natuurlijke trek: warm rookgas stijgt vanzelf op. 2 sifons.</UitlegItem>
+        <UitlegItem term="Onderdruk (VR)">natuurlijke trek: warm rookgas stijgt vanzelf op. Dubbele sifon met open verbinding.</UitlegItem>
         <UitlegItem term="Overdruk (HR)">de ventilator duwt het rookgas door het kanaal. Daarom een terugslagklep verplicht.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
           Schuif tussen ONDERDRUK en OVERDRUK. Let op de drukmeter, de kier, de klep en de sifons.
@@ -967,13 +997,13 @@ function Ronde2({ addScore, onDone }) {
                   <>
                     <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
                     <li>• Druk in het kanaal is lager dan in de luchttoevoer (NPR 3378-40)</li>
-                    <li>• Condensafvoer met 2 sifons</li>
+                    <li>• Dubbele sifon in serie met open verbinding</li>
                   </>
                 ) : (
                   <>
                     <li>• De ventilator van het toestel zet druk op het kanaal</li>
                     <li>• Druk in het kanaal is hoger dan in de woning — terugslagklep verplicht</li>
-                    <li>• Condensafvoer met 3 sifons (als de kap niet inregenvrij is), max. 2 toestellen per verdieping</li>
+                    <li>• Aparte condens- en regenwatersifon per kanaal, max. 2 toestellen per verdieping</li>
                   </>
                 )}
               </ul>
