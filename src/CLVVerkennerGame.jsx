@@ -770,39 +770,59 @@ const R3_BAKKEN = [
 
 function BakIcoon({ type }) {
   const flow = { strokeDasharray: "5 4", animation: "flowDash 0.8s linear infinite" };
+  const flowDown = { strokeDasharray: "4 3", animation: "flowDash 1.1s linear infinite" };
+  const half = type === "half";
+  const sx = half ? 55 : 40; // hart van de gemeenschappelijke rookgasafvoer
   return (
     <svg viewBox="0 0 80 70" className="w-20 h-16 mx-auto">
-      {/* schachtwanden (doorsnede) */}
-      <rect x="30" y="12" width="4" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.5" />
-      <rect x="46" y="12" width="4" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.5" />
       {/* gearceerde vloer */}
-      <line x1="8" y1="60" x2="30" y2="60" stroke={C.brownText} strokeWidth="2" />
-      <line x1="50" y1="60" x2="72" y2="60" stroke={C.brownText} strokeWidth="2" />
-      {[12, 18, 24, 56, 62, 68].map((x) => (
-        <line key={x} x1={x} y1="60" x2={x - 4} y2="66" stroke={C.brownText} strokeWidth="1" />
+      <line x1="6" y1="58" x2="74" y2="58" stroke={C.brownText} strokeWidth="1.5" />
+      {[12, 20, 28, 36, 44, 52, 60, 68].map((x) => (
+        <line key={x} x1={x} y1="58" x2={x - 4} y2="63" stroke={C.brownText} strokeWidth="0.9" />
       ))}
-      {/* rookgas omhoog */}
-      <path d="M40 54 L40 12" fill="none" stroke={C.red} strokeWidth="3" style={flow} />
-      <path d="M36 12 L40 4 L44 12" fill="none" stroke={C.red} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* schachtwanden (gemeenschappelijke rookgasafvoer) */}
+      <rect x={sx - 7} y="12" width="3.5" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.3" />
+      <rect x={sx + 3.5} y="12" width="3.5" height="46" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.3" />
+      {/* rookgas omhoog in de schacht */}
+      <path d={`M${sx} 54 L${sx} 10`} fill="none" stroke={C.red} strokeWidth="2.5" style={flow} />
+      <path d={`M${sx - 4} 14 L${sx} 6 L${sx + 4} 14`} fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+
       {type === "onderdruk" && (
-        /* natuurlijke trek: open uitmonding, golfjes warme lucht */
-        <path d="M30 8 q3 -3 6 0 M44 8 q3 -3 6 0" fill="none" stroke={C.brown} strokeWidth="1.5" strokeLinecap="round" />
-      )}
-      {type === "half" && (
         <>
-          {/* eigen luchtinlaat via gevelrooster */}
-          <rect x="4" y="28" width="10" height="12" fill="white" stroke={C.brownText} strokeWidth="1.5" />
-          {[31, 34, 37].map((y) => (
-            <line key={y} x1="5" y1={y} x2="13" y2={y} stroke={C.brownText} strokeWidth="1" />
-          ))}
-          <path d="M16 34 L28 34" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeDasharray="4 3" style={flow} />
+          {/* lucht omlaag in de schacht (concentrisch, via het dak) */}
+          <path d={`M${sx - 3} 16 L${sx - 3} 54`} fill="none" stroke="#3B82F6" strokeWidth="1.7" style={flowDown} />
+          <path d={`M${sx - 5.5} 50 L${sx - 3} 55 L${sx - 0.5} 50`} fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          {/* natuurlijke trek: golfjes warme lucht boven de uitmonding */}
+          <path d={`M${sx - 6} 8 q3 -3 6 0 M${sx} 8 q3 -3 6 0`} fill="none" stroke={C.brown} strokeWidth="1.3" strokeLinecap="round" />
         </>
       )}
+
       {type === "overdruk" && (
         <>
-          {/* ventilator onderin het kanaal */}
-          <circle cx="40" cy="50" r="6" fill="white" stroke={C.brownText} strokeWidth="1.5" />
-          <path d="M40 50 L40 45 M40 50 L44 53 M40 50 L36 53" stroke={C.brownText} strokeWidth="1.5" strokeLinecap="round" />
+          {/* lucht omlaag in de schacht (concentrisch) */}
+          <path d={`M${sx - 3} 16 L${sx - 3} 48`} fill="none" stroke="#3B82F6" strokeWidth="1.7" style={flowDown} />
+          {/* ventilator onderin het kanaal (de overdrukbron) */}
+          <circle cx={sx} cy="50" r="5" fill="white" stroke={C.brownText} strokeWidth="1.3" />
+          <path d={`M${sx} 50 L${sx} 46 M${sx} 50 L${sx + 3.5} 52.5 M${sx} 50 L${sx - 3.5} 52.5`} stroke={C.brownText} strokeWidth="1.3" strokeLinecap="round" />
+        </>
+      )}
+
+      {half && (
+        <>
+          {/* los toestel (links van de schacht) */}
+          <rect x="22" y="34" width="18" height="20" fill="white" stroke={C.brownText} strokeWidth="1.3" />
+          <circle cx="31" cy="46" r="3.2" fill="none" stroke={C.red} strokeWidth="1.2" />
+          {/* gevelrooster met eigen luchtinlaat */}
+          <rect x="4" y="38" width="6" height="12" fill="white" stroke={C.brownText} strokeWidth="1.2" />
+          {[41, 44, 47].map((y) => (
+            <line key={y} x1="5" y1={y} x2="9" y2={y} stroke={C.brownText} strokeWidth="0.9" />
+          ))}
+          {/* lucht van de gevel NAAR het toestel (niet via de schacht!) */}
+          <path d="M10 44 L20 44" fill="none" stroke="#3B82F6" strokeWidth="1.7" strokeDasharray="4 3" style={flow} />
+          <path d="M17 41.5 L21 44 L17 46.5" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          {/* rookgas van het toestel naar de gemeenschappelijke schacht */}
+          <path d={`M34 34 L34 28 L${sx} 28`} fill="none" stroke={C.red} strokeWidth="1.7" style={flow} />
         </>
       )}
     </svg>
@@ -870,7 +890,7 @@ function Ronde3({ addScore, onDone }) {
         Sleep (of tik) elke toestelcodering naar het systeem waarop hij mag worden aangesloten.
       </p>
 
-      <UitlegStrook title="Spiekbriefje — de toestelcodes">
+      <UitlegStrook title="Spiekbriefje — de toestelcodes" defaultOpen={false}>
         <p className="mb-0.5"><strong>C4.</strong> (C42/C43) → onderdruk-CLV · <strong>C8.</strong> (C82/C83) → half-CLV · <strong>C(10).</strong> → overdruk-CLV</p>
         <p>Laatste cijfer: <strong>2</strong> = ventilator in de rookgasafvoer · <strong>3</strong> = in de luchttoevoer</p>
       </UitlegStrook>
