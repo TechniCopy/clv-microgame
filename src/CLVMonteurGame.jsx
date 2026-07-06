@@ -38,13 +38,6 @@ const POOL_R1 = [
     feedbackWrong: "Denk aan de animatie: de open stomp liet rookgas binnen. Altijd beide stompen direct afsluiten bij demontage.",
   },
   {
-    question: "Een HR-toestel wordt aangesloten op een CLV-kanaal op overdruk. Wat moet er in het toestel aanwezig zijn om rookgas-recirculatie te voorkomen?",
-    options: ["Een rookgaskeerklep (terugslagklep)", "Een TTB (thermische terugslagbeveiliging)", "Een rookgasdop", "Een rookgassensor"],
-    correct: 0,
-    feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel (voorschriften CLV C(10)-toepassingen, bijlage D).",
-    feedbackWrong: "Bij overdruk-CLV is de rookgaskeerklep (terugslagklep) verplicht. Een TTB is iets anders: die meet temperatuur bij open toestellen.",
-  },
-  {
     question: "Waarom is rookgas-recirculatie levensgevaarlijk?",
     options: [
       "Rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding — dat giftige gas adem je dan in.",
@@ -59,6 +52,13 @@ const POOL_R1 = [
 ];
 
 const POOL_R2 = [
+  {
+    question: "Een HR-toestel wordt aangesloten op een CLV-kanaal op overdruk. Wat moet er in het toestel aanwezig zijn om rookgas-recirculatie te voorkomen?",
+    options: ["Een rookgaskeerklep (terugslagklep)", "Een TTB (thermische terugslagbeveiliging)", "Een rookgasdop", "Een rookgassensor"],
+    correct: 0,
+    feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel (voorschriften CLV C(10)-toepassingen, bijlage D).",
+    feedbackWrong: "Bij overdruk-CLV is de rookgaskeerklep (terugslagklep) verplicht. Een TTB is iets anders: die meet temperatuur bij open toestellen.",
+  },
   {
     question: "Je sluit een nieuw toestel aan op een bestaand inpandig RVS CLV-systeem. Met welk materiaal mag de verbindingsleiding worden gemaakt?",
     options: ["RVS", "Kunststof", "Dikwandig aluminium", "Dunwandig aluminium"],
@@ -169,7 +169,7 @@ const ONDERHOUD_STAPPEN = [
 
 // ─── RONDE 1: RECIRCULATIE VOORKOMEN ───
 
-function RecircSVG({ closed }) {
+function RecircSVG({ closed, gedemonteerd }) {
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
   const flowSlow = { strokeDasharray: "8 6", animation: "flowDash 1.2s linear infinite" };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
@@ -224,21 +224,40 @@ function RecircSVG({ closed }) {
       <path d="M190 305 L410 305" fill="none" stroke={C.red} strokeWidth="4" style={flow} />
       <path d="M403 322 L190 322" fill="none" stroke="#3B82F6" strokeWidth="3" style={flowSlow} />
 
-      {/* BOVENSTE WONING: gedemonteerd toestel */}
-      <rect x="115" y="120" width="80" height="66" fill="none" stroke={C.beigeMid} strokeWidth="2" strokeDasharray="6 5" />
-      <text x="155" y="150" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">toestel</text>
-      <text x="155" y="162" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">gedemonteerd</text>
+      {/* BOVENSTE WONING */}
+      {!gedemonteerd ? (
+        <>
+          {/* het oude toestel hangt er nog (uit), aangesloten op de stompen */}
+          <rect x="115" y="120" width="80" height="66" fill="white" stroke={C.brownText} strokeWidth="2.5" />
+          <circle cx="145" cy="146" r="10" fill="none" stroke={C.beigeMid} strokeWidth="2" />
+          <text x="155" y="176" fontSize="8.5" fontWeight="700" fill={C.brownText} textAnchor="middle">OUDE KETEL (UIT)</text>
+          <path d="M195 139 H360" fill="none" stroke={C.brownText} strokeWidth="5" strokeLinecap="round" />
+          <path d="M195 179 H360" fill="none" stroke={C.brownText} strokeWidth="5" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <rect x="115" y="120" width="80" height="66" fill="none" stroke={C.beigeMid} strokeWidth="2" strokeDasharray="6 5" />
+          <text x="155" y="150" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">toestel</text>
+          <text x="155" y="162" fontSize="8.5" fontWeight="600" fill={C.brown} textAnchor="middle">gedemonteerd</text>
+        </>
+      )}
 
-      {/* open aansluitstompen door de schachtwand (met flens, zoals in de norm) */}
+      {/* afvoerbak voor het oude toestel */}
+      <path d="M96 208 L104 226 H166 L174 208" fill={gedemonteerd ? C.beigeLight : "white"} stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
+      <text x="135" y="221" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">afvoer</text>
+      {gedemonteerd && <rect x="112" y="200" width="46" height="10" fill="white" stroke={C.brownText} strokeWidth="1.5" />}
+
+      {/* aansluitstompen door de schachtwand (met flens, zoals in de norm) */}
       {[
         { id: "rookgas", y: 128 },
         { id: "lucht", y: 168 },
       ].map(({ id, y }) => {
         const dicht = closed[id];
+        const open = gedemonteerd && !dicht;
         return (
           <g key={id}>
             <rect x="364" y={y + 2} width="28" height="18" fill="white" stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
-            <ellipse cx="364" cy={y + 11} rx="4.5" ry="11" fill={dicht ? C.greenLight : "#3B1E0A"} stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
+            <ellipse cx="364" cy={y + 11} rx="4.5" ry="11" fill={dicht ? C.greenLight : open ? "#3B1E0A" : "white"} stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
             {dicht && <circle cx="364" cy={y + 11} r="5" fill={C.green} stroke="white" strokeWidth="1.5" />}
             <text x="356" y={y + 14} fontSize="8" fontWeight="600" fill={C.brown} textAnchor="end">{id}</text>
           </g>
@@ -246,14 +265,14 @@ function RecircSVG({ closed }) {
       })}
 
       {/* open rookgasstomp: rookgas (CO) stroomt de woning in */}
-      {!closed.rookgas && (
+      {gedemonteerd && !closed.rookgas && (
         <>
           <path d="M410 139 L364 139 L300 139 Q250 139 235 160 Q225 175 240 190" fill="none" stroke={C.red} strokeWidth="4" style={flow} opacity="0.9" />
           <path d="M232 184 L240 196 L248 186" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
       {/* open luchtstomp: hier blaast alleen lucht uit het toevoerkanaal */}
-      {!closed.lucht && (
+      {gedemonteerd && !closed.lucht && (
         <>
           <path d="M403 179 L364 179 L324 179" fill="none" stroke="#3B82F6" strokeWidth="3" style={flowSlow} opacity="0.8" />
           <path d="M332 174 L322 179 L332 184" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -261,7 +280,7 @@ function RecircSVG({ closed }) {
       )}
 
       {/* gevaarwolkjes in de bovenwoning (alleen door het rookgas) */}
-      {!closed.rookgas && (
+      {gedemonteerd && !closed.rookgas && (
         <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
           <circle cx="250" cy="210" r="14" fill={C.red} opacity="0.15" />
           <circle cx="285" cy="200" r="10" fill={C.red} opacity="0.15" />
@@ -298,24 +317,25 @@ function COMeter({ value }) {
 
 function Ronde1({ addScore, onDone }) {
   const [gestart, setGestart] = useState(false);
+  const [gedemonteerd, setGedemonteerd] = useState(false);
   const [closed, setClosed] = useState({ rookgas: false, lucht: false });
   const [kappenOver, setKappenOver] = useState(2);
   const [hint, setHint] = useState(null);
   const [co, setCo] = useState(0);
   const gratisFout = useEersteFoutVrij();
-  const closedRef = useRef(closed);
+  const stateRef = useRef({ closed, gedemonteerd });
   useEffect(() => {
-    closedRef.current = closed;
-  }, [closed]);
+    stateRef.current = { closed, gedemonteerd };
+  }, [closed, gedemonteerd]);
 
   const bothClosed = closed.rookgas && closed.lucht;
 
-  // CO komt alleen uit de open rookgasstomp: de meter loopt op zolang die
-  // open staat, en daalt zodra hij is afgedopt (de luchtstomp geeft geen CO)
+  // CO komt alleen uit de open rookgasstomp: die is pas open na demontage,
+  // en de meter daalt zodra de stomp is afgedopt (de luchtstomp geeft geen CO)
   useEffect(() => {
     const timer = setInterval(() => {
       setCo((prev) => {
-        const open = !closedRef.current.rookgas;
+        const open = stateRef.current.gedemonteerd && !stateRef.current.closed.rookgas;
         const target = open ? 600 : 0;
         const next = prev + (target - prev) * (open ? 0.012 : 0.08);
         return Math.abs(next - target) < 1 ? target : next;
@@ -324,17 +344,48 @@ function Ronde1({ addScore, onDone }) {
     return () => clearInterval(timer);
   }, []);
 
+  // fase 1: het oude toestel naar de afvoerbak slepen
+  const dropAfvoer = (payload, point) => {
+    if (gedemonteerd) return undefined;
+    if (payload === "toestel") {
+      setGedemonteerd(true);
+      addScore(5, point);
+      setHint(null);
+      playSound("drop");
+      return "correct";
+    }
+    return undefined;
+  };
+
+  // fase 2: het juiste onderdeel (afsluitkap) op de open stompen
+  const FOUTE_ONDERDELEN = {
+    tape: "Tape is niet gasdicht en niet toegestaan. Gebruik een afsluitkap.",
+    beugel: "Een beugel sluit niets af, die is om leidingen op te hangen. Gebruik een afsluitkap.",
+  };
+
   const dropKap = (stomp) => (payload, point) => {
-    if (closed[stomp]) return undefined;
-    setClosed((prev) => ({ ...prev, [stomp]: true }));
-    setKappenOver((prev) => prev - 1);
-    addScore(5, point);
-    setHint(null);
-    playSound("drop");
-    return "correct";
+    if (!gedemonteerd || closed[stomp]) return undefined;
+    if (payload.startsWith("kap")) {
+      setClosed((prev) => ({ ...prev, [stomp]: true }));
+      setKappenOver((prev) => prev - 1);
+      addScore(5, point);
+      setHint(null);
+      playSound("drop");
+      return "correct";
+    }
+    const uitleg = FOUTE_ONDERDELEN[payload] ?? "Dat onderdeel hoort hier niet.";
+    if (gratisFout()) {
+      playSound("wrong");
+      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
+      return "wrong";
+    }
+    addScore(-5, point);
+    setHint(uitleg);
+    return "wrong";
   };
 
   const dropFout = (foutHint) => (payload, point) => {
+    if (!gedemonteerd) return undefined;
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${foutHint} (deze eerste misser telt niet mee)`);
@@ -356,10 +407,9 @@ function Ronde1({ addScore, onDone }) {
         <UitlegItem term="Waarom gevaarlijk">
           rookgas bevat koolmonoxide (CO), vooral bij onvolledige verbranding. Een giftig gas dat je niet ruikt.
         </UitlegItem>
-        <UitlegItem term="Bij demontage">de stompen staan open. Dop ze allebei (rookgas en lucht) meteen af.</UitlegItem>
-        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Kijk hoe het rookgas binnenstroomt en de CO-meter oploopt. Stop het op tijd.
-        </p>
+        <UitlegItem term="Jouw klus">
+          demonteer het oude toestel in de bovenwoning. Let op: daarna staan de stompen open.
+        </UitlegItem>
       </RondeIntro>
     );
   }
@@ -371,8 +421,9 @@ function Ronde1({ addScore, onDone }) {
         Ronde 1: Recirculatie voorkomen
       </h2>
       <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        In de bovenwoning is een toestel gedemonteerd — de aansluitstompen staan nog open! Sleep de afsluitkappen op de open
-        stompen voordat het rookgas van de buren binnenstroomt.
+        {!gedemonteerd
+          ? "Stap 1: demonteer het oude toestel. Sleep (of tik) het naar de afvoerbak."
+          : "Het toestel is weg, maar nu staan de aansluitstompen open! Sluit ze allebei af voordat het rookgas van de buren binnenstroomt."}
       </p>
 
       <div className="mb-3">
@@ -380,56 +431,90 @@ function Ronde1({ addScore, onDone }) {
       </div>
 
       <div className="relative w-full" style={{ maxWidth: 520 }}>
-        <RecircSVG closed={closed} />
-        {/* dropzones over de stompen (viewBox 520x430) */}
-        <DropTarget
-          id="stomp-rookgas"
-          onDropItem={closed.rookgas ? undefined : dropKap("rookgas")}
-          className="absolute"
-          style={{ left: `${(352 / 520) * 100}%`, top: `${(120 / 430) * 100}%`, width: `${(48 / 520) * 100}%`, height: `${(38 / 430) * 100}%` }}
-        >
-          {({ isHover }) => (
-            <div
-              className="w-full h-full rounded-lg border-2 transition-colors"
-              style={{
-                borderStyle: closed.rookgas ? "solid" : "dashed",
-                borderColor: closed.rookgas ? C.green : isHover ? C.olive : "transparent",
-                backgroundColor: isHover && !closed.rookgas ? "rgba(92,107,46,0.25)" : "transparent",
-              }}
-            />
-          )}
-        </DropTarget>
-        <DropTarget
-          id="stomp-lucht"
-          onDropItem={closed.lucht ? undefined : dropKap("lucht")}
-          className="absolute"
-          style={{ left: `${(352 / 520) * 100}%`, top: `${(160 / 430) * 100}%`, width: `${(48 / 520) * 100}%`, height: `${(38 / 430) * 100}%` }}
-        >
-          {({ isHover }) => (
-            <div
-              className="w-full h-full rounded-lg border-2 transition-colors"
-              style={{
-                borderStyle: closed.lucht ? "solid" : "dashed",
-                borderColor: closed.lucht ? C.green : isHover ? C.olive : "transparent",
-                backgroundColor: isHover && !closed.lucht ? "rgba(92,107,46,0.25)" : "transparent",
-              }}
-            />
-          )}
-        </DropTarget>
-        {/* afleider: het werkende toestel beneden */}
-        <DropTarget
-          id="fout-ketel"
-          onDropItem={dropFout("De kap hoort niet op het werkende toestel — sluit de open aansluitstompen in de bovenwoning af.")}
-          className="absolute"
-          style={{ left: `${(115 / 520) * 100}%`, top: `${(285 / 430) * 100}%`, width: `${(80 / 520) * 100}%`, height: `${(70 / 430) * 100}%` }}
-        >
-          {({ flash }) => (
-            <div
-              className="w-full h-full rounded-lg transition-colors"
-              style={{ backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.25)" : "transparent" }}
-            />
-          )}
-        </DropTarget>
+        <RecircSVG closed={closed} gedemonteerd={gedemonteerd} />
+        {/* fase 1: het oude toestel is sleepbaar */}
+        {!gedemonteerd && (
+          <>
+            <Draggable
+              payload="toestel"
+              ghost={<ToestelVisual />}
+              className="absolute"
+              style={{ left: `${(115 / 520) * 100}%`, top: `${(120 / 430) * 100}%`, width: `${(80 / 520) * 100}%`, height: `${(66 / 430) * 100}%` }}
+            >
+              <div className="w-full h-full rounded-lg border-2 border-dashed" style={{ borderColor: C.olive, backgroundColor: "rgba(92,107,46,0.08)" }} />
+            </Draggable>
+            <DropTarget
+              id="afvoerbak"
+              onDropItem={dropAfvoer}
+              className="absolute"
+              style={{ left: `${(90 / 520) * 100}%`, top: `${(198 / 430) * 100}%`, width: `${(90 / 520) * 100}%`, height: `${(34 / 430) * 100}%` }}
+            >
+              {({ isHover }) => (
+                <div
+                  className="w-full h-full rounded-lg border-2 transition-colors"
+                  style={{
+                    borderStyle: "dashed",
+                    borderColor: isHover ? C.olive : "transparent",
+                    backgroundColor: isHover ? "rgba(92,107,46,0.25)" : "transparent",
+                  }}
+                />
+              )}
+            </DropTarget>
+          </>
+        )}
+        {/* fase 2: dropzones over de stompen (viewBox 520x430) */}
+        {gedemonteerd && (
+          <>
+            <DropTarget
+              id="stomp-rookgas"
+              onDropItem={closed.rookgas ? undefined : dropKap("rookgas")}
+              className="absolute"
+              style={{ left: `${(352 / 520) * 100}%`, top: `${(120 / 430) * 100}%`, width: `${(48 / 520) * 100}%`, height: `${(38 / 430) * 100}%` }}
+            >
+              {({ isHover }) => (
+                <div
+                  className="w-full h-full rounded-lg border-2 transition-colors"
+                  style={{
+                    borderStyle: closed.rookgas ? "solid" : "dashed",
+                    borderColor: closed.rookgas ? C.green : isHover ? C.olive : "transparent",
+                    backgroundColor: isHover && !closed.rookgas ? "rgba(92,107,46,0.25)" : "transparent",
+                  }}
+                />
+              )}
+            </DropTarget>
+            <DropTarget
+              id="stomp-lucht"
+              onDropItem={closed.lucht ? undefined : dropKap("lucht")}
+              className="absolute"
+              style={{ left: `${(352 / 520) * 100}%`, top: `${(160 / 430) * 100}%`, width: `${(48 / 520) * 100}%`, height: `${(38 / 430) * 100}%` }}
+            >
+              {({ isHover }) => (
+                <div
+                  className="w-full h-full rounded-lg border-2 transition-colors"
+                  style={{
+                    borderStyle: closed.lucht ? "solid" : "dashed",
+                    borderColor: closed.lucht ? C.green : isHover ? C.olive : "transparent",
+                    backgroundColor: isHover && !closed.lucht ? "rgba(92,107,46,0.25)" : "transparent",
+                  }}
+                />
+              )}
+            </DropTarget>
+            {/* afleider: het werkende toestel beneden */}
+            <DropTarget
+              id="fout-ketel"
+              onDropItem={dropFout("De kap hoort niet op het werkende toestel — sluit de open aansluitstompen in de bovenwoning af.")}
+              className="absolute"
+              style={{ left: `${(115 / 520) * 100}%`, top: `${(285 / 430) * 100}%`, width: `${(80 / 520) * 100}%`, height: `${(70 / 430) * 100}%` }}
+            >
+              {({ flash }) => (
+                <div
+                  className="w-full h-full rounded-lg transition-colors"
+                  style={{ backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.25)" : "transparent" }}
+                />
+              )}
+            </DropTarget>
+          </>
+        )}
       </div>
 
       {hint && (
@@ -438,15 +523,25 @@ function Ronde1({ addScore, onDone }) {
         </p>
       )}
 
-      {!bothClosed ? (
-        <div className="flex gap-3 mt-2 items-center">
+      {!gedemonteerd ? (
+        <p className="text-xs italic font-medium mt-2" style={{ color: C.brown }}>
+          Tip: pak het oude toestel in de bovenwoning en sleep het naar de afvoerbak eronder.
+        </p>
+      ) : !bothClosed ? (
+        <div className="flex gap-3 mt-2 items-center flex-wrap justify-center">
           {Array.from({ length: kappenOver }).map((_, i) => (
             <Draggable key={i} payload={`kap${i}`} ghost={<KapVisual />}>
               <KapVisual />
             </Draggable>
           ))}
+          <Draggable payload="tape" ghost={<TapeVisual />}>
+            <TapeVisual />
+          </Draggable>
+          <Draggable payload="beugel" ghost={<BeugelVisual />}>
+            <BeugelVisual />
+          </Draggable>
           <span className="text-xs italic font-medium" style={{ color: C.brown }}>
-            ← sleep de afsluitkappen naar de open stompen
+            ← kies het juiste onderdeel voor de open stompen
           </span>
         </div>
       ) : (
@@ -472,6 +567,40 @@ function KapVisual() {
         <text x="28" y="26" fontSize="8" fontWeight="700" fill="white" textAnchor="middle">KAP</text>
       </svg>
       <span className="text-[9px] font-bold" style={{ color: C.brownText }}>Afsluitkap</span>
+    </div>
+  );
+}
+
+function TapeVisual() {
+  return (
+    <div className="flex flex-col items-center select-none">
+      <svg width="52" height="40" viewBox="0 0 52 40">
+        <circle cx="26" cy="21" r="13" fill="#9CA3AF" stroke={C.brownText} strokeWidth="2" />
+        <circle cx="26" cy="21" r="5" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+        <path d="M38 16 H48 V26 H39" fill="#9CA3AF" stroke={C.brownText} strokeWidth="1.5" />
+      </svg>
+      <span className="text-[9px] font-bold" style={{ color: C.brownText }}>Tape</span>
+    </div>
+  );
+}
+
+function BeugelVisual() {
+  return (
+    <div className="flex flex-col items-center select-none">
+      <svg width="52" height="40" viewBox="0 0 52 40">
+        <path d="M14 26 a12 12 0 0 1 24 0" fill="none" stroke={C.brownText} strokeWidth="4" />
+        <line x1="26" y1="14" x2="26" y2="5" stroke={C.brownText} strokeWidth="3.5" />
+        <line x1="12" y1="28" x2="40" y2="28" stroke={C.brownText} strokeWidth="2.5" />
+      </svg>
+      <span className="text-[9px] font-bold" style={{ color: C.brownText }}>Beugel</span>
+    </div>
+  );
+}
+
+function ToestelVisual() {
+  return (
+    <div className="rounded border-2 px-3 py-2 text-[9px] font-bold select-none" style={{ backgroundColor: "white", borderColor: C.brownText, color: C.brownText }}>
+      OUDE KETEL
     </div>
   );
 }
