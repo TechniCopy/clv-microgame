@@ -626,104 +626,6 @@ function LeidingKaart({ mat }) {
   );
 }
 
-function AansluitSVG({ stap, afschot, beugels }) {
-  // toestel links (afvoer bovenop), schachtstomp rechts; horizontale leiding ~3 m
-  const leidingY = 88;
-  // positief afschot = leiding loopt af richting het toestel (linkerkant lager)
-  const leftY = leidingY + afschot * 2.2;
-  const pipeAt = (x) => leftY + (leidingY - leftY) * ((x - 132) / (408 - 132));
-  const flowUp = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
-  const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
-
-  return (
-    <svg viewBox="0 0 520 260" className="w-full h-auto select-none">
-      <defs>
-        <pattern id="hatchM2" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="6" stroke={C.brownText} strokeWidth="1.4" />
-        </pattern>
-      </defs>
-
-      {/* vloer */}
-      <rect x="20" y="234" width="480" height="12" fill="url(#hatchM2)" stroke={C.brownText} strokeWidth="2" />
-
-      {/* schachtwanden rechts (doorsnede) */}
-      <rect x="430" y="14" width="8" height="220" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      <rect x="482" y="14" width="8" height="220" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      {/* binnenste rookgaskanaal */}
-      <line x1="452" y1="14" x2="452" y2="234" stroke={C.brownText} strokeWidth="2" />
-      <line x1="468" y1="14" x2="468" y2="234" stroke={C.brownText} strokeWidth="2" />
-      {/* stromen in het kanaal */}
-      <path d="M460 230 L460 18" fill="none" stroke={C.red} strokeWidth="3.5" strokeLinecap="round" style={flowUp} />
-      <path d="M444 18 L444 230" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
-      <path d="M476 18 L476 230" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" style={flowDown} />
-      <text x="460" y="10" fontSize="9" fontWeight="700" fill={C.brown} textAnchor="middle">
-        RVS CLV-KANAAL
-      </text>
-      {/* aansluitstomp met flens door de schachtwand */}
-      <rect x="412" y={leidingY - 12} width="22" height="24" fill="white" stroke={C.brownText} strokeWidth="2" />
-      <ellipse cx="412" cy={leidingY} rx="5" ry="14" fill="white" stroke={C.brownText} strokeWidth="2" />
-
-      {/* toestel links, met de rookgasaansluiting bovenop */}
-      <rect x="50" y="140" width="76" height="94" fill="white" stroke={C.brownText} strokeWidth="2.5" />
-      <circle cx="88" cy="184" r="13" fill="none" stroke={C.red} strokeWidth="2" />
-      <path d="M82 188 q6 -14 12 0 q-6 8 -12 0" fill={C.red} opacity="0.7" />
-      <text x="88" y="222" fontSize="9" fontWeight="700" fill={C.brownText} textAnchor="middle">HR-KETEL</text>
-      {/* aansluitstub bovenop het toestel */}
-      <rect x="79" y="126" width="18" height="14" fill="white" stroke={C.brownText} strokeWidth="2.5" />
-
-      {/* leiding (na stap A): bocht omhoog vanaf de ketel + horizontaal deel met afschot */}
-      {stap > 0 && (
-        <g>
-          {/* bocht van de aansluitstub naar de horizontale leiding */}
-          <path d={`M88 136 V${leftY} H134`} fill="none" stroke={C.brownText} strokeWidth="20" strokeLinejoin="round" strokeLinecap="round" />
-          <path d={`M88 136 V${leftY} H134`} fill="none" stroke="#B7BFC4" strokeWidth="15" strokeLinejoin="round" strokeLinecap="round" />
-          {/* horizontale leiding (linkerkant zakt mee met het afschot) */}
-          <polygon
-            points={`132,${leftY - 9} 408,${leidingY - 9} 408,${leidingY + 9} 132,${leftY + 9}`}
-            fill="#B7BFC4"
-            stroke={C.brownText}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-          <line x1="142" y1={leftY - 3 + (leidingY - leftY) * (10 / 276)} x2="396" y2={leidingY - 3 - (leidingY - leftY) * (12 / 276)} stroke="white" strokeWidth="2.5" opacity="0.7" />
-          {/* beugels op de leiding */}
-          {beugels.map((pos) => {
-            const bx = 128 + pos * 93.3;
-            const by = pipeAt(bx);
-            return (
-              <g key={pos}>
-                <rect x={bx - 5} y={by - 16} width="10" height="8" rx="2" fill={C.olive} stroke={C.oliveDark} strokeWidth="1.5" />
-                <line x1={bx} y1={by - 16} x2={bx} y2={by - 26} stroke={C.oliveDark} strokeWidth="3" />
-              </g>
-            );
-          })}
-        </g>
-      )}
-      {stap === 0 && (
-        <g>
-          <path d={`M88 136 V${leidingY} H132`} fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
-          <rect x="132" y={leidingY - 9} width="276" height="18" rx="9" fill="none" stroke={C.beigeMid} strokeWidth="2.5" strokeDasharray="8 6" />
-        </g>
-      )}
-
-      {/* meetlat (stap C) */}
-      {stap >= 2 && (
-        <g>
-          <line x1="128" y1="190" x2="408" y2="190" stroke={C.brownText} strokeWidth="1.5" />
-          {[0, 1, 2, 3].map((m) => (
-            <g key={m}>
-              <line x1={128 + m * 93.3} y1="185" x2={128 + m * 93.3} y2="195" stroke={C.brownText} strokeWidth="1.5" />
-              <text x={128 + m * 93.3} y="208" fontSize="9" fontWeight="600" fill={C.brownText} textAnchor="middle">
-                {m} m
-              </text>
-            </g>
-          ))}
-        </g>
-      )}
-    </svg>
-  );
-}
-
 // ─── STAP B: DE DRUKVERKENNER (onderdruk vs overdruk) ───
 
 const R2B_KAARTJES = [
@@ -764,7 +666,7 @@ function DrukSchuif({ modus, onChange }) {
   );
 }
 
-function DrukSysteemSVG({ modus }) {
+function DrukSysteemSVG({ modus, aangesloten = true }) {
   const over = modus === "overdruk";
   const flowUp = { strokeDasharray: "8 6", animation: `flowDash ${over ? "0.45s" : "1.1s"} linear infinite` };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
@@ -793,11 +695,15 @@ function DrukSysteemSVG({ modus }) {
       <line x1="402" y1="20" x2="402" y2="320" stroke={C.brownText} strokeWidth="2" />
       <path d="M376 320 H404 V328 Q404 336 390 336 Q376 336 376 328 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
 
-      {/* stromen */}
-      <path d="M390 316 L390 16" fill="none" stroke={C.red} strokeWidth={over ? 5 : 3.5} strokeLinecap="round" style={flowUp} />
-      <path d="M385 14 L390 4 L395 14" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M364 26 L364 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
-      <path d="M416 26 L416 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+      {/* stromen (pas als het toestel is aangesloten en in bedrijf) */}
+      {aangesloten && (
+        <>
+          <path d="M390 316 L390 16" fill="none" stroke={C.red} strokeWidth={over ? 5 : 3.5} strokeLinecap="round" style={flowUp} />
+          <path d="M385 14 L390 4 L395 14" fill="none" stroke={C.red} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M364 26 L364 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+          <path d="M416 26 L416 350" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" style={flowDown} />
+        </>
+      )}
       {/* natuurlijke trek: warmtegolfjes boven de uitmonding */}
       {!over && (
         <g stroke={C.brown} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.7">
@@ -814,9 +720,9 @@ function DrukSysteemSVG({ modus }) {
         <line
           x1="475"
           y1="80"
-          x2={over ? 484 : 466}
-          y2="69"
-          stroke={over ? C.red : "#3B82F6"}
+          x2={!aangesloten ? 475 : over ? 484 : 466}
+          y2={!aangesloten ? 66 : 69}
+          stroke={!aangesloten ? C.beigeMid : over ? C.red : "#3B82F6"}
           strokeWidth="2.5"
           strokeLinecap="round"
         />
@@ -826,16 +732,23 @@ function DrukSysteemSVG({ modus }) {
       </g>
 
       {/* parallelle aansluiting: aparte rookgasafvoer- en luchttoevoerleiding */}
-      {/* rookgasafvoerleiding: van het toestel naar het BINNENKANAAL */}
-      <path d="M95 160 V110 H380" fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M95 160 V110 H380" fill="none" stroke="#B7BFC4" strokeWidth="8.5" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M95 154 V110 H386" fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" style={flowUp} />
+      {aangesloten ? (
+        <>
+          {/* rookgasafvoerleiding: van het toestel naar het BINNENKANAAL */}
+          <path d="M95 160 V110 H380" fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
+          <path d="M95 160 V110 H380" fill="none" stroke="#B7BFC4" strokeWidth="8.5" strokeLinejoin="round" strokeLinecap="round" />
+          <path d="M95 154 V110 H386" fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" style={flowUp} />
+        </>
+      ) : (
+        /* nog niet aangesloten: het gat waar de rookgasleiding moet komen */
+        <path d="M95 160 V110 H376" fill="none" stroke={C.brown} strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="10 8" opacity="0.4" />
+      )}
       <ellipse cx="380" cy="110" rx="4" ry="10" fill="white" stroke={C.brownText} strokeWidth="2" />
       <text x="165" y="101" fontSize="8" fontWeight="600" fill={C.brown}>rookgasafvoer</text>
       {/* luchttoevoerleiding: van de RINGSPLEET naar het toestel */}
       <path d="M362 140 H120 V160" fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" />
       <path d="M362 140 H120 V160" fill="none" stroke="#B7BFC4" strokeWidth="8.5" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M364 140 H120 V154" fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeLinecap="round" style={flowDown} />
+      {aangesloten && <path d="M364 140 H120 V154" fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeLinecap="round" style={flowDown} />}
       <ellipse cx="362" cy="140" rx="4" ry="10" fill="white" stroke={C.brownText} strokeWidth="2" />
       <text x="165" y="157" fontSize="8" fontWeight="600" fill={C.brown}>luchttoevoer</text>
 
@@ -852,16 +765,16 @@ function DrukSysteemSVG({ modus }) {
       <rect x="86" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
       <rect x="111" y="158" width="18" height="12" fill="white" stroke={C.brownText} strokeWidth="2" />
       <rect x="60" y="170" width="90" height="100" fill="white" stroke={C.brownText} strokeWidth="2.5" />
-      {/* vlam */}
-      <circle cx="88" cy="225" r="10" fill="none" stroke={C.red} strokeWidth="2" />
-      <path d="M83 228 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.7" />
+      {/* vlam (alleen als het toestel in bedrijf is) */}
+      <circle cx="88" cy="225" r="10" fill="none" stroke={aangesloten ? C.red : C.beigeMid} strokeWidth="2" />
+      {aangesloten && <path d="M83 228 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.7" />}
       {/* ventilator (draait bij overdruk) */}
       <circle cx="124" cy="200" r="11" fill="white" stroke={C.brownText} strokeWidth="2" />
       <g
-        stroke={over ? C.red : C.beigeMid}
+        stroke={aangesloten && over ? C.red : C.beigeMid}
         strokeWidth="2.5"
         strokeLinecap="round"
-        style={over ? { transformOrigin: "124px 200px", animation: "spinFan 0.7s linear infinite" } : undefined}
+        style={aangesloten && over ? { transformOrigin: "124px 200px", animation: "spinFan 0.7s linear infinite" } : undefined}
       >
         <line x1="124" y1="200" x2="124" y2="192" />
         <line x1="124" y1="200" x2="131" y2="204" />
@@ -871,7 +784,9 @@ function DrukSysteemSVG({ modus }) {
         {over ? "HR-KETEL" : "VR-KETEL"}
       </text>
 
-      {/* kier in de schachtwand: wat gebeurt er bij een lek? */}
+      {/* kier in de schachtwand: wat gebeurt er bij een lek? (pas zichtbaar in bedrijf) */}
+      {aangesloten && (
+        <>
       <rect x="349" y="232" width="10" height="14" fill="white" />
       <line x1="350" y1="232" x2="358" y2="232" stroke={C.brownText} strokeWidth="1.5" strokeDasharray="2 2" />
       <line x1="350" y1="246" x2="358" y2="246" stroke={C.brownText} strokeWidth="1.5" strokeDasharray="2 2" />
@@ -890,6 +805,8 @@ function DrukSysteemSVG({ modus }) {
           <text x="316" y="226" fontSize="8.5" fontWeight="600" fill="#3B82F6" textAnchor="end">lucht zuigt</text>
           <text x="316" y="236" fontSize="8.5" fontWeight="600" fill="#3B82F6" textAnchor="end">naar binnen</text>
         </g>
+      )}
+        </>
       )}
 
       {/* ── condensafvoer onderaan, normconform per systeem ── */}
@@ -940,6 +857,7 @@ function DrukSysteemSVG({ modus }) {
 function Ronde2({ addScore, onDone }) {
   const [gestart, setGestart] = useState(false);
   const [stap, setStap] = useState(0); // 0 = materiaalkeuze, 1 = drukverkenner
+  const [aangesloten, setAangesloten] = useState(false); // na stap A start de installatie
   const [hint, setHint] = useState(null);
   const [modus, setModus] = useState("onderdruk");
   const [seen, setSeen] = useState({ onderdruk: true, overdruk: false });
@@ -957,8 +875,10 @@ function Ronde2({ addScore, onDone }) {
     if (mat.correct) {
       addScore(5, point);
       setHint(null);
-      setTimeout(() => setStap(1), 700);
-      playSound("drop");
+      // de leiding zit erin: het toestel komt in bedrijf en de stromen starten
+      setAangesloten(true);
+      playSound("levelup");
+      setTimeout(() => setStap(1), 1800);
       return "correct";
     }
     const uitleg = `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`;
@@ -1061,34 +981,38 @@ function Ronde2({ addScore, onDone }) {
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
         {stap === 0
-          ? "Stap A: kies (sleep of tik) de juiste leiding. Let op: de schacht is van RVS!"
-          : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en het aantal sifons."}
+          ? aangesloten
+            ? "De leiding zit erin — het toestel komt in bedrijf en de stromen starten!"
+            : "Stap A: de rookgasleiding ontbreekt nog (stippellijn). Kies de juiste leiding. Let op: de schacht is van RVS!"
+          : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en de sifons."}
       </p>
 
       {stap === 0 && (
         <>
           <div className="relative w-full" style={{ maxWidth: 520 }}>
-            <AansluitSVG stap={0} afschot={0} beugels={[]} />
-            <DropTarget
-              id="leiding-gat"
-              onDropItem={dropMateriaal}
-              className="absolute"
-              style={{ left: `${(128 / 520) * 100}%`, top: `${(63 / 260) * 100}%`, width: `${(280 / 520) * 100}%`, height: `${(34 / 260) * 100}%` }}
-            >
-              {({ isHover, flash }) => (
-                <div
-                  className="w-full h-full rounded-full border-2 transition-colors flex items-center justify-center text-[10px] font-bold"
-                  style={{
-                    borderStyle: "dashed",
-                    borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
-                    backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.2)" : isHover ? "rgba(92,107,46,0.15)" : "transparent",
-                    color: C.brown,
-                  }}
-                >
-                  sleep de juiste leiding hierheen
-                </div>
-              )}
-            </DropTarget>
+            <DrukSysteemSVG modus="onderdruk" aangesloten={aangesloten} />
+            {!aangesloten && (
+              <DropTarget
+                id="leiding-gat"
+                onDropItem={dropMateriaal}
+                className="absolute"
+                style={{ left: `${(80 / 520) * 100}%`, top: `${(94 / 400) * 100}%`, width: `${(310 / 520) * 100}%`, height: `${(34 / 400) * 100}%` }}
+              >
+                {({ isHover, flash }) => (
+                  <div
+                    className="w-full h-full rounded-full border-2 transition-colors flex items-center justify-center text-[10px] font-bold"
+                    style={{
+                      borderStyle: "dashed",
+                      borderColor: flash === "wrong" ? C.red : isHover ? C.olive : "transparent",
+                      backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.2)" : isHover ? "rgba(92,107,46,0.15)" : "transparent",
+                      color: C.brown,
+                    }}
+                  >
+                    sleep de juiste leiding hierheen
+                  </div>
+                )}
+              </DropTarget>
+            )}
           </div>
 
           {hint && (
@@ -1097,13 +1021,15 @@ function Ronde2({ addScore, onDone }) {
             </p>
           )}
 
-          <div className="flex gap-4 mt-3">
-            {MATERIALEN.map((mat) => (
-              <Draggable key={mat.id} payload={mat.id} ghost={<LeidingKaart mat={mat} />}>
-                <LeidingKaart mat={mat} />
-              </Draggable>
-            ))}
-          </div>
+          {!aangesloten && (
+            <div className="flex gap-4 mt-3">
+              {MATERIALEN.map((mat) => (
+                <Draggable key={mat.id} payload={mat.id} ghost={<LeidingKaart mat={mat} />}>
+                  <LeidingKaart mat={mat} />
+                </Draggable>
+              ))}
+            </div>
+          )}
         </>
       )}
 
