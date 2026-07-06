@@ -20,7 +20,7 @@ import {
   playSound,
 } from "./shared.jsx";
 
-const MAX_SCORE = 145;
+const MAX_SCORE = 150;
 
 // ─── VRAGENPOOLS ───
 
@@ -1182,23 +1182,71 @@ function Ronde2({ addScore, onDone }) {
 
 // ─── RONDE 3: CONTROLEREN EN IN BEDRIJF STELLEN ───
 
-const CONTROLEPUNTEN = [
-  { id: "typeplaat", label: "Klopt het toesteltype met dit CLV-systeem? (typeplaat)", verplicht: true },
-  { id: "klep", label: "Is de terugslagklep aanwezig en gemonteerd (bij overdruk-CLV)?", verplicht: true },
-  { id: "luik", label: "Is het inspectieluik (min. 50x50 cm) aanwezig en bereikbaar?", verplicht: true },
-  { id: "sifon", label: "Functioneert de condensaatafvoer? Zijn beide sifons gevuld?", verplicht: true },
-  { id: "plaat", label: "Is de schoorsteenplaat aanwezig met de juiste gegevens?", verplicht: true },
-  { id: "melder", label: "Is er een CO-melder geplaatst in de opstellingsruimte?", verplicht: true },
-  { id: "kleur", label: "De kleur van de leiding beoordelen", verplicht: false },
-  { id: "cvdruk", label: "De cv-druk bij de buren controleren", verplicht: false },
+// Oplevering via klik-op-locatie: de speler loopt de installatie langs.
+// Per hotspot kiest hij wat je daar controleert; op 2 plekken is het juiste
+// antwoord dat er niets te controleren valt. Posities in de 280x400-viewBox.
+const HOTSPOTS = [
+  {
+    id: "typeplaat", x: 48, y: 141, echt: true, naam: "Typeplaat op het toestel",
+    opties: ["Past het toesteltype (C43) bij dit CLV-systeem?", "Hangt de typeplaat recht?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "Op de typeplaat staat de toestelcode. Die moet passen bij dit CLV-systeem.",
+  },
+  {
+    id: "klep", x: 118, y: 70, echt: true, naam: "Rookgasafvoerleiding",
+    opties: ["Is de terugslagklep aanwezig en gemonteerd (bij overdruk)?", "Wordt de leiding warm genoeg?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "Bij overdruk-CLV is de terugslagklep verplicht (voorschriften C(10), bijlage D).",
+  },
+  {
+    id: "luik", x: 160, y: 256, echt: true, naam: "Schachtwand onderin",
+    opties: ["Is het inspectieluik min. 50x50 cm en bereikbaar?", "Zit het luik goed op slot?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "Min. 50x50 cm en max. 50 cm van het systeem (NPR 3378-40, art. 5.1.5).",
+  },
+  {
+    id: "sifon", x: 228, y: 338, echt: true, naam: "Condensafvoer",
+    opties: ["Werkt de afvoer en zijn beide sifons gevuld?", "Zijn de sifons leeg en droog?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "Beide sifons gevuld met water. Anders komt er rookgas of rioolgas door.",
+  },
+  {
+    id: "plaat", x: 125, y: 257, echt: true, naam: "Plaat bij het inspectieluik",
+    opties: ["Is de schoorsteenplaat aanwezig met de juiste gegevens?", "Is de plaat mooi gepoetst?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "De schoorsteenplaat vermeldt de gegevens van het systeem en de installateur (C(10), art. 7.2).",
+  },
+  {
+    id: "melder", x: 50, y: 30, echt: true, naam: "Plafond van de opstellingsruimte",
+    opties: ["Hangt er een CO-melder in de opstellingsruimte?", "Hangt er een lamp met genoeg licht?", "Hier hoef je niets te controleren"],
+    correct: 0,
+    uitleg: "Een CO-melder waarschuwt als er toch koolmonoxide vrijkomt.",
+  },
+  {
+    id: "loosleiding", x: 46, y: 94, echt: false, naam: "De leiding zelf",
+    opties: ["De kleur van de leiding beoordelen", "De leiding opnieuw verven", "Hier hoef je bij de oplevering niets te controleren"],
+    correct: 2,
+    uitleg: "De kleur van de leiding zegt niets. Dit hoort niet bij de oplevering.",
+  },
+  {
+    id: "loosvlam", x: 60, y: 185, echt: false, naam: "De brander in het toestel",
+    opties: ["De cv-druk bij de buren controleren", "De brander alvast bijstellen", "Hier hoef je bij de oplevering niets te controleren"],
+    correct: 2,
+    uitleg: "De brander en de buren horen niet bij de oplevering van het CLV-systeem.",
+  },
 ];
 
-function ControleSVG({ checked, running }) {
+function ControleSVG({ checked, running, onderhoudStap = 0 }) {
   const hl = (id) => (checked.includes(id) ? C.green : C.brownText);
   const fillOk = (id) => (checked.includes(id) ? C.greenLight : "white");
   const flow = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
-
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
+  // onderhoudsbeurt: de tekening bouwt mee met de gesleepte stappen
+  const s = onderhoudStap;
+  const luikOpen = s >= 1 && s < 6;
+  const dekselsOpen = s >= 2 && s < 5;
+  const dekselsZichtbaar = s >= 2;
+  const reinigen = s === 4;
 
   return (
     <svg viewBox="0 0 280 400" className="w-full h-auto select-none">
@@ -1262,10 +1310,68 @@ function ControleSVG({ checked, running }) {
       <circle cx="60" cy="185" r="11" fill="none" stroke={running ? C.red : C.beigeMid} strokeWidth="2" />
       {running && <path d="M55 188 q5 -12 10 0 q-5 7 -10 0" fill={C.red} opacity="0.8" />}
 
-      {/* bouwkundig inspectieluik in de schachtwand */}
-      <rect x="152" y="240" width="16" height="32" fill={fillOk("luik")} stroke={hl("luik")} strokeWidth={checked.includes("luik") ? 3 : 2} />
-      <line x1="155" y1="246" x2="165" y2="246" stroke={hl("luik")} strokeWidth="1.5" />
-      <line x1="155" y1="266" x2="165" y2="266" stroke={hl("luik")} strokeWidth="1.5" />
+      {/* bouwkundig inspectieluik in de schachtwand (opent tijdens de onderhoudsbeurt) */}
+      {luikOpen ? (
+        <>
+          <rect x="152" y="240" width="16" height="32" fill="#3B1E0A" stroke={C.brownText} strokeWidth="2" />
+          <g transform="rotate(-70 152 240)">
+            <rect x="152" y="240" width="6" height="32" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+          </g>
+        </>
+      ) : (
+        <>
+          <rect x="152" y="240" width="16" height="32" fill={fillOk("luik")} stroke={hl("luik")} strokeWidth={checked.includes("luik") ? 3 : 2} />
+          <line x1="155" y1="246" x2="165" y2="246" stroke={hl("luik")} strokeWidth="1.5" />
+          <line x1="155" y1="266" x2="165" y2="266" stroke={hl("luik")} strokeWidth="1.5" />
+          {s >= 6 && (
+            <>
+              <circle cx="146" cy="238" r="7" fill={C.green} />
+              <path d="M143 238 L145.5 240.5 L149.5 236" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          )}
+        </>
+      )}
+
+      {/* inspectiedeksels van lucht- en rookgaskanaal (alleen tijdens de onderhoudsbeurt) */}
+      {dekselsZichtbaar && (
+        <g>
+          {[
+            { x: 168, y: 284 },
+            { x: 184, y: 284 },
+          ].map(({ x, y }, i) =>
+            dekselsOpen ? (
+              <g key={i}>
+                <rect x={x} y={y} width="11" height="9" fill="#3B1E0A" stroke={C.brownText} strokeWidth="1.3" />
+                <rect x={x - 6} y={y - 7} width="11" height="6" fill="white" stroke={C.brownText} strokeWidth="1.2" transform={`rotate(-25 ${x} ${y})`} />
+              </g>
+            ) : (
+              <g key={i}>
+                <rect x={x} y={y} width="11" height="9" fill="white" stroke={C.green} strokeWidth="1.5" />
+                <path d={`M${x + 2.5} ${y + 4.5} L${x + 4.5} ${y + 6.5} L${x + 8.5} ${y + 2.5}`} fill="none" stroke={C.green} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </g>
+            )
+          )}
+        </g>
+      )}
+
+      {/* reinigen: borstel in het rookgaskanaal */}
+      {reinigen && (
+        <g>
+          <line x1="188" y1="215" x2="188" y2="258" stroke={C.brown} strokeWidth="2.5" strokeLinecap="round" />
+          <rect x="182" y="258" width="12" height="16" rx="3" fill={C.olive} stroke={C.oliveDark} strokeWidth="1.5" />
+          {[262, 267, 272].map((y) => (
+            <line key={y} x1="183" y1={y} x2="193" y2={y} stroke="white" strokeWidth="1" opacity="0.7" />
+          ))}
+          <g stroke={C.olive} strokeWidth="1.4" strokeLinecap="round" style={{ animation: "pulseGlow 1s ease-in-out infinite" }}>
+            <path d="M176 240 l4 4 M180 240 l-4 4" />
+            <path d="M198 250 l4 4 M202 250 l-4 4" />
+            <path d="M177 290 l4 4 M181 290 l-4 4" />
+          </g>
+        </g>
+      )}
+
+      {/* typeplaat-controle: gele gloed op de schoorsteenplaat */}
+      {s === 3 && <rect x="100" y="242" width="50" height="30" fill="#FBBF24" opacity="0.3" rx="4" />}
 
       {/* condensafvoer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
       <path d="M188 316 V320 H206" fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -1276,9 +1382,21 @@ function ControleSVG({ checked, running }) {
   );
 }
 
+function schudDrie() {
+  const mix = [0, 1, 2];
+  for (let i = mix.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [mix[i], mix[j]] = [mix[j], mix[i]];
+  }
+  return mix;
+}
+
 function Ronde3({ addScore, onDone }) {
   const [gestart, setGestart] = useState(false);
-  const [checked, setChecked] = useState([]); // ids in 'gecontroleerd'
+  const [klaarHotspots, setKlaarHotspots] = useState([]); // afgeronde hotspot-ids
+  const [actief, setActief] = useState(null); // geopende hotspot-id
+  const [optieMix, setOptieMix] = useState([0, 1, 2]);
+  const [gekozen, setGekozen] = useState(null); // gekozen optie-positie (fout blijft staan)
   const [hint, setHint] = useState(null);
   const [running, setRunning] = useState(false);
   const [fase, setFase] = useState("oplever"); // oplever -> onderhoud
@@ -1287,37 +1405,44 @@ function Ronde3({ addScore, onDone }) {
   const gratisFoutOplever = useEersteFoutVrij();
   const gratisFoutStap = useEersteFoutVrij();
 
-  const verplichteIds = CONTROLEPUNTEN.filter((p) => p.verplicht).map((p) => p.id);
-  const alleVerplicht = verplichteIds.every((id) => checked.includes(id));
+  // groen laten oplichten in de tekening: alleen de echte controlepunten
+  const checked = klaarHotspots.filter((id) => HOTSPOTS.find((h) => h.id === id)?.echt);
+  const alleGecheckt = klaarHotspots.length === HOTSPOTS.length;
   const onderhoudKlaar = gedaan.length === ONDERHOUD_STAPPEN.length;
+  const hotspot = actief ? HOTSPOTS.find((h) => h.id === actief) : null;
 
-  const dropControle = (payload, point) => {
-    const punt = CONTROLEPUNTEN.find((p) => p.id === payload);
-    if (!punt || checked.includes(punt.id)) return undefined;
-    if (punt.verplicht) {
-      const next = [...checked, punt.id];
-      setChecked(next);
-      addScore(5, point);
+  const openHotspot = (id) => {
+    if (klaarHotspots.includes(id)) return;
+    setActief(id);
+    setGekozen(null);
+    setHint(null);
+    setOptieMix(schudDrie()); // opties schudden bij openen
+  };
+
+  const kiesOptie = (pos) => {
+    if (!hotspot || gekozen === pos) return;
+    setGekozen(pos);
+    if (optieMix[pos] === hotspot.correct) {
+      playSound("correct");
+      addScore(5);
+      setKlaarHotspots((prev) => [...prev, hotspot.id]);
       setHint(null);
-      playSound("drop");
-      // laatste verplichte punt binnen: afleiders die correct zijn blijven staan leveren +5 op
-      if (verplichteIds.every((id) => next.includes(id))) {
-        const overgebleven = CONTROLEPUNTEN.filter((p) => !p.verplicht && !next.includes(p.id));
-        if (overgebleven.length > 0) {
-          setTimeout(() => addScore(overgebleven.length * 5), 600);
-        }
+      setTimeout(() => {
+        setActief(null);
+        setGekozen(null);
+      }, 700);
+    } else {
+      const uitleg = hotspot.uitleg;
+      if (gratisFoutOplever()) {
+        playSound("wrong");
+        setHint(`${uitleg} (deze eerste misser telt niet mee — kies opnieuw)`);
+      } else {
+        playSound("wrong");
+        addScore(-5);
+        setHint(`${uitleg} Kies opnieuw.`);
       }
-      return "correct";
+      setTimeout(() => setGekozen(null), 700);
     }
-    const uitleg = `"${punt.label}" hoort niet bij de verplichte controles van een CLV-systeem. Laat dit punt staan.`;
-    if (gratisFoutOplever()) {
-      playSound("wrong");
-      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
-      return "wrong";
-    }
-    addScore(-5, point);
-    setHint(uitleg);
-    return "wrong";
   };
 
   const startToestel = () => {
@@ -1360,15 +1485,12 @@ function Ronde3({ addScore, onDone }) {
         onStart={() => setGestart(true)}
       >
         <UitlegItem term="Opleveren">
-          check de vaste punten: typeplaat, terugslagklep, inspectieluik, sifons gevuld, schoorsteenplaat en een CO-melder.
+          loop de installatie langs. Tik op de stippen in de tekening en kies wat je daar controleert.
         </UitlegItem>
-        <UitlegItem term="Let op">sommige punten op het formulier horen er niet bij. Die laat je staan.</UitlegItem>
+        <UitlegItem term="Let op">op sommige plekken hoef je niets te controleren. Trap er niet in.</UitlegItem>
         <UitlegItem term="Onderhoud">
           open van buiten naar binnen, controleer en reinig, sluit daarna alles weer af. In die volgorde.
         </UitlegItem>
-        <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
-          Eerst het opleverformulier. Daarna in bedrijf stellen en de onderhoudsbeurt.
-        </p>
       </RondeIntro>
     );
   }
@@ -1381,68 +1503,78 @@ function Ronde3({ addScore, onDone }) {
       </h2>
       <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>
         {fase === "oplever"
-          ? "Werk het opleverformulier af: sleep elk verplicht controlepunt naar ‘Gecontroleerd’. Pas op — er zitten punten tussen die er niet bij horen!"
-          : "Het toestel draait! Nu de onderhoudsbeurt van het CLV-systeem zelf: sleep de onderhoudsvoorschriften in de juiste volgorde naar het stappenplan."}
+          ? "Loop de installatie langs: tik op elke stip en kies wat je daar controleert."
+          : "Het toestel draait! Nu de onderhoudsbeurt van het CLV-systeem zelf: sleep de onderhoudsvoorschriften in de juiste volgorde naar het stappenplan. Kijk mee in de tekening."}
       </p>
 
       <div className="flex flex-col md:flex-row gap-4 w-full max-w-3xl items-start">
         {fase === "oplever" ? (
-          /* opleverformulier */
+          /* oplevering: vraagpanel naast de tekening */
           <div className="flex-1 w-full">
             <div className="rounded-2xl border-2 p-3 mb-3" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
               <div className="flex items-center gap-2 mb-2">
                 <ClipboardCheck className="w-4 h-4" style={{ color: C.olive }} />
                 <span className="font-bold italic text-sm" style={{ color: C.brownText }}>
-                  Opleverformulier — te controleren
+                  Oplevering — {klaarHotspots.length}/{HOTSPOTS.length} locaties gecheckt
                 </span>
               </div>
-              <div className="flex flex-col gap-1.5">
-                {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).map((p) => (
-                  <Draggable key={p.id} payload={p.id} ghost={<DragCard label={p.label} small />}>
-                    <div
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 bg-white"
-                      style={{ borderColor: C.beigeMid, color: C.brownText }}
-                    >
-                      {p.label}
-                    </div>
-                  </Draggable>
-                ))}
-                {CONTROLEPUNTEN.filter((p) => !checked.includes(p.id)).length === 0 && (
-                  <span className="text-xs italic" style={{ color: C.brown }}>
-                    (leeg)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <DropTarget id="gecontroleerd" onDropItem={dropControle}>
-              {({ isHover, flash }) => (
-                <div
-                  className="rounded-2xl border-2 p-3 min-h-[110px] transition-colors"
-                  style={{
-                    borderStyle: "dashed",
-                    borderColor: flash === "wrong" ? C.red : isHover ? C.olive : C.green,
-                    backgroundColor: flash === "wrong" ? C.redLight : isHover ? C.oliveLight : C.greenLight,
-                  }}
-                >
-                  <span className="font-bold italic text-sm" style={{ color: C.green }}>
-                    Gecontroleerd ✓ ({checked.length}/6)
-                  </span>
-                  <div className="flex flex-col gap-1.5 mt-2">
-                    {CONTROLEPUNTEN.filter((p) => checked.includes(p.id)).map((p) => (
-                      <div
-                        key={p.id}
-                        className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border-2 flex items-center gap-1.5"
-                        style={{ backgroundColor: "white", borderColor: C.green, color: C.green }}
+              {!hotspot ? (
+                <p className="text-xs italic" style={{ color: C.brown }}>
+                  {alleGecheckt
+                    ? "Alle locaties gecheckt. Stel het toestel in bedrijf!"
+                    : "Tik op een pulserende stip in de tekening om die plek te controleren."}
+                </p>
+              ) : (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: C.olive }}>
+                    {hotspot.naam}
+                  </p>
+                  <p className="text-sm font-bold italic mb-2" style={{ color: C.brownText }}>
+                    Wat doe je hier?
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {optieMix.map((optIdx, pos) => (
+                      <button
+                        key={pos}
+                        onClick={() => kiesOptie(pos)}
+                        className="text-left px-3 py-2 rounded-xl border-2 text-xs font-medium transition-all"
+                        style={{
+                          backgroundColor:
+                            gekozen === pos
+                              ? optIdx === hotspot.correct
+                                ? C.greenLight
+                                : C.redLight
+                              : "white",
+                          borderColor:
+                            gekozen === pos ? (optIdx === hotspot.correct ? C.green : C.red) : C.beigeMid,
+                          color: C.brownText,
+                        }}
                       >
-                        <CheckCircle className="w-3 h-3 shrink-0" />
-                        {p.label}
-                      </div>
+                        {hotspot.opties[optIdx]}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
-            </DropTarget>
+            </div>
+            {/* afgeronde punten */}
+            {klaarHotspots.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {klaarHotspots.map((id) => {
+                  const h = HOTSPOTS.find((x) => x.id === id);
+                  return (
+                    <span
+                      key={id}
+                      className="rounded-lg px-2 py-1 text-[10px] font-semibold border flex items-center gap-1"
+                      style={{ backgroundColor: C.greenLight, borderColor: C.green, color: C.green }}
+                    >
+                      <CheckCircle className="w-3 h-3" />
+                      {h?.naam}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           /* onderhoudsbeurt: stappenplan in de juiste volgorde */
@@ -1512,9 +1644,39 @@ function Ronde3({ addScore, onDone }) {
           </div>
         )}
 
-        {/* tekening */}
-        <div className="w-full md:w-[240px] shrink-0">
-          <ControleSVG checked={checked} running={running} />
+        {/* tekening (met hotspots tijdens de oplevering) */}
+        <div className="w-full max-w-[280px] mx-auto md:w-[260px] shrink-0 relative">
+          <ControleSVG checked={checked} running={running} onderhoudStap={fase === "onderhoud" ? gedaan.length : 0} />
+          {fase === "oplever" &&
+            HOTSPOTS.map((h) => {
+              const klaar = klaarHotspots.includes(h.id);
+              const isActief = actief === h.id;
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => openHotspot(h.id)}
+                  className="absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${(h.x / 280) * 100}%`, top: `${(h.y / 400) * 100}%`, width: 26, height: 26 }}
+                  aria-label={h.naam}
+                >
+                  {!klaar && (
+                    <span
+                      className="absolute inset-0 rounded-full animate-ping"
+                      style={{ backgroundColor: isActief ? C.olive : C.red, opacity: 0.35 }}
+                    />
+                  )}
+                  <span
+                    className="absolute inset-1 rounded-full border-2 flex items-center justify-center text-[11px] font-bold text-white"
+                    style={{
+                      backgroundColor: klaar ? C.green : isActief ? C.olive : C.red,
+                      borderColor: "white",
+                    }}
+                  >
+                    {klaar ? "✓" : "?"}
+                  </span>
+                </button>
+              );
+            })}
         </div>
       </div>
 
@@ -1531,7 +1693,7 @@ function Ronde3({ addScore, onDone }) {
               Het toestel start op... rookgasafvoer loopt — alles in orde!
             </p>
           ) : (
-            <GameButton onClick={startToestel} disabled={!alleVerplicht} variant="green">
+            <GameButton onClick={startToestel} disabled={!alleGecheckt} variant="green">
               <Power className="w-4 h-4" />
               Toestel in bedrijf stellen
             </GameButton>
