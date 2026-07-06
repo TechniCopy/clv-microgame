@@ -7,7 +7,7 @@ import CLVMonteurGame from "./CLVMonteurGame.jsx";
 const STORAGE_KEY = "clv_game1_voltooid";
 
 // Alle schermen per game, voor het Ctrl-D controlemenu
-const DEV_SCREENS = [
+const DEV_SCREENS_BASIS = [
   { id: "start", label: "Startscherm" },
   { id: "intro", label: "Missie-intro" },
   { id: "r1", label: "Ronde 1 — interactie" },
@@ -18,6 +18,15 @@ const DEV_SCREENS = [
   { id: "r3mc", label: "Ronde 3 — MC-controle" },
   { id: "end", label: "Eindscherm" },
 ];
+
+const DEV_SCREENS = {
+  verkenner: [
+    ...DEV_SCREENS_BASIS.slice(0, 2),
+    { id: "r0", label: "Training — de drie systemen" },
+    ...DEV_SCREENS_BASIS.slice(2),
+  ],
+  monteur: DEV_SCREENS_BASIS,
+};
 
 function DevMenu({ onJump, onClose }) {
   return (
@@ -45,7 +54,7 @@ function DevMenu({ onJump, onClose }) {
                 {titel}
               </div>
               <div className="flex flex-col gap-1">
-                {DEV_SCREENS.map((s) => (
+                {DEV_SCREENS[game].map((s) => (
                   <button
                     key={s.id}
                     onClick={() => onJump(game, s.id)}

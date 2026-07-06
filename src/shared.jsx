@@ -809,13 +809,13 @@ export function EndScreen({ score, maxScore, lives, text, onRestart, onExit, exi
   );
 }
 
-// ─── STAP-BANNER (UITLEG / INTERACTIE / MC-CONTROLE) ───
+// ─── STAP-BANNER (TRAINEN / DOEN / CONTROLE) ───
 
 export function StepBanner({ step }) {
   const map = {
-    0: { txt: "Uitleg vooraf", bg: C.beigeLight, border: C.brown, color: C.brown },
-    1: { txt: "Stap 1 — Interactie", bg: C.oliveLight, border: C.olive, color: C.oliveDark },
-    2: { txt: "Stap 2 — Controle", bg: "#FFF0D6", border: C.brown, color: C.brown },
+    0: { txt: "Trainen", bg: C.beigeLight, border: C.brown, color: C.brown },
+    1: { txt: "Doen", bg: C.oliveLight, border: C.olive, color: C.oliveDark },
+    2: { txt: "Controle", bg: "#FFF0D6", border: C.brown, color: C.brown },
   };
   const s = map[step] ?? map[1];
   return (
@@ -867,6 +867,126 @@ export function UitlegItem({ term, children }) {
         {term && children ? " — " : ""}
         {children}
       </p>
+    </div>
+  );
+}
+
+// ─── TRAINOEFENING (actief leren vooraf) ───
+//
+// Korte, veilige oefening voor de echte opdracht: geen punten, geen levens.
+// De speler krijgt per item een omschrijving of vraag en kiest het antwoord.
+// Een fout item komt later in de reeks terug tot het goed beantwoord is.
+// items: [{ vraag, opties: [..], correct: index, uitleg }]
+
+function schud(n) {
+  const a = Array.from({ length: n }, (_, i) => i);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function TrainOefening({ titel, intro, items, onKlaar, buttonText = "Naar de opdracht" }) {
+  const [queue, setQueue] = useState(() => schud(items.length));
+  const [goed, setGoed] = useState([]); // item-indices die goed beantwoord zijn
+  const [mix, setMix] = useState(() => schud(items[0] ? items[0].opties.length : 0));
+  const [selected, setSelected] = useState(null);
+
+  const klaar = queue.length === 0;
+  const item = klaar ? null : items[queue[0]];
+  const checked = selected !== null;
+  const correctPos = item ? mix.indexOf(item.correct) : -1;
+  const isCorrect = selected === correctPos;
+
+  const kies = (i) => {
+    if (checked) return;
+    setSelected(i);
+    playSound(i === correctPos ? "correct" : "wrong");
+  };
+
+  const volgende = () => {
+    const [huidig, ...rest] = queue;
+    // goed: item is klaar; fout: item komt achteraan terug
+    const nieuw = isCorrect ? rest : [...rest, huidig];
+    if (isCorrect && !goed.includes(huidig)) setGoed((prev) => [...prev, huidig]);
+    setQueue(nieuw);
+    setSelected(null);
+    if (nieuw.length > 0) setMix(schud(items[nieuw[0]].opties.length));
+  };
+
+  return (
+    <div className="flex-1 flex flex-col items-center p-6">
+      <StepBanner step={0} />
+      {titel && (
+        <h2 className="text-xl font-bold italic mb-1 text-center" style={{ color: C.brownText }}>{titel}</h2>
+      )}
+      {intro && (
+        <p className="text-sm mb-4 max-w-lg text-center font-medium" style={{ color: C.brown }}>{intro}</p>
+      )}
+
+      {!klaar ? (
+        <div className="border-2 rounded-2xl p-6 max-w-xl w-full shadow-md" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>
+              Oefenen — geen punten, geen levens
+            </span>
+            <span className="text-xs font-bold" style={{ color: C.brown }}>
+              {goed.length}/{items.length} goed
+            </span>
+          </div>
+          <h3 className="font-bold mb-4 text-sm italic" style={{ color: C.brownText }}>{item.vraag}</h3>
+          <div className="flex flex-col gap-2 mb-2">
+            {mix.map((optIdx, pos) => (
+              <button
+                key={pos}
+                onClick={() => kies(pos)}
+                className="text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all"
+                style={{
+                  backgroundColor:
+                    checked && pos === correctPos
+                      ? C.greenLight
+                      : checked && selected === pos
+                      ? C.redLight
+                      : C.bgCard,
+                  borderColor:
+                    checked && pos === correctPos
+                      ? C.green
+                      : checked && selected === pos
+                      ? C.red
+                      : C.beigeMid,
+                  color: C.brownText,
+                }}
+              >
+                {item.opties[optIdx]}
+              </button>
+            ))}
+          </div>
+          {checked && (
+            <div className="mt-2">
+              <p className="text-sm mb-3 italic font-medium" style={{ color: isCorrect ? C.green : C.red }}>
+                {isCorrect ? `Klopt! ${item.uitleg ?? ""}` : `${item.uitleg ?? ""} Deze komt zo nog een keer terug.`}
+              </p>
+              <GameButton onClick={volgende} variant={isCorrect ? "green" : "danger"} className="w-full">
+                Volgende
+              </GameButton>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-4">
+          <div className="border-2 rounded-2xl p-6 max-w-md w-full text-center" style={{ backgroundColor: C.greenLight, borderColor: C.green }}>
+            <CheckCircle className="w-10 h-10 mx-auto mb-2" style={{ color: C.green }} />
+            <p className="text-sm font-bold" style={{ color: C.green }}>
+              Training klaar — nu ga je het toepassen. Vanaf hier tellen de punten!
+            </p>
+          </div>
+          <GameButton onClick={onKlaar} variant="green">
+            {buttonText}
+            <ArrowRight className="w-4 h-4" />
+          </GameButton>
+        </div>
+      )}
     </div>
   );
 }
