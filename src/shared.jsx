@@ -813,6 +813,7 @@ export function EndScreen({ score, maxScore, lives, text, onRestart, onExit, exi
 
 export function StepBanner({ step }) {
   const map = {
+    intro: { txt: "Vooraf", bg: C.beigeLight, border: C.beigeMid, color: C.brown },
     0: { txt: "Trainen", bg: C.beigeLight, border: C.brown, color: C.brown },
     1: { txt: "Doen", bg: C.oliveLight, border: C.olive, color: C.oliveDark },
     2: { txt: "Controle", bg: "#FFF0D6", border: C.brown, color: C.brown },
@@ -836,7 +837,7 @@ export function StepBanner({ step }) {
 export function RondeIntro({ title, intro, children, onStart, buttonText = "Aan de slag" }) {
   return (
     <div className="flex-1 flex flex-col items-center p-6">
-      <StepBanner step={0} />
+      <StepBanner step="intro" />
       <h2 className="text-xl font-bold italic mb-1 text-center" style={{ color: C.brownText }}>{title}</h2>
       {intro && (
         <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>

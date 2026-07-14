@@ -608,7 +608,14 @@ function ToestelVisual() {
 // ─── RONDE 2: HET TOESTEL AANSLUITEN ───
 
 const MATERIALEN = [
-  { id: "rvs", label: "RVS", kleur: "#B7BfC4", correct: true },
+  { id: "rvs", label: "RVS — zelfde merk", kleur: "#B7BfC4", correct: true },
+  {
+    id: "rvsB",
+    label: "RVS — ander merk",
+    kleur: "#B7BfC4",
+    correct: false,
+    uitleg: "Wel RVS, maar een ander merk mag niet: afdichtingsringen en maten verschillen net, met lekkage als risico. Gebruik altijd onderdelen van dezelfde fabrikant.",
+  },
   { id: "kunststof", label: "Kunststof", kleur: "#E8E3D8", correct: false },
   { id: "aluminium", label: "Aluminium", kleur: "#8E9AA3", correct: false },
 ];
@@ -618,7 +625,8 @@ function LeidingKaart({ mat }) {
     <div className="flex flex-col items-center select-none">
       <svg width="90" height="30" viewBox="0 0 90 30">
         <rect x="4" y="9" width="82" height="12" rx="6" fill={mat.kleur} stroke={C.brownText} strokeWidth="2" />
-        {mat.id === "rvs" && <line x1="10" y1="13" x2="80" y2="13" stroke="white" strokeWidth="2" opacity="0.7" />}
+        {mat.id.startsWith("rvs") && <line x1="10" y1="13" x2="80" y2="13" stroke="white" strokeWidth="2" opacity="0.7" />}
+        {mat.id === "rvsB" && <circle cx="45" cy="15" r="4" fill="none" stroke={C.brownText} strokeWidth="1.3" />}
         {mat.id === "kunststof" && <line x1="10" y1="15" x2="80" y2="15" stroke="#C96" strokeWidth="2" opacity="0.6" />}
       </svg>
       <span className="text-[10px] font-bold" style={{ color: C.brownText }}>{mat.label}</span>
@@ -666,7 +674,8 @@ function DrukSchuif({ modus, onChange }) {
   );
 }
 
-function DrukSysteemSVG({ modus, aangesloten = true }) {
+// labels=false verbergt de benoemende teksten (tijdens de mini-opdracht, anders zijn ze de antwoordsleutel)
+function DrukSysteemSVG({ modus, aangesloten = true, labels = true }) {
   const over = modus === "overdruk";
   const flowUp = { strokeDasharray: "8 6", animation: `flowDash ${over ? "0.45s" : "1.1s"} linear infinite` };
   const flowDown = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
@@ -757,7 +766,7 @@ function DrukSysteemSVG({ modus, aangesloten = true }) {
         <g>
           <circle cx="240" cy="110" r="9" fill={C.greenLight} stroke={C.green} strokeWidth="2.5" />
           <line x1="235" y1="115" x2="245" y2="105" stroke={C.green} strokeWidth="2.5" />
-          <text x="240" y="92" fontSize="8.5" fontWeight="700" fill={C.green} textAnchor="middle">terugslagklep verplicht</text>
+          {labels && <text x="240" y="92" fontSize="8.5" fontWeight="700" fill={C.green} textAnchor="middle">terugslagklep verplicht</text>}
         </g>
       )}
 
@@ -821,8 +830,12 @@ function DrukSysteemSVG({ modus, aangesloten = true }) {
             <path d="M466 346 H492 V392" />
           </g>
           <DrainageTrein x={436} y={342} s={0.78} stroke={C.brownText} strokeWidth={3.1} riool={false} />
-          <text x="466" y="333" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">2 sifons in serie</text>
-          <text x="466" y="342" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">+ open verbinding</text>
+          {labels && (
+            <>
+              <text x="466" y="333" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">2 sifons in serie</text>
+              <text x="466" y="342" fontSize="7.5" fontWeight="600" fill={C.brown} textAnchor="middle">+ open verbinding</text>
+            </>
+          )}
         </>
       ) : (
         <>
@@ -837,15 +850,19 @@ function DrukSysteemSVG({ modus, aangesloten = true }) {
             <path d={uTrap(446, 347, 17, 22)} />
             <path d="M463 347 V392" />
           </g>
-          <text x="382" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">condens-</text>
-          <text x="382" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
-          <text x="460" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">regenwater-</text>
-          <text x="460" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
+          {labels && (
+            <>
+              <text x="382" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">condens-</text>
+              <text x="382" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
+              <text x="460" y="336" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">regenwater-</text>
+              <text x="460" y="345" fontSize="8" fontWeight="700" fill={C.brownText} textAnchor="middle">sifon</text>
+            </>
+          )}
         </>
       )}
 
       {/* max 2 toestellen per verdieping (alleen overdruk, C(10)-voorschriften hfst. 8) */}
-      {over && (
+      {over && labels && (
         <text x="20" y="60" fontSize="9" fontWeight="700" fill={C.brownText}>
           max. 2 toestellen per verdieping
         </text>
@@ -861,6 +878,7 @@ function Ronde2({ addScore, onDone }) {
   const [hint, setHint] = useState(null);
   const [modus, setModus] = useState("onderdruk");
   const [seen, setSeen] = useState({ onderdruk: true, overdruk: false });
+  const [opdracht, setOpdracht] = useState(false); // mini-opdracht gestart: labels en spiekbrief verdwijnen
   const [placed, setPlaced] = useState({});
   const gratisFout = useEersteFoutVrij();
 
@@ -881,7 +899,7 @@ function Ronde2({ addScore, onDone }) {
       setTimeout(() => setStap(1), 1800);
       return "correct";
     }
-    const uitleg = `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`;
+    const uitleg = mat.uitleg ?? `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`;
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee)`);
@@ -964,6 +982,7 @@ function Ronde2({ addScore, onDone }) {
         onStart={() => setGestart(true)}
       >
         <UitlegItem term="Materiaal">RVS-systeem? Dan ook een RVS-leiding. Anders gaat het roesten (galvanische corrosie).</UitlegItem>
+        <UitlegItem term="Merk">alles van dezelfde fabrikant. Afdichtingen en maten van een ander merk passen net niet — lekkage.</UitlegItem>
         <UitlegItem term="Onderdruk (VR)">natuurlijke trek: warm rookgas stijgt vanzelf op. Dubbele sifon met open verbinding.</UitlegItem>
         <UitlegItem term="Overdruk (HR)">de ventilator duwt het rookgas door het kanaal. Daarom een terugslagklep verplicht.</UitlegItem>
         <p className="text-xs mt-3 italic" style={{ color: C.brown }}>
@@ -984,13 +1003,34 @@ function Ronde2({ addScore, onDone }) {
           ? aangesloten
             ? "De leiding zit erin — het toestel komt in bedrijf en de stromen starten!"
             : "Stap A: de rookgasleiding ontbreekt nog (stippellijn). Kies de juiste leiding. Let op: de schacht is van RVS!"
-          : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en de sifons."}
+          : opdracht
+            ? "Sorteer de eigenschappen. De schuif blijft werken — kijk goed naar de tekening."
+            : "Stap B: zet de schuif op ONDERDRUK en op OVERDRUK en kijk wat er verandert: de drukmeter, de kier in de wand, de terugslagklep en de sifons."}
       </p>
 
       {stap === 0 && (
         <>
           <div className="relative w-full" style={{ maxWidth: 520 }}>
             <DrukSysteemSVG modus="onderdruk" aangesloten={aangesloten} />
+            {!aangesloten && (
+              <DropTarget
+                id="leiding-gat-v"
+                onDropItem={dropMateriaal}
+                className="absolute"
+                style={{ left: `${(78 / 520) * 100}%`, top: `${(126 / 400) * 100}%`, width: `${(34 / 520) * 100}%`, height: `${(32 / 400) * 100}%` }}
+              >
+                {({ isHover, flash }) => (
+                  <div
+                    className="w-full h-full rounded-xl border-2 transition-colors"
+                    style={{
+                      borderStyle: "dashed",
+                      borderColor: flash === "wrong" ? C.red : isHover ? C.olive : "transparent",
+                      backgroundColor: flash === "wrong" ? "rgba(192,57,43,0.2)" : isHover ? "rgba(92,107,46,0.15)" : "transparent",
+                    }}
+                  />
+                )}
+              </DropTarget>
+            )}
             {!aangesloten && (
               <DropTarget
                 id="leiding-gat"
@@ -1043,34 +1083,39 @@ function Ronde2({ addScore, onDone }) {
               >
                 {modus === "onderdruk" ? "Concentrisch CLV met onderdruk (VR)" : "Concentrisch CLV met overdruk (HR)"}
               </div>
-              <DrukSysteemSVG modus={modus} />
+              <DrukSysteemSVG modus={modus} labels={!opdracht} />
             </div>
             <div className="flex flex-col gap-3 items-center lg:pt-14">
               <DrukSchuif modus={modus} onChange={handleModus} />
-              <ul className="text-xs max-w-[230px] flex flex-col gap-1.5 italic" style={{ color: C.brown }}>
-                {modus === "onderdruk" ? (
-                  <>
-                    <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
-                    <li>• Druk in het kanaal is lager dan in de luchttoevoer (NPR 3378-40)</li>
-                    <li>• Dubbele sifon in serie met open verbinding</li>
-                  </>
-                ) : (
-                  <>
-                    <li>• De ventilator van het toestel zet druk op het kanaal</li>
-                    <li>• Druk in het kanaal is hoger dan in de woning — terugslagklep verplicht</li>
-                    <li>• Aparte condens- en regenwatersifon per kanaal, max. 2 toestellen per verdieping</li>
-                  </>
-                )}
-              </ul>
+              {!opdracht && (
+                <ul className="text-xs max-w-[230px] flex flex-col gap-1.5 italic" style={{ color: C.brown }}>
+                  {modus === "onderdruk" ? (
+                    <>
+                      <li>• Natuurlijke trek: warme rookgassen stijgen vanzelf op</li>
+                      <li>• Druk in het kanaal is lager dan in de luchttoevoer (NPR 3378-40)</li>
+                      <li>• Dubbele sifon in serie met open verbinding</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• De ventilator van het toestel zet druk op het kanaal</li>
+                      <li>• Druk in het kanaal is hoger dan in de woning — terugslagklep verplicht</li>
+                      <li>• Aparte condens- en regenwatersifon per kanaal, max. 2 toestellen per verdieping</li>
+                    </>
+                  )}
+                </ul>
+              )}
               {!bothSeen && (
                 <p className="text-xs font-bold" style={{ color: C.olive }}>
                   Bekijk ook de andere stand →
                 </p>
               )}
+              {bothSeen && !opdracht && (
+                <GameButton onClick={() => setOpdracht(true)}>Naar de mini-opdracht</GameButton>
+              )}
             </div>
           </div>
 
-          {bothSeen && (
+          {opdracht && (
             <div className="w-full max-w-3xl mt-5">
               <div className="text-sm font-bold italic mb-2 text-center" style={{ color: C.brownText }}>
                 Mini-opdracht: sleep elke eigenschap naar het juiste systeem
@@ -1120,9 +1165,13 @@ const HOTSPOTS = [
   },
   {
     id: "klep", x: 118, y: 70, echt: true, naam: "Rookgasafvoerleiding",
-    opties: ["Is de terugslagklep aanwezig en gemonteerd (bij overdruk)?", "Wordt de leiding warm genoeg?", "Hier hoef je niets te controleren"],
+    opties: [
+      "Zit de leiding goed vast en is de verbinding luchtdicht?",
+      "Is de terugslagklep aanwezig en gemonteerd?",
+      "Hier hoef je niets te controleren",
+    ],
     correct: 0,
-    uitleg: "Bij overdruk-CLV is de terugslagklep verplicht (voorschriften C(10), bijlage D).",
+    uitleg: "De aansluiting controleer je altijd op dichtheid. Een terugslagklep is hier niet verplicht: die hoort bij overdruk, en dit C43-toestel werkt op onderdruk.",
   },
   {
     id: "luik", x: 160, y: 256, echt: true, naam: "Schachtwand onderin",
@@ -1137,10 +1186,10 @@ const HOTSPOTS = [
     uitleg: "Beide sifons gevuld met water. Anders komt er rookgas of rioolgas door.",
   },
   {
-    id: "plaat", x: 125, y: 257, echt: true, naam: "Plaat bij het inspectieluik",
+    id: "plaat", x: 97, y: 257, echt: true, naam: "Plaat bij het inspectieluik",
     opties: ["Is de schoorsteenplaat aanwezig met de juiste gegevens?", "Is de plaat mooi gepoetst?", "Hier hoef je niets te controleren"],
     correct: 0,
-    uitleg: "De schoorsteenplaat vermeldt de gegevens van het systeem en de installateur (C(10), art. 7.2).",
+    uitleg: "De schoorsteenplaat vermeldt de gegevens van het systeem en de installateur, en moet aanwezig en leesbaar zijn.",
   },
   {
     id: "melder", x: 50, y: 30, echt: true, naam: "Plafond van de opstellingsruimte",
@@ -1205,9 +1254,9 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
       )}
 
       {/* schoorsteenplaat: typeplaat nabij het inspectieluik (C(10)-voorschriften, 7.2) */}
-      <rect x="104" y="246" width="42" height="22" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
-      <line x1="110" y1="253" x2="140" y2="253" stroke={hl("plaat")} strokeWidth="1.5" />
-      <line x1="110" y1="260" x2="132" y2="260" stroke={hl("plaat")} strokeWidth="1.5" />
+      <rect x="76" y="246" width="42" height="22" fill={fillOk("plaat")} stroke={hl("plaat")} strokeWidth={checked.includes("plaat") ? 3 : 2} />
+      <line x1="82" y1="253" x2="112" y2="253" stroke={hl("plaat")} strokeWidth="1.5" />
+      <line x1="82" y1="260" x2="104" y2="260" stroke={hl("plaat")} strokeWidth="1.5" />
 
       {/* CO-melder in de opstellingsruimte */}
       <circle cx="50" cy="30" r="11" fill={fillOk("melder")} stroke={hl("melder")} strokeWidth={checked.includes("melder") ? 3 : 2} />
@@ -1223,9 +1272,8 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
       <path d="M170 92 H74 V112" fill="none" stroke="#B7BFC4" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round" />
       {running && <path d="M172 92 H74 V106" fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeLinecap="round" style={flowDown} />}
       <ellipse cx="170" cy="92" rx="3.5" ry="9" fill="white" stroke={C.brownText} strokeWidth="2" />
-      {/* terugslagklep in de rookgasafvoer */}
-      <circle cx="118" cy="70" r="8.5" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
-      <line x1="113" y1="75" x2="123" y2="65" stroke={hl("klep")} strokeWidth="2.5" />
+      {/* koppeling in de rookgasafvoerleiding (controlepunt: zit de verbinding goed dicht? geen terugslagklep — dit is onderdruk) */}
+      <rect x="111" y="62" width="14" height="16" rx="2" fill={fillOk("klep")} stroke={hl("klep")} strokeWidth={checked.includes("klep") ? 3 : 2} />
 
       {/* toestel met aparte stubs (rookgas links, lucht rechts) + typeplaat + vlam */}
       <rect x="38" y="108" width="16" height="12" fill="white" stroke={hl("typeplaat")} strokeWidth="2" />
@@ -1297,7 +1345,7 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
       )}
 
       {/* typeplaat-controle: gele gloed op de schoorsteenplaat */}
-      {s === 3 && <rect x="100" y="242" width="50" height="30" fill="#FBBF24" opacity="0.3" rx="4" />}
+      {s === 3 && <rect x="72" y="242" width="50" height="30" fill="#FBBF24" opacity="0.3" rx="4" />}
 
       {/* condensafvoer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
       <path d="M188 316 V320 H206" fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -1330,6 +1378,7 @@ function Ronde3({ addScore, onDone }) {
   const [kaarten] = useState(() => [...ONDERHOUD_STAPPEN].sort(() => Math.random() - 0.5));
   const gratisFoutOplever = useEersteFoutVrij();
   const gratisFoutStap = useEersteFoutVrij();
+  const sluitTimer = useRef(null); // pending sluit-timeout van een goed beantwoorde hotspot
 
   // groen laten oplichten in de tekening: alleen de echte controlepunten
   const checked = klaarHotspots.filter((id) => HOTSPOTS.find((h) => h.id === id)?.echt);
@@ -1339,6 +1388,7 @@ function Ronde3({ addScore, onDone }) {
 
   const openHotspot = (id) => {
     if (klaarHotspots.includes(id)) return;
+    clearTimeout(sluitTimer.current); // anders sluit de vorige hotspot deze meteen weer
     setActief(id);
     setGekozen(null);
     setHint(null);
@@ -1346,14 +1396,15 @@ function Ronde3({ addScore, onDone }) {
   };
 
   const kiesOptie = (pos) => {
-    if (!hotspot || gekozen === pos) return;
+    // al afgevinkt: klikken in het 700ms-sluitvenster mag niets meer doen
+    if (!hotspot || gekozen === pos || klaarHotspots.includes(hotspot.id)) return;
     setGekozen(pos);
     if (optieMix[pos] === hotspot.correct) {
       playSound("correct");
       addScore(5);
-      setKlaarHotspots((prev) => [...prev, hotspot.id]);
+      setKlaarHotspots((prev) => (prev.includes(hotspot.id) ? prev : [...prev, hotspot.id]));
       setHint(null);
-      setTimeout(() => {
+      sluitTimer.current = setTimeout(() => {
         setActief(null);
         setGekozen(null);
       }, 700);
@@ -1416,6 +1467,10 @@ function Ronde3({ addScore, onDone }) {
         <UitlegItem term="Let op">op sommige plekken hoef je niets te controleren. Trap er niet in.</UitlegItem>
         <UitlegItem term="Onderhoud">
           open van buiten naar binnen, controleer en reinig, sluit daarna alles weer af. In die volgorde.
+        </UitlegItem>
+        <UitlegItem term="Levensduur">
+          een CLV-systeem gaat circa 15 jaar mee. Daarna verouderen materiaal en afdichtingen: controleren, en bij
+          twijfel vervangen of een beheerplan opstellen.
         </UitlegItem>
       </RondeIntro>
     );
