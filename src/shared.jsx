@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { CheckCircle, XCircle, Star, ArrowRight, RotateCcw, Heart, Lightbulb, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle, XCircle, Star, ArrowRight, RotateCcw, Heart, Lightbulb, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 
 // ─── THEME COLORS (huisstijl Studium CLV-microgames) ───
 
@@ -19,6 +19,7 @@ export const C = {
   redLight: "#FDEAEA",
   beigeMid: "#D9CDB8",
   beigeLight: "#EFE7D6",
+  amber: "#B7791F",       // aandachtspunt op het eindscherm
 };
 
 // ─── SOUND EFFECTS (Web Audio API) ───
@@ -684,7 +685,7 @@ function pickAndShuffle(pool) {
   };
 }
 
-export function MCControle({ pool, addScore, loseLife, onComplete, lastRound = false }) {
+export function MCControle({ pool, addScore, loseLife, onComplete, onFout, lastRound = false }) {
   const [q] = useState(() => pickAndShuffle(pool));
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -700,6 +701,7 @@ export function MCControle({ pool, addScore, loseLife, onComplete, lastRound = f
       addScore(attempts === 0 ? 10 : 5);
     } else {
       loseLife();
+      onFout?.(q.aandacht);
     }
   };
 
@@ -772,13 +774,23 @@ export function MCControle({ pool, addScore, loseLife, onComplete, lastRound = f
 
 // ─── END SCREEN ───
 
-export function EndScreen({ score, maxScore, lives, text, onRestart, onExit, exitLabel = "Terug naar het menu" }) {
+export function EndScreen({
+  score,
+  maxScore,
+  lives,
+  text,
+  leermomenten = [],
+  aandacht = [],
+  onRestart,
+  onExit,
+  exitLabel = "Terug naar het menu",
+}) {
   const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
   let stars = pct >= 80 ? 3 : pct >= 60 ? 2 : 1;
   if (lives <= 1 && stars > 1) stars -= 1;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
+    <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8">
       <div className="flex gap-2">
         {[1, 2, 3].map((s) => (
           <Star
@@ -795,9 +807,48 @@ export function EndScreen({ score, maxScore, lives, text, onRestart, onExit, exi
           <Heart key={h} className="w-5 h-5" fill={h <= lives ? "#E74C3C" : "transparent"} stroke={h <= lives ? "#E74C3C" : "#B8A990"} />
         ))}
       </div>
-      <div className="border-2 rounded-2xl p-6 max-w-lg" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
-        <p className="text-sm text-center leading-relaxed" style={{ color: C.brownText }}>{text}</p>
-      </div>
+      <p className="text-sm text-center leading-relaxed max-w-md font-medium" style={{ color: C.brown }}>
+        {text}
+      </p>
+
+      {(leermomenten.length > 0 || aandacht.length > 0) && (
+        <div className="border-2 rounded-2xl p-5 max-w-lg w-full" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
+          {leermomenten.length > 0 && (
+            <>
+              <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: C.olive }}>
+                Belangrijkste leermomenten
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {leermomenten.map((l) => (
+                  <li key={l} className="flex items-start gap-2 text-sm leading-snug" style={{ color: C.brownText }}>
+                    <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: C.green }} />
+                    {l}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {aandacht.length > 0 && (
+            <>
+              <div
+                className={`text-xs font-bold uppercase tracking-wide mb-2 ${leermomenten.length > 0 ? "mt-4" : ""}`}
+                style={{ color: C.amber }}
+              >
+                Jouw aandachtspunten
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {aandacht.map((a) => (
+                  <li key={a} className="flex items-start gap-2 text-sm leading-snug" style={{ color: C.brownText }}>
+                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: C.amber }} />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-3 flex-wrap justify-center">
         <GameButton onClick={onRestart} variant="secondary">
           <RotateCcw className="w-4 h-4" />
@@ -1036,6 +1087,22 @@ export function useEersteFoutVrij() {
     }
     return false;
   }, []);
+}
+
+// ─── AANDACHTSPUNTEN VERZAMELEN ───
+//
+// Elke misser noteert 1 kort lesfeit. Op het eindscherm krijgt de cursist ze
+// terug als "Jouw aandachtspunten": persoonlijk, en precies de stof die hij
+// nog niet beheerste. Dubbele meldingen worden samengevoegd.
+
+export function useAandacht() {
+  const [aandacht, setAandacht] = useState([]);
+  const noteer = useCallback((tekst) => {
+    if (!tekst) return;
+    setAandacht((prev) => (prev.includes(tekst) ? prev : [...prev, tekst]));
+  }, []);
+  const reset = useCallback(() => setAandacht([]), []);
+  return { aandacht, noteer, reset };
 }
 
 // ─── ONDERKANT-DRAINAGE volgens NPR 3378-40/41 ───

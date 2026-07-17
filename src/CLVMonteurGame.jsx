@@ -16,6 +16,7 @@ import {
   RondeIntro,
   UitlegItem,
   useEersteFoutVrij,
+  useAandacht,
   DrainageTrein,
   playSound,
 } from "./shared.jsx";
@@ -36,6 +37,7 @@ const POOL_R1 = [
     correct: 0,
     feedbackCorrect: "Precies! Beide stompen direct afsluiten, anders kan rookgas van de buren de woning instromen. Deze waarschuwing staat ook verplicht op de typeplaat bij elke aansluiting (voorschriften CLV C(10)-toepassingen, hoofdstuk 7).",
     feedbackWrong: "Denk aan de animatie: de open stomp liet rookgas binnen. Altijd beide stompen direct afsluiten bij demontage.",
+    aandacht: "Bij demontage sluit je beide aansluitstompen direct af",
   },
   {
     question: "Waarom is rookgas-recirculatie levensgevaarlijk?",
@@ -48,6 +50,7 @@ const POOL_R1 = [
     correct: 0,
     feedbackCorrect: "Juist! Rookgas bevat koolmonoxide (CO) — en bij een onvolledige verbranding veel meer. Via recirculatie adem je dat giftige, reukloze gas in.",
     feedbackWrong: "De kern: rookgas bevat koolmonoxide (CO), zeker bij een onvolledige verbranding. Via recirculatie komt dat giftige gas de woning in.",
+    aandacht: "Recirculatie is levensgevaarlijk omdat rookgas koolmonoxide (CO) bevat",
   },
 ];
 
@@ -58,6 +61,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Correct! Bij overdruk-CLV is een terugslagklep verplicht, gekeurd samen met het toestel (voorschriften CLV C(10)-toepassingen, bijlage D).",
     feedbackWrong: "Bij overdruk-CLV is de rookgaskeerklep (terugslagklep) verplicht. Een TTB is iets anders: die meet temperatuur bij open toestellen.",
+    aandacht: "Bij overdruk-CLV is een terugslagklep in het toestel verplicht",
   },
   {
     question: "Je sluit een nieuw toestel aan op een bestaand inpandig RVS CLV-systeem. Met welk materiaal mag de verbindingsleiding worden gemaakt?",
@@ -65,6 +69,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Correct! Bij een RVS-systeem alleen RVS gebruiken — anders ontstaat galvanische corrosie en verschil in uitzetting.",
     feedbackWrong: "Op een bestaand RVS-systeem mag je geen ander materiaal combineren. Alleen RVS.",
+    aandacht: "Op een RVS-systeem hoort een RVS-leiding: ander materiaal geeft galvanische corrosie",
   },
   {
     question: "Wat is het verschil tussen een onderdruk- en een overdruk-CLV-systeem?",
@@ -77,6 +82,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Juist! Onderdruk (VR) werkt op natuurlijke trek (NPR 3378-40); bij overdruk (HR) duwt de ventilator het rookgas onder druk het kanaal in (voorschriften CLV C(10)-toepassingen).",
     feedbackWrong: "Denk aan de schuif: bij onderdruk stijgt het rookgas vanzelf (natuurlijke trek), bij overdruk zet de ventilator van het toestel druk op het kanaal.",
+    aandacht: "Onderdruk werkt op natuurlijke trek, bij overdruk zet de ventilator druk op het kanaal",
   },
   {
     question: "Waarom is bij een overdruk-CLV-systeem een terugslagklep in het toestel verplicht?",
@@ -89,6 +95,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Correct! Bij overdruk staat het kanaal onder druk. Een stilstaand toestel zonder terugslagklep wordt dan een open route voor rookgas de woning in (voorschriften CLV C(10)-toepassingen, bijlage D).",
     feedbackWrong: "Bij overdruk is de druk in het kanaal hoger dan in de woning. Zonder terugslagklep duwt het rookgas zich via een stilstaand toestel naar binnen.",
+    aandacht: "Bij overdruk kan rookgas via een stilstaand toestel zonder klep de woning in",
   },
   {
     question: "Mag je voor de aansluitleiding onderdelen van twee verschillende merken combineren?",
@@ -101,6 +108,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Juist! Hetzelfde merk voor de hele aansluitleiding — afdichtingen en maten passen dan op elkaar.",
     feedbackWrong: "Verschillende merken combineren mag niet: afdichtingsringen en maatvoering verschillen net, met lekkage als risico.",
+    aandacht: "Gebruik voor de hele aansluitleiding onderdelen van hetzelfde merk",
   },
 ];
 
@@ -111,6 +119,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Klopt! Minimaal 50 x 50 cm, brandwerend, en maximaal 50 cm van het hart van het CLV-systeem (NPR 3378-40, art. 5.1.5).",
     feedbackWrong: "Het inspectieluik moet minimaal 50 x 50 cm zijn, zodat het systeem goed bereikbaar en inspecteerbaar blijft (NPR 3378-40, art. 5.1.5).",
+    aandacht: "Het inspectieluik is minimaal 50 x 50 cm",
   },
   {
     question: "Wat is de verwachte levensduur van een CLV-systeem?",
@@ -118,6 +127,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Juist! Na circa 15 jaar neemt de kans op rookgaslekkage toe door veroudering van materialen en afdichtingen.",
     feedbackWrong: "De verwachte levensduur is circa 15 jaar. Daarna verouderen metalen (corrosie), kunststof (bros) en afdichtingsringen (uitharden).",
+    aandacht: "Een CLV-systeem gaat circa 15 jaar mee",
   },
   {
     question: "Een cv-ketel in een flat is 16 jaar oud en wordt vervangen. Wat moet je naast de ketelvervanging doen met het CLV-systeem?",
@@ -130,6 +140,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Correct! Na circa 15 jaar moet je het CLV beoordelen. Tijdelijk doorgebruik kan, maar alleen met CO-melders, vervangingsplan en periodieke metingen.",
     feedbackWrong: "De levensduur is circa 15 jaar. Bij vervanging van een toestel in gestapelde bouw altijd controleren of het CLV-systeem nog geschikt is.",
+    aandacht: "Vervang je een toestel? Controleer dan of het CLV-systeem nog geschikt is",
   },
   {
     question: "Je opent tijdens een onderhoudsbeurt het inspectieluik van de rookgasafvoer (RGA). Waar moet je op bedacht zijn?",
@@ -142,6 +153,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Klopt! Achter het RGA-inspectieluik kan zich condenswater hebben opgehoopt — pas op als je het opent.",
     feedbackWrong: "Bij het openen van het RGA-luik moet je bedacht zijn op waterophoping: er kan condenswater achter het luik staan.",
+    aandacht: "Achter het RGA-inspectieluik kan condenswater staan: pas op bij het openen",
   },
   {
     question: "Welke onderdelen reinig je bij een onderhoudsbeurt van een CLV-systeem?",
@@ -154,6 +166,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Juist! Je reinigt de rookgasafvoer, beide sifons (en vult ze met water terug) en het luchttoevoerdeel.",
     feedbackWrong: "Volgens de onderhoudsvoorschriften reinig je drie dingen: de rookgasafvoer, de sifons (met water, ook de rioleringssifon) en het luchttoevoerdeel.",
+    aandacht: "Bij onderhoud reinig je de rookgasafvoer, beide sifons en het luchttoevoerdeel",
   },
 ];
 
@@ -315,7 +328,7 @@ function COMeter({ value }) {
   );
 }
 
-function Ronde1({ addScore, onDone }) {
+function Ronde1({ addScore, onDone, noteer }) {
   const [gestart, setGestart] = useState(false);
   const [gedemonteerd, setGedemonteerd] = useState(false);
   const [closed, setClosed] = useState({ rookgas: false, lucht: false });
@@ -362,6 +375,10 @@ function Ronde1({ addScore, onDone }) {
     tape: "Tape is niet gasdicht en niet toegestaan. Gebruik een afsluitkap.",
     beugel: "Een beugel sluit niets af, die is om leidingen op te hangen. Gebruik een afsluitkap.",
   };
+  const FOUT_AANDACHT = {
+    tape: "Een open stomp sluit je af met een afsluitkap, nooit met tape",
+    beugel: "Een beugel sluit niets af: gebruik een afsluitkap",
+  };
 
   const dropKap = (stomp) => (payload, point) => {
     if (!gedemonteerd || closed[stomp]) return undefined;
@@ -374,6 +391,7 @@ function Ronde1({ addScore, onDone }) {
       return "correct";
     }
     const uitleg = FOUTE_ONDERDELEN[payload] ?? "Dat onderdeel hoort hier niet.";
+    noteer(FOUT_AANDACHT[payload]);
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee)`);
@@ -386,6 +404,7 @@ function Ronde1({ addScore, onDone }) {
 
   const dropFout = (foutHint) => (payload, point) => {
     if (!gedemonteerd) return undefined;
+    noteer("Sluit de open stompen af in de woning waar je het toestel weghaalt");
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${foutHint} (deze eerste misser telt niet mee)`);
@@ -615,6 +634,7 @@ const MATERIALEN = [
     kleur: "#B7BfC4",
     correct: false,
     uitleg: "Wel RVS, maar een ander merk mag niet: afdichtingsringen en maten verschillen net, met lekkage als risico. Gebruik altijd onderdelen van dezelfde fabrikant.",
+    aandacht: "Gebruik voor de hele aansluitleiding onderdelen van hetzelfde merk",
   },
   { id: "kunststof", label: "Kunststof", kleur: "#E8E3D8", correct: false },
   { id: "aluminium", label: "Aluminium", kleur: "#8E9AA3", correct: false },
@@ -637,12 +657,12 @@ function LeidingKaart({ mat }) {
 // ─── STAP B: DE DRUKVERKENNER (onderdruk vs overdruk) ───
 
 const R2B_KAARTJES = [
-  { id: "d1", label: "Werkt op natuurlijke trek", col: "onderdruk" },
-  { id: "d2", label: "De ventilator van het toestel zet druk op het kanaal", col: "overdruk" },
-  { id: "d3", label: "Terugslagklep in het toestel verplicht", col: "overdruk" },
-  { id: "d4", label: "Dubbele sifon in serie met open verbinding", col: "onderdruk" },
-  { id: "d5", label: "Aparte condens- en regenwatersifon per kanaal", col: "overdruk" },
-  { id: "d6", label: "Maximaal 2 toestellen per verdieping", col: "overdruk" },
+  { id: "d1", label: "Werkt op natuurlijke trek", col: "onderdruk", aandacht: "Onderdruk werkt op natuurlijke trek: het warme rookgas stijgt vanzelf" },
+  { id: "d2", label: "De ventilator van het toestel zet druk op het kanaal", col: "overdruk", aandacht: "Bij overdruk zet de ventilator van het toestel druk op het kanaal" },
+  { id: "d3", label: "Terugslagklep in het toestel verplicht", col: "overdruk", aandacht: "De terugslagklep is verplicht bij overdruk, niet bij onderdruk" },
+  { id: "d4", label: "Dubbele sifon in serie met open verbinding", col: "onderdruk", aandacht: "Onderdruk: dubbele sifon in serie met een open verbinding ertussen" },
+  { id: "d5", label: "Aparte condens- en regenwatersifon per kanaal", col: "overdruk", aandacht: "Overdruk: een aparte condens- en regenwatersifon per kanaal" },
+  { id: "d6", label: "Maximaal 2 toestellen per verdieping", col: "overdruk", aandacht: "Bij een C(10) overdruk-CLV: maximaal 2 toestellen per verdieping" },
 ];
 
 function DrukSchuif({ modus, onChange }) {
@@ -871,7 +891,7 @@ function DrukSysteemSVG({ modus, aangesloten = true, labels = true }) {
   );
 }
 
-function Ronde2({ addScore, onDone }) {
+function Ronde2({ addScore, onDone, noteer }) {
   const [gestart, setGestart] = useState(false);
   const [stap, setStap] = useState(0); // 0 = materiaalkeuze, 1 = drukverkenner
   const [aangesloten, setAangesloten] = useState(false); // na stap A start de installatie
@@ -900,6 +920,7 @@ function Ronde2({ addScore, onDone }) {
       return "correct";
     }
     const uitleg = mat.uitleg ?? `${mat.label} mag hier niet: de schacht is RVS. Twee verschillende metalen of materialen geven galvanische corrosie en verschil in uitzetting.`;
+    noteer(mat.aandacht ?? "Op een RVS-systeem hoort een RVS-leiding: ander materiaal geeft galvanische corrosie");
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee)`);
@@ -926,6 +947,7 @@ function Ronde2({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
+    noteer(kaart.aandacht);
     const uitleg =
       col === "onderdruk"
         ? "Bij onderdruk werkt het kanaal op natuurlijke trek, met een dubbele sifon in serie en een open verbinding (NEN 3287). De aparte condens-/regenwatersifon hoort bij overdruk."
@@ -1162,6 +1184,7 @@ const HOTSPOTS = [
     opties: ["Past het toesteltype (C43) bij dit CLV-systeem?", "Hangt de typeplaat recht?", "Hier hoef je niets te controleren"],
     correct: 0,
     uitleg: "Op de typeplaat staat de toestelcode. Die moet passen bij dit CLV-systeem.",
+    aandacht: "Controleer op de typeplaat of de toestelcode past bij het CLV-systeem",
   },
   {
     id: "klep", x: 118, y: 70, echt: true, naam: "Rookgasafvoerleiding",
@@ -1172,42 +1195,49 @@ const HOTSPOTS = [
     ],
     correct: 0,
     uitleg: "De aansluiting controleer je altijd op dichtheid. Een terugslagklep is hier niet verplicht: die hoort bij overdruk, en dit C43-toestel werkt op onderdruk.",
+    aandacht: "Controleer de aansluitleiding op dichtheid; een terugslagklep hoort alleen bij overdruk",
   },
   {
     id: "luik", x: 160, y: 256, echt: true, naam: "Schachtwand onderin",
     opties: ["Is het inspectieluik min. 50x50 cm en bereikbaar?", "Zit het luik goed op slot?", "Hier hoef je niets te controleren"],
     correct: 0,
     uitleg: "Min. 50x50 cm en max. 50 cm van het systeem (NPR 3378-40, art. 5.1.5).",
+    aandacht: "Het inspectieluik is minimaal 50 x 50 cm en moet bereikbaar zijn",
   },
   {
     id: "sifon", x: 228, y: 338, echt: true, naam: "Condensafvoer",
     opties: ["Werkt de afvoer en zijn beide sifons gevuld?", "Zijn de sifons leeg en droog?", "Hier hoef je niets te controleren"],
     correct: 0,
     uitleg: "Beide sifons gevuld met water. Anders komt er rookgas of rioolgas door.",
+    aandacht: "Beide sifons moeten met water gevuld zijn, anders komt er rookgas of rioolgas door",
   },
   {
     id: "plaat", x: 97, y: 257, echt: true, naam: "Plaat bij het inspectieluik",
     opties: ["Is de schoorsteenplaat aanwezig met de juiste gegevens?", "Is de plaat mooi gepoetst?", "Hier hoef je niets te controleren"],
     correct: 0,
     uitleg: "De schoorsteenplaat vermeldt de gegevens van het systeem en de installateur, en moet aanwezig en leesbaar zijn.",
+    aandacht: "De schoorsteenplaat met de systeemgegevens moet aanwezig en leesbaar zijn",
   },
   {
     id: "melder", x: 50, y: 30, echt: true, naam: "Plafond van de opstellingsruimte",
     opties: ["Hangt er een CO-melder in de opstellingsruimte?", "Hangt er een lamp met genoeg licht?", "Hier hoef je niets te controleren"],
     correct: 0,
     uitleg: "Een CO-melder waarschuwt als er toch koolmonoxide vrijkomt.",
+    aandacht: "In de opstellingsruimte hoort een CO-melder te hangen",
   },
   {
     id: "loosleiding", x: 46, y: 94, echt: false, naam: "De leiding zelf",
     opties: ["De kleur van de leiding beoordelen", "De leiding opnieuw verven", "Hier hoef je bij de oplevering niets te controleren"],
     correct: 2,
     uitleg: "De kleur van de leiding zegt niets. Dit hoort niet bij de oplevering.",
+    aandacht: "Bij de oplevering controleer je alleen wat de norm voorschrijft, geen kleur of uiterlijk",
   },
   {
     id: "loosvlam", x: 60, y: 185, echt: false, naam: "De brander in het toestel",
     opties: ["De cv-druk bij de buren controleren", "De brander alvast bijstellen", "Hier hoef je bij de oplevering niets te controleren"],
     correct: 2,
     uitleg: "De brander en de buren horen niet bij de oplevering van het CLV-systeem.",
+    aandacht: "De brander en de installatie van de buren horen niet bij deze oplevering",
   },
 ];
 
@@ -1365,7 +1395,7 @@ function schudDrie() {
   return mix;
 }
 
-function Ronde3({ addScore, onDone }) {
+function Ronde3({ addScore, onDone, noteer }) {
   const [gestart, setGestart] = useState(false);
   const [klaarHotspots, setKlaarHotspots] = useState([]); // afgeronde hotspot-ids
   const [actief, setActief] = useState(null); // geopende hotspot-id
@@ -1410,6 +1440,7 @@ function Ronde3({ addScore, onDone }) {
       }, 700);
     } else {
       const uitleg = hotspot.uitleg;
+      noteer(hotspot.aandacht);
       if (gratisFoutOplever()) {
         playSound("wrong");
         setHint(`${uitleg} (deze eerste misser telt niet mee — kies opnieuw)`);
@@ -1444,6 +1475,7 @@ function Ronde3({ addScore, onDone }) {
     }
     const uitleg =
       "Let op de volgorde van de onderhoudsvoorschriften: eerst alles openen (van buiten naar binnen), dan controleren en reinigen, en daarna alles weer terugplaatsen.";
+    noteer("Onderhoudsvolgorde: eerst openen van buiten naar binnen, dan reinigen, dan alles terugplaatsen");
     if (gratisFoutStap()) {
       playSound("wrong");
       setHint(`${uitleg} (deze eerste misser telt niet mee)`);
@@ -1722,10 +1754,20 @@ function StartScreen({ onStart }) {
 
 const SCREEN_ROUND = { r1: 1, r1mc: 1, r2: 2, r2mc: 2, r3: 3, r3mc: 3 };
 
+// Kernpunten van deze game: staan altijd op het eindscherm, ook bij een foutloos spel.
+const LEERMOMENTEN = [
+  "Sluit bij demontage beide aansluitstompen direct af met een afsluitkap",
+  "Rookgas bevat koolmonoxide (CO): recirculatie is levensgevaarlijk",
+  "Een terugslagklep is verplicht bij overdruk, niet bij onderdruk",
+  "Op een RVS-systeem hoort een RVS-leiding van hetzelfde merk",
+  "Onderhoud: openen van buiten naar binnen, reinigen, en alles weer afsluiten",
+];
+
 export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
   const [screen, setScreen] = useState(initialScreen);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(5);
+  const { aandacht, noteer, reset: resetAandacht } = useAandacht();
   const juice = useGameJuice();
 
   const addScore = useCallback(
@@ -1746,6 +1788,7 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
     setScreen("start");
     setScore(0);
     setLives(5);
+    resetAandacht();
   };
 
   useEffect(() => {
@@ -1778,27 +1821,27 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
             </IntroScreen>
           )}
 
-          {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} />}
+          {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} noteer={noteer} />}
           {screen === "r1mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R1} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("r2")} />
+              <MCControle pool={POOL_R1} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r2")} />
             </div>
           )}
 
-          {screen === "r2" && <Ronde2 addScore={addScore} onDone={() => setScreen("r2mc")} />}
+          {screen === "r2" && <Ronde2 addScore={addScore} onDone={() => setScreen("r2mc")} noteer={noteer} />}
           {screen === "r2mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R2} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("r3")} />
+              <MCControle pool={POOL_R2} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r3")} />
             </div>
           )}
 
-          {screen === "r3" && <Ronde3 addScore={addScore} onDone={() => setScreen("r3mc")} />}
+          {screen === "r3" && <Ronde3 addScore={addScore} onDone={() => setScreen("r3mc")} noteer={noteer} />}
           {screen === "r3mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R3} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("end")} lastRound />
+              <MCControle pool={POOL_R3} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("end")} lastRound />
             </div>
           )}
 
@@ -1808,6 +1851,8 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
               maxScore={MAX_SCORE}
               lives={lives}
               text="Je kunt nu een toestel veilig aansluiten en controleren op een CLV-systeem!"
+              leermomenten={LEERMOMENTEN}
+              aandacht={aandacht}
               onRestart={resetGame}
               onExit={onExit}
             />

@@ -15,6 +15,7 @@ import {
   StepBanner,
   TrainOefening,
   useEersteFoutVrij,
+  useAandacht,
   DrainageTrein,
   playSound,
 } from "./shared.jsx";
@@ -35,6 +36,7 @@ const POOL_R1 = [
     correct: 0,
     feedbackCorrect: "Precies! Bij beide is de rookgasafvoer gemeenschappelijk. Het verschil zit in de lucht: CLV via het dak, half-CLV individueel, bijvoorbeeld via de gevel (NPR 3378-40 en NPR 3378-41).",
     feedbackWrong: "Kijk terug naar de animatie: bij beide systemen ging het rookgas via hetzelfde kanaal. Alleen de luchttoevoer verschilde.",
+    aandacht: "CLV en half-CLV verschillen alleen in de luchttoevoer, niet in de rookgasafvoer",
   },
   {
     question: "Bij een half-CLV-systeem: waar haalt het toestel zijn verbrandingslucht vandaan?",
@@ -47,6 +49,7 @@ const POOL_R1 = [
     correct: 0,
     feedbackCorrect: "Klopt! Bij half-CLV is alleen de afvoer gemeenschappelijk; elk toestel heeft een eigen luchtinlaat, meestal via de gevel.",
     feedbackWrong: "Bij half-CLV is er geen gezamenlijk luchtkanaal. Elk toestel haalt zelf lucht, via de gevel.",
+    aandacht: "Bij half-CLV haalt elk toestel zelf lucht via de gevel",
   },
   {
     question: "Welk onderdeel is bij zowel een CLV- als een half-CLV-systeem gemeenschappelijk?",
@@ -54,6 +57,7 @@ const POOL_R1 = [
     correct: 0,
     feedbackCorrect: "Juist! De gemeenschappelijke rookgasafvoer is de kern van elk CLV-systeem — met of zonder gezamenlijke luchttoevoer.",
     feedbackWrong: "Denk aan de schuif-animatie: wat je ook deed met de luchttoevoer, het rookgas bleef via hetzelfde kanaal gaan.",
+    aandacht: "De rookgasafvoer is bij elk CLV-systeem gemeenschappelijk",
   },
 ];
 
@@ -69,6 +73,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Klopt! De terugslagklep voorkomt rookgas-recirculatie (verplicht bij overdruk volgens de voorschriften CLV C(10)-toepassingen, bijlage D) — daarover leer je meer in game 2.",
     feedbackWrong: "De terugslagklep houdt rookgas van andere toestellen tegen. Zonder klep kan rookgas terugstromen en dat is levensgevaarlijk.",
+    aandacht: "De terugslagklep voorkomt dat rookgas van andere toestellen terugstroomt",
   },
   {
     question: "Wat is de functie van de drukvereffeningsconstructie onderaan het CLV-systeem?",
@@ -81,6 +86,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Juist! De drukvereffeningsconstructie houdt de druk tussen lucht- en rookgaskanaal in balans.",
     feedbackWrong: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen om het drukverschil in balans te houden.",
+    aandacht: "De drukvereffeningsconstructie houdt de druk tussen lucht- en rookgaskanaal in balans",
   },
   {
     question: "Waarom heeft de condensaatafvoer van een CLV-systeem een dubbele sifon nodig?",
@@ -93,6 +99,7 @@ const POOL_R2 = [
     correct: 0,
     feedbackCorrect: "Precies! Twee sifons met een open verbinding ertussen: een tegen rookgas, een tegen rioolgas (aansluiting op de riolering volgens NEN 3287).",
     feedbackWrong: "Twee gevaren: rookgas uit het systeem en rioolgas uit de riolering. Elke sifon houdt er een tegen.",
+    aandacht: "Twee sifons: de eerste houdt rookgas tegen, de tweede rioolgas",
   },
 ];
 
@@ -103,6 +110,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Correct! Bij een C(10) overdruk-CLV mogen maximaal 2 toestellen per verdieping worden aangesloten (voorschriften CLV C(10)-toepassingen, hoofdstuk 8).",
     feedbackWrong: "Volgens de voorschriften voor C(10)-toepassingen (hoofdstuk 8, Dimensionering) mogen er maximaal 2 toestellen per verdieping op een overdruk-CLV worden aangesloten.",
+    aandacht: "Bij een C(10) overdruk-CLV: maximaal 2 toestellen per verdieping",
   },
   {
     question: "Een concentrisch CLV-systeem werkt op natuurlijke trek. Welk type toestel mag hierop worden aangesloten?",
@@ -110,6 +118,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Juist! C42 en C43 zijn de types voor een concentrisch onderdruk-CLV (NPR 3378-40).",
     feedbackWrong: "Voor onderdruk-CLV (natuurlijke trek) gelden C42 en C43 (NPR 3378-40). C83 hoort bij half-CLV (NPR 3378-41), C33 bij een individuele dakdoorvoer.",
+    aandacht: "C42 en C43 horen bij het concentrische onderdruk-CLV",
   },
   {
     question: "Wat betekent het laatste cijfer 3 in de codering C43?",
@@ -122,6 +131,7 @@ const POOL_R3 = [
     correct: 0,
     feedbackCorrect: "Klopt! Een 3 = ventilator in de luchttoevoer, een 2 = ventilator in de rookgasafvoer (toestelaanduidingen volgens NPR 3378-80). Alleen gesloten toestellen met ventilator mogen op een CLV.",
     feedbackWrong: "Het laatste cijfer gaat over de ventilator: 2 = in de rookgasafvoer, 3 = in de luchttoevoer.",
+    aandacht: "Laatste cijfer van de toestelcode: 2 = ventilator in de rookgasafvoer, 3 = in de luchttoevoer",
   },
 ];
 
@@ -422,13 +432,13 @@ function LuchtSchuif({ stand, onChange }) {
 // ─── RONDE 1: CLV of half-CLV? ───
 
 const R1_KAARTJES = [
-  { id: "k1", label: "Lucht en rookgas beide via gezamenlijk kanaal", col: "clv" },
-  { id: "k2", label: "Alleen rookgasafvoer gemeenschappelijk", col: "half" },
-  { id: "k3", label: "Luchtinlaat per woning via de gevel", col: "half" },
-  { id: "k4", label: "Luchttoevoer via het dak", col: "clv" },
+  { id: "k1", label: "Lucht en rookgas beide via gezamenlijk kanaal", col: "clv", aandacht: "Bij CLV gaan lucht en rookgas allebei via het gezamenlijke kanaal" },
+  { id: "k2", label: "Alleen rookgasafvoer gemeenschappelijk", col: "half", aandacht: "Bij half-CLV is alleen de rookgasafvoer gemeenschappelijk" },
+  { id: "k3", label: "Luchtinlaat per woning via de gevel", col: "half", aandacht: "Bij half-CLV komt de lucht per woning via de gevel" },
+  { id: "k4", label: "Luchttoevoer via het dak", col: "clv", aandacht: "Bij CLV komt de luchttoevoer via het dak" },
 ];
 
-function Ronde1({ addScore, onDone }) {
+function Ronde1({ addScore, onDone, noteer }) {
   const [stand, setStand] = useState("dak");
   const [seen, setSeen] = useState({ dak: true, gevel: false });
   const [placed, setPlaced] = useState({}); // id -> kolom
@@ -452,6 +462,7 @@ function Ronde1({ addScore, onDone }) {
       setHint(null);
       return "correct";
     }
+    noteer(kaart.aandacht);
     const uitleg =
       col === "clv"
         ? "Bij CLV gaan lucht en rookgas samen door het dak."
@@ -576,12 +587,12 @@ const R2_H = 500;
 const R2_ZONE = { w: 165, h: 34 };
 
 const R2_ONDERDELEN = [
-  { id: "instroming", label: "Instromingsconstructie", side: "left", zone: { x: 5, y: 63 }, anchor: { x: 254, y: 103 }, hint: "De instromingsconstructie zit bovenaan: via het rooster onder de kap komt de lucht binnen." },
-  { id: "uitstroming", label: "Uitstromingsconstructie", side: "right", zone: { x: 390, y: 30 }, anchor: { x: 298, y: 60 }, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak." },
-  { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand." },
-  { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand." },
-  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 351, y: 437 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering." },
-  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 252, y: 456 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal." },
+  { id: "instroming", label: "Instromingsconstructie", side: "left", zone: { x: 5, y: 63 }, anchor: { x: 254, y: 103 }, hint: "De instromingsconstructie zit bovenaan: via het rooster onder de kap komt de lucht binnen.", aandacht: "De instromingsconstructie zit bovenaan: daar komt de lucht binnen" },
+  { id: "uitstroming", label: "Uitstromingsconstructie", side: "right", zone: { x: 390, y: 30 }, anchor: { x: 298, y: 60 }, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak.", aandacht: "De uitstromingsconstructie zit bovenaan: daar gaat het rookgas naar buiten" },
+  { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand.", aandacht: "De aansluitstompen steken per verdieping door de schachtwand" },
+  { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand.", aandacht: "Het inspectieluik zit onderin de schachtwand, minimaal 50x50 cm" },
+  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 351, y: 437 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering.", aandacht: "De condensaatafvoer met sifons zit onderaan en voert af naar het riool" },
+  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 252, y: 456 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal.", aandacht: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen" },
 ];
 
 function SchachtOnderdelen({ placed }) {
@@ -724,7 +735,7 @@ function SchachtOnderdelen({ placed }) {
   );
 }
 
-function Ronde2({ addScore, onDone }) {
+function Ronde2({ addScore, onDone, noteer }) {
   const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
@@ -741,6 +752,7 @@ function Ronde2({ addScore, onDone }) {
       return "correct";
     }
     const dragged = R2_ONDERDELEN.find((o) => o.id === payload);
+    noteer(dragged?.aandacht);
     if (gratisFout()) {
       playSound("wrong");
       setHint(`${dragged?.hint ?? "Kijk nog eens naar de tekening."} (deze eerste misser telt niet mee)`);
@@ -847,6 +859,13 @@ const R3_BAKKEN = [
   { id: "overdruk", titel: "Overdruk-CLV", sub: "ventilatordruk" },
 ];
 
+// Aandachtspunt per systeemgroep: C42 en C43 leveren zo 1 regel op, geen twee.
+const R3_AANDACHT = {
+  onderdruk: "C42 en C43 horen bij het concentrische onderdruk-CLV (natuurlijke trek)",
+  half: "C82 en C83 horen bij half-CLV: de lucht komt via de gevel",
+  overdruk: "C(10)3 hoort bij het overdruk-CLV met ventilatordruk",
+};
+
 function BakIcoon({ type }) {
   const flow = { strokeDasharray: "5 4", animation: "flowDash 0.8s linear infinite" };
   const flowDown = { strokeDasharray: "4 3", animation: "flowDash 1.1s linear infinite" };
@@ -908,7 +927,7 @@ function BakIcoon({ type }) {
   );
 }
 
-function Ronde3({ addScore, onDone }) {
+function Ronde3({ addScore, onDone, noteer }) {
   const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({}); // toestelId -> bakId
   const [hint, setHint] = useState(null);
@@ -925,6 +944,7 @@ function Ronde3({ addScore, onDone }) {
       playSound("drop");
       return "correct";
     }
+    noteer(R3_AANDACHT[toestel.bak]);
     const uitleg =
       toestel.id === "C103"
         ? "C(10) is het overdruk-systeem (ventilatordruk)."
@@ -1052,10 +1072,19 @@ function StartScreen({ onStart }) {
 
 const SCREEN_ROUND = { r0: 1, r1: 1, r1mc: 1, r2: 2, r2mc: 2, r3: 3, r3mc: 3 };
 
+// Kernpunten van deze game: staan altijd op het eindscherm, ook bij een foutloos spel.
+const LEERMOMENTEN = [
+  "Bij elk CLV-systeem is de rookgasafvoer gemeenschappelijk",
+  "Het verschil zit in de lucht: CLV via het dak, half-CLV via de gevel",
+  "Twee sifons onderin: de eerste tegen rookgas, de tweede tegen rioolgas",
+  "De toestelcode moet passen bij het systeem: C42/C43 onderdruk, C82/C83 half-CLV",
+];
+
 export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGameComplete }) {
   const [screen, setScreen] = useState(initialScreen);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(5);
+  const { aandacht, noteer, reset: resetAandacht } = useAandacht();
   const juice = useGameJuice();
 
   const addScore = useCallback(
@@ -1076,6 +1105,7 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
     setScreen("start");
     setScore(0);
     setLives(5);
+    resetAandacht();
   };
 
   useEffect(() => {
@@ -1125,27 +1155,27 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
             />
           )}
 
-          {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} />}
+          {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} noteer={noteer} />}
           {screen === "r1mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R1} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("r2")} />
+              <MCControle pool={POOL_R1} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r2")} />
             </div>
           )}
 
-          {screen === "r2" && <Ronde2 addScore={addScore} onDone={() => setScreen("r2mc")} />}
+          {screen === "r2" && <Ronde2 addScore={addScore} onDone={() => setScreen("r2mc")} noteer={noteer} />}
           {screen === "r2mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R2} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("r3")} />
+              <MCControle pool={POOL_R2} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r3")} />
             </div>
           )}
 
-          {screen === "r3" && <Ronde3 addScore={addScore} onDone={() => setScreen("r3mc")} />}
+          {screen === "r3" && <Ronde3 addScore={addScore} onDone={() => setScreen("r3mc")} noteer={noteer} />}
           {screen === "r3mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R3} addScore={addScore} loseLife={loseLife} onComplete={() => setScreen("end")} lastRound />
+              <MCControle pool={POOL_R3} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("end")} lastRound />
             </div>
           )}
 
@@ -1155,6 +1185,8 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
               maxScore={MAX_SCORE}
               lives={lives}
               text="Je herkent nu CLV-systemen. In De CLV-Monteur ga je er ook echt mee aan de slag!"
+              leermomenten={LEERMOMENTEN}
+              aandacht={aandacht}
               onRestart={resetGame}
               onExit={onExit}
             />
