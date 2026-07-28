@@ -20,11 +20,7 @@ const DEV_SCREENS_BASIS = [
 ];
 
 const DEV_SCREENS = {
-  verkenner: [
-    ...DEV_SCREENS_BASIS.slice(0, 2),
-    { id: "r0", label: "Training — de drie systemen" },
-    ...DEV_SCREENS_BASIS.slice(2),
-  ],
+  verkenner: DEV_SCREENS_BASIS,
   monteur: DEV_SCREENS_BASIS,
 };
 

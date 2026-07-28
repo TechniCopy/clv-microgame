@@ -13,7 +13,6 @@ import {
   MCControle,
   EndScreen,
   StepBanner,
-  TrainOefening,
   useEersteFoutVrij,
   useAandacht,
   DrainageTrein,
@@ -132,119 +131,6 @@ const POOL_R3 = [
     feedbackCorrect: "Klopt! Een 3 = ventilator in de luchttoevoer, een 2 = ventilator in de rookgasafvoer (toestelaanduidingen volgens NPR 3378-80). Alleen gesloten toestellen met ventilator mogen op een CLV.",
     feedbackWrong: "Het laatste cijfer gaat over de ventilator: 2 = in de rookgasafvoer, 3 = in de luchttoevoer.",
     aandacht: "Laatste cijfer van de toestelcode: 2 = ventilator in de rookgasafvoer, 3 = in de luchttoevoer",
-  },
-];
-
-// ─── TRAININGEN (actief leren, zonder punten) ───
-
-const TRAIN_SYSTEMEN = [
-  {
-    vraag: "Lucht en rookgas gaan allebei door een gezamenlijk kanaal door het dak. Welk systeem is dit?",
-    opties: ["CLV", "Half-CLV", "Hoge druk CLV"],
-    correct: 0,
-    uitleg: "Bij CLV deel je beide: lucht komt via het dak binnen, rookgas gaat via het dak naar buiten.",
-  },
-  {
-    vraag: "Alleen het rookgas gaat door het gezamenlijke kanaal. Elk toestel haalt zelf lucht via een rooster in de gevel. Welk systeem is dit?",
-    opties: ["Half-CLV", "CLV", "Hoge druk CLV"],
-    correct: 0,
-    uitleg: "Half = de helft gedeeld: alleen de rookgasafvoer.",
-  },
-  {
-    vraag: "Een ventilator in het toestel duwt het rookgas onder druk het gezamenlijke kanaal in. Welk systeem is dit?",
-    opties: ["Hoge druk CLV", "CLV", "Half-CLV"],
-    correct: 0,
-    uitleg: "Bij hoge druk (overdruk) doet de ventilator het werk, niet de natuurlijke trek.",
-  },
-];
-
-const TRAIN_ONDERDELEN = [
-  {
-    vraag: "Hier komt de verse lucht het systeem binnen, bovenaan op het dak.",
-    opties: ["Instromingsconstructie", "Uitstromingsconstructie", "Aansluitstompen", "Inspectieluik"],
-    correct: 0,
-    uitleg: "Instromen = naar binnen stromen. De lucht komt binnen via het rooster onder de kap.",
-  },
-  {
-    vraag: "Hier verlaat het rookgas het systeem, bovenaan op het dak.",
-    opties: ["Uitstromingsconstructie", "Instromingsconstructie", "Drukvereffeningsconstructie", "Condensaatafvoer + sifon"],
-    correct: 0,
-    uitleg: "Uitstromen = naar buiten stromen. Het rookgas gaat er bovenaan uit.",
-  },
-  {
-    vraag: "Hierop sluit je per verdieping een toestel aan. Ze steken door de schachtwand.",
-    opties: ["Aansluitstompen", "Inspectieluik", "Instromingsconstructie", "Drukvereffeningsconstructie"],
-    correct: 0,
-    uitleg: "Elke verdieping heeft eigen aansluitstompen voor het toestel.",
-  },
-  {
-    vraag: "Zit helemaal onderin en houdt de druk tussen het lucht- en rookgaskanaal in balans.",
-    opties: ["Drukvereffeningsconstructie", "Condensaatafvoer + sifon", "Aansluitstompen", "Uitstromingsconstructie"],
-    correct: 0,
-    uitleg: "Vereffenen = gelijkmaken. Dit onderdeel maakt de druk tussen beide kanalen gelijk.",
-  },
-  {
-    vraag: "Voert het condenswater onderin af naar het riool.",
-    opties: ["Condensaatafvoer + sifon", "Drukvereffeningsconstructie", "Inspectieluik", "Instromingsconstructie"],
-    correct: 0,
-    uitleg: "Condenswater loopt onderin het kanaal en gaat via twee sifons naar het riool.",
-  },
-  {
-    vraag: "Opening van minimaal 50x50 cm in de schachtwand, om bij het systeem te kunnen.",
-    opties: ["Inspectieluik", "Aansluitstompen", "Condensaatafvoer + sifon", "Uitstromingsconstructie"],
-    correct: 0,
-    uitleg: "Het luik zit maximaal 50 cm van het systeem (NPR 3378-40).",
-  },
-  {
-    vraag: "Klep in het toestel die voorkomt dat rookgas van de buren terugstroomt.",
-    opties: ["Terugslagklep", "Drukvereffeningsconstructie", "Sifon", "Afsluitkap"],
-    correct: 0,
-    uitleg: "De terugslagklep laat rookgas maar 1 kant op: naar buiten.",
-  },
-  {
-    vraag: "De condensafvoer heeft twee sifons met een open verbinding ertussen. De tweede sifon houdt ... tegen.",
-    opties: ["Rioolgas", "Rookgas", "Regenwater", "Condenswater"],
-    correct: 0,
-    uitleg: "Sifon 1 houdt rookgas tegen, sifon 2 is de stankafsluiter tegen rioolgas.",
-  },
-];
-
-const TRAIN_CODES = [
-  {
-    vraag: "Welke toestellen sluit je aan op een onderdruk-CLV (natuurlijke trek)?",
-    opties: ["C42 en C43", "C82 en C83", "C(10)3", "C33"],
-    correct: 0,
-    uitleg: "C4-codes horen bij het concentrische onderdruk-CLV (NPR 3378-40).",
-  },
-  {
-    vraag: "Welke toestellen horen bij een half-CLV?",
-    opties: ["C82 en C83", "C42 en C43", "C(10)3", "C63"],
-    correct: 0,
-    uitleg: "C8-codes horen bij half-CLV: lucht via de gevel (NPR 3378-41).",
-  },
-  {
-    vraag: "Welk toestel hoort bij een overdruk-CLV?",
-    opties: ["C(10)3", "C43", "C82", "C13"],
-    correct: 0,
-    uitleg: "C(10) is de overdruk-toepassing met ventilatordruk op het kanaal.",
-  },
-  {
-    vraag: "Wat betekent het laatste cijfer 3 in C43?",
-    opties: ["Ventilator in de luchttoevoer", "Ventilator in de rookgasafvoer", "3 toestellen per verdieping", "3 kW vermogen"],
-    correct: 0,
-    uitleg: "3 = ventilator in de luchttoevoer (NPR 3378-80).",
-  },
-  {
-    vraag: "En het laatste cijfer 2, zoals in C82?",
-    opties: ["Ventilator in de rookgasafvoer", "Ventilator in de luchttoevoer", "2 sifons", "2 toestellen per verdieping"],
-    correct: 0,
-    uitleg: "2 = ventilator in de rookgasafvoer.",
-  },
-  {
-    vraag: "Hoeveel toestellen mogen er per verdieping op een C(10) overdruk-CLV?",
-    opties: ["2", "1", "3", "Onbeperkt"],
-    correct: 0,
-    uitleg: "Maximaal 2 toestellen per verdieping (voorschriften CLV C(10)-toepassingen, hoofdstuk 8).",
   },
 ];
 
@@ -736,7 +622,6 @@ function SchachtOnderdelen({ placed }) {
 }
 
 function Ronde2({ addScore, onDone, noteer }) {
-  const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
   const gratisFout = useEersteFoutVrij();
@@ -762,18 +647,6 @@ function Ronde2({ addScore, onDone, noteer }) {
     setHint(dragged?.hint ?? null);
     return "wrong";
   };
-
-  if (!gestart) {
-    return (
-      <TrainOefening
-        titel="Ronde 2: De onderdelen van een CLV-systeem"
-        intro="Eerst even trainen: welk onderdeel hoort bij welke omschrijving?"
-        items={TRAIN_ONDERDELEN}
-        onKlaar={() => setGestart(true)}
-        buttonText="Naar de tekening"
-      />
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -928,7 +801,6 @@ function BakIcoon({ type }) {
 }
 
 function Ronde3({ addScore, onDone, noteer }) {
-  const [gestart, setGestart] = useState(false);
   const [placed, setPlaced] = useState({}); // toestelId -> bakId
   const [hint, setHint] = useState(null);
   const gratisFout = useEersteFoutVrij();
@@ -960,18 +832,6 @@ function Ronde3({ addScore, onDone, noteer }) {
     setHint(uitleg);
     return "wrong";
   };
-
-  if (!gestart) {
-    return (
-      <TrainOefening
-        titel="Ronde 3: Welk toestel op welk systeem?"
-        intro="Eerst de codes trainen. Daarna ga je ze zonder hulp toepassen."
-        items={TRAIN_CODES}
-        onKlaar={() => setGestart(true)}
-        buttonText="Naar het sorteren"
-      />
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col items-center p-6">
@@ -1070,7 +930,7 @@ function StartScreen({ onStart }) {
 
 // ─── MAIN ───
 
-const SCREEN_ROUND = { r0: 1, r1: 1, r1mc: 1, r2: 2, r2mc: 2, r3: 3, r3mc: 3 };
+const SCREEN_ROUND = { r1: 1, r1mc: 1, r2: 2, r2mc: 2, r3: 3, r3mc: 3 };
 
 // Kernpunten van deze game: staan altijd op het eindscherm, ook bij een foutloos spel.
 const LEERMOMENTEN = [
@@ -1131,7 +991,7 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
           {screen === "start" && <StartScreen onStart={() => setScreen("intro")} />}
 
           {screen === "intro" && (
-            <IntroScreen title="Missie: het CLV-systeem" buttonText="Aan de slag" onNext={() => setScreen("r0")}>
+            <IntroScreen title="Missie: het CLV-systeem" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
               <div className="leading-relaxed" style={{ color: C.brownText }}>
                 <p className="mb-2">
                   <strong>CLV</strong> = <strong>C</strong>ombinatie <strong>L</strong>uchttoevoer en{" "}
@@ -1143,16 +1003,6 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
                 <p>Een fout raakt dus niet alleen jou, maar ook de buren. In deze missie leer je hoe het werkt.</p>
               </div>
             </IntroScreen>
-          )}
-
-          {screen === "r0" && (
-            <TrainOefening
-              titel="De drie systemen"
-              intro="Verbind elk systeem met de juiste omschrijving. Daarna ga je ze zelf ontdekken."
-              items={TRAIN_SYSTEMEN}
-              onKlaar={() => setScreen("r1")}
-              buttonText="Naar ronde 1"
-            />
           )}
 
           {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} noteer={noteer} />}
