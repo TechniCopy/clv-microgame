@@ -13,7 +13,6 @@ import {
   MCControle,
   EndScreen,
   StepBanner,
-  useDrag,
   useEersteFoutVrij,
   useAandacht,
   DrainageTrein,
@@ -478,8 +477,8 @@ const R2_ONDERDELEN = [
   { id: "uitstroming", label: "Uitstromingsconstructie", side: "right", zone: { x: 390, y: 30 }, anchor: { x: 298, y: 60 }, hint: "De uitstromingsconstructie zit bovenaan: daar verlaat het rookgas het dak.", aandacht: "De uitstromingsconstructie zit bovenaan: daar gaat het rookgas naar buiten" },
   { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand.", aandacht: "De aansluitstompen steken per verdieping door de schachtwand" },
   { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand.", aandacht: "Het inspectieluik zit onderin de schachtwand, minimaal 50x50 cm" },
-  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 351, y: 437 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering.", aandacht: "De condensaatafvoer met sifons zit onderaan en voert af naar het riool" },
-  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 252, y: 456 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal.", aandacht: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen" },
+  { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 357, y: 450 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering.", aandacht: "De condensaatafvoer met sifons zit onderaan en voert af naar het riool" },
+  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 258, y: 462 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal.", aandacht: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen" },
 ];
 
 function SchachtOnderdelen({ placed }) {
@@ -506,9 +505,9 @@ function SchachtOnderdelen({ placed }) {
         </pattern>
       </defs>
 
-      {/* verwijslijnen van onderdeel naar de rand van de figuur (normfiguur-stijl) */}
+      {/* verwijslijnen van dropvlak naar onderdeel */}
       {R2_ONDERDELEN.map((o) => {
-        const x1 = o.side === "left" ? 8 : R2_W - 8;
+        const x1 = o.side === "left" ? o.zone.x + R2_ZONE.w : o.zone.x;
         const y1 = o.zone.y + R2_ZONE.h / 2;
         return (
           <g key={`lijn-${o.id}`}>
@@ -526,20 +525,21 @@ function SchachtOnderdelen({ placed }) {
       <rect x="50" y="470" width="398" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
       <rect x="478" y="470" width="32" height="14" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* schachtwanden met houtnerf (lopen door tot het dak) */}
-      <rect x="234" y="150" width="16" height="312" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
-      <rect x="310" y="150" width="16" height="312" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      {/* schachtwanden met houtnerf (van het dak tot op de vloer) */}
+      <rect x="234" y="150" width="16" height="320" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
+      <rect x="310" y="150" width="16" height="320" fill="url(#grain)" stroke={C.brownText} strokeWidth="2" />
       {/* dak dicht rond de pijp: deksegmenten tussen schachtwand en doorvoer */}
       <rect x="250" y="150" width="14" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
       <rect x="296" y="150" width="14" height="18" fill="url(#hatch)" stroke={C.brownText} strokeWidth="2" />
 
       {/* concentrische pijp: buitenwand (264/296) en binnenpijp voor rookgas (272/288) */}
-      <line x1="264" y1="120" x2="264" y2="395" stroke={C.brownText} strokeWidth="2" />
-      <line x1="296" y1="120" x2="296" y2="395" stroke={C.brownText} strokeWidth="2" />
-      <line x1="272" y1="106" x2="272" y2="395" stroke={C.brownText} strokeWidth="2" />
-      <line x1="288" y1="106" x2="288" y2="395" stroke={C.brownText} strokeWidth="2" />
-      {/* opvangbak onderaan het rookgaskanaal */}
-      <path d="M270 395 H290 V404 Q290 412 280 412 Q270 412 270 404 Z" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <line x1="264" y1="120" x2="264" y2="392" stroke={C.brownText} strokeWidth="2" />
+      <line x1="296" y1="120" x2="296" y2="392" stroke={C.brownText} strokeWidth="2" />
+      <line x1="272" y1="106" x2="272" y2="388" stroke={C.brownText} strokeWidth="2" />
+      <line x1="288" y1="106" x2="288" y2="388" stroke={C.brownText} strokeWidth="2" />
+      {/* opvangbak: trechter over de volle kanaalbreedte (NPR-figuur), met rand als ellips */}
+      <ellipse cx="280" cy="392" rx="17" ry="4.5" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <path d="M263 393 L276 415 V424 H284 V415 L297 393" fill="white" stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
 
       {/* DAKDOORVOER: de concentrische pijp steekt door het dak en eindigt in de kap */}
       <g>
@@ -569,11 +569,11 @@ function SchachtOnderdelen({ placed }) {
       </g>
 
       {/* concentrische stroom: rookgas (rood) in het hart, lucht (blauw) in de ringspleet */}
-      <path d="M268 124 L268 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M263 408 L268 418 L273 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M292 124 L292 415" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
-      <path d="M287 408 L292 418 L297 408" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M280 388 L280 80" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
+      <path d="M268 124 L268 380" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M263 374 L268 383 L273 374" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M292 124 L292 380" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" style={flowDown} />
+      <path d="M287 374 L292 383 L297 374" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M280 384 L280 80" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
 
       {/* AANSLUITSTOMPEN per verdieping: concentrische aansluiting (rood rookgas + blauw lucht) */}
       {[200, 260, 320].map((y) => (
@@ -596,13 +596,13 @@ function SchachtOnderdelen({ placed }) {
         <line x1="314" y1="400" x2="324" y2="400" stroke={mark("luik")} strokeWidth="1.5" />
       </g>
 
-      {/* CONDENSAFVOER (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
-      {/* afvoer uit de opvangbak, door de schachtwand naar de drainage-trein */}
-      <path d="M280 412 V414 H342" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
-      <DrainageTrein x={342} y={414} s={1.7} stroke={mark("condens")} strokeWidth={ok("condens") ? 1.7 : 1.5} riool={false} />
-      {/* van sifon 2 naar de riolering door de vloersparing */}
+      {/* CONDENSAFVOER (NPR 3378-40/41): trechter -> laag door de wand -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
+      {/* afvoer uit de trechter: kort omlaag, bocht en laag door de schachtwand naar de sifons */}
+      <path d="M280 424 V434 H350" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <DrainageTrein x={350} y={434} s={1.2} stroke={mark("condens")} strokeWidth={ok("condens") ? 2.4 : 2} riool={false} />
+      {/* na sifon 2: omhoog, over de vloer en met een OPEN uiteinde in de vloersparing (NEN 3287) */}
       <path
-        d="M405 423 H452 V470"
+        d="M394 440 V426 H466 V474"
         fill="none"
         stroke={mark("condens")}
         strokeWidth={ok("condens") ? 3 : 2.5}
@@ -611,11 +611,11 @@ function SchachtOnderdelen({ placed }) {
       />
       <text x="452" y="492" fontSize="10" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
 
-      {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerde bodemplaat */}
+      {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerd blok op de vloer, links van de condensafvoer */}
       <g>
-        <rect x="250" y="448" width="60" height="14" fill={fillOk("drukver")} stroke={mark("drukver")} strokeWidth={ok("drukver") ? 3 : 2} />
-        {[262, 280, 298].map((cx) => (
-          <circle key={cx} cx={cx} cy="455" r="4" fill="none" stroke={mark("drukver")} strokeWidth="1.8" />
+        <rect x="252" y="459" width="32" height="11" fill={fillOk("drukver")} stroke={mark("drukver")} strokeWidth={ok("drukver") ? 3 : 2} />
+        {[260, 272].map((cx) => (
+          <circle key={cx} cx={cx} cy="464.5" r="3.5" fill="none" stroke={mark("drukver")} strokeWidth="1.8" />
         ))}
       </g>
     </svg>
@@ -626,11 +626,7 @@ function Ronde2({ addScore, onDone, noteer }) {
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
   const gratisFout = useEersteFoutVrij();
-  const drag = useDrag();
   const allPlaced = R2_ONDERDELEN.every((o) => placed[o.id]);
-  // de vakken verschijnen pas als de speler een label sleept of heeft aangetikt;
-  // in rust is de figuur schoon, zoals de normfiguur
-  const bezig = drag.dragging || !!drag.selected;
 
   const dropOn = (target) => (payload, point) => {
     if (placed[target.id]) return undefined;
@@ -660,7 +656,7 @@ function Ronde2({ addScore, onDone, noteer }) {
         Ronde 2: De onderdelen van een CLV-systeem
       </h2>
       <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        Elke stippellijn wijst een onderdeel aan. Sleep (of tik) elk label naar het uiteinde van de juiste stippellijn.
+        Sleep (of tik) elk label naar het juiste onderdeel in de tekening.
       </p>
 
       <div className="relative w-full" style={{ maxWidth: R2_W }}>
@@ -679,30 +675,19 @@ function Ronde2({ addScore, onDone, noteer }) {
               height: `${(R2_ZONE.h / R2_H) * 100}%`,
             }}
           >
-            {({ isHover, flash }) => {
-              const zichtbaar = placed[o.id] || flash === "wrong" || isHover || bezig;
-              return (
-                <div
-                  className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[10px] font-bold text-center leading-tight px-1 transition-colors"
-                  style={{
-                    borderStyle: placed[o.id] ? "solid" : "dashed",
-                    borderColor: !zichtbaar ? "transparent" : placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
-                    backgroundColor: !zichtbaar
-                      ? "transparent"
-                      : placed[o.id]
-                      ? C.greenLight
-                      : flash === "wrong"
-                      ? C.redLight
-                      : isHover
-                      ? C.oliveLight
-                      : "rgba(255,252,245,0.95)",
-                    color: placed[o.id] ? C.green : C.brown,
-                  }}
-                >
-                  {placed[o.id] ? o.label : zichtbaar ? "?" : ""}
-                </div>
-              );
-            }}
+            {({ isHover, flash }) => (
+              <div
+                className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[10px] font-bold text-center leading-tight px-1 transition-colors"
+                style={{
+                  borderStyle: placed[o.id] ? "solid" : "dashed",
+                  borderColor: placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
+                  backgroundColor: placed[o.id] ? C.greenLight : flash === "wrong" ? C.redLight : isHover ? C.oliveLight : "rgba(255,252,245,0.95)",
+                  color: placed[o.id] ? C.green : C.brown,
+                }}
+              >
+                {placed[o.id] ? o.label : "?"}
+              </div>
+            )}
           </DropTarget>
         ))}
       </div>
