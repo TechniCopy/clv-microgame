@@ -478,7 +478,7 @@ const R2_ONDERDELEN = [
   { id: "stomp", label: "Aansluitstompen", side: "right", zone: { x: 390, y: 253 }, anchor: { x: 356, y: 269 }, hint: "Aansluitstompen steken per verdieping door de schachtwand.", aandacht: "De aansluitstompen steken per verdieping door de schachtwand" },
   { id: "luik", label: "Inspectieluik", side: "right", zone: { x: 390, y: 373 }, anchor: { x: 334, y: 390 }, hint: "Het (bouwkundig) inspectieluik, min. 50x50 cm en brandwerend, zit onderaan in de schachtwand.", aandacht: "Het inspectieluik zit onderin de schachtwand, minimaal 50x50 cm" },
   { id: "condens", label: "Condensaatafvoer + sifon", side: "left", zone: { x: 5, y: 405 }, anchor: { x: 357, y: 450 }, hint: "De condensaatafvoer met sifon zit onderaan, en voert via een tweede sifon met open verbinding af naar de riolering.", aandacht: "De condensaatafvoer met sifons zit onderaan en voert af naar het riool" },
-  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 258, y: 462 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal.", aandacht: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen" },
+  { id: "drukver", label: "Drukvereffeningsconstructie", side: "left", zone: { x: 5, y: 443 }, anchor: { x: 266, y: 463 }, hint: "De drukvereffeningsconstructie zit helemaal onderaan en verbindt het lucht- en rookgaskanaal.", aandacht: "De drukvereffeningsconstructie zit onderaan en verbindt beide kanalen" },
 ];
 
 function SchachtOnderdelen({ placed }) {
@@ -537,9 +537,12 @@ function SchachtOnderdelen({ placed }) {
       <line x1="296" y1="120" x2="296" y2="392" stroke={C.brownText} strokeWidth="2" />
       <line x1="272" y1="106" x2="272" y2="388" stroke={C.brownText} strokeWidth="2" />
       <line x1="288" y1="106" x2="288" y2="388" stroke={C.brownText} strokeWidth="2" />
-      {/* opvangbak: trechter over de volle kanaalbreedte (NPR-figuur), met rand als ellips */}
-      <ellipse cx="280" cy="392" rx="17" ry="4.5" fill="white" stroke={C.brownText} strokeWidth="2" />
-      <path d="M263 393 L276 415 V424 H284 V415 L297 393" fill="white" stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
+      {/* klein toegangsluikje op het kanaal zelf, vlak boven de opvangbak */}
+      <rect x="290" y="346" width="18" height="24" rx="6" fill="white" stroke={C.brownText} strokeWidth="2" />
+      <line x1="295" y1="353" x2="303" y2="353" stroke={C.brownText} strokeWidth="1.5" />
+      <line x1="295" y1="363" x2="303" y2="363" stroke={C.brownText} strokeWidth="1.5" />
+      {/* opvangbak onder het kanaal, met conische bodem; hierop is de condensafvoer aangesloten */}
+      <path d="M264 392 V403 L277 416 H283 L296 403 V392" fill="white" stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
 
       {/* DAKDOORVOER: de concentrische pijp steekt door het dak en eindigt in de kap */}
       <g>
@@ -598,7 +601,7 @@ function SchachtOnderdelen({ placed }) {
 
       {/* CONDENSAFVOER (NPR 3378-40/41): trechter -> laag door de wand -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
       {/* afvoer uit de trechter: kort omlaag, bocht en laag door de schachtwand naar de sifons */}
-      <path d="M280 424 V434 H350" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M280 416 V434 H350" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
       <DrainageTrein x={350} y={434} s={1.2} stroke={mark("condens")} strokeWidth={ok("condens") ? 2.4 : 2} riool={false} />
       {/* na sifon 2: omhoog, over de vloer en met een OPEN uiteinde in de vloersparing (NEN 3287) */}
       <path
@@ -611,11 +614,11 @@ function SchachtOnderdelen({ placed }) {
       />
       <text x="452" y="492" fontSize="10" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
 
-      {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerd blok op de vloer, links van de condensafvoer */}
+      {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerde strook onderaan, over de volle breedte van het kanaal */}
       <g>
-        <rect x="252" y="459" width="32" height="11" fill={fillOk("drukver")} stroke={mark("drukver")} strokeWidth={ok("drukver") ? 3 : 2} />
-        {[260, 272].map((cx) => (
-          <circle key={cx} cx={cx} cy="464.5" r="3.5" fill="none" stroke={mark("drukver")} strokeWidth="1.8" />
+        <rect x="254" y="456" width="52" height="14" fill={fillOk("drukver")} stroke={mark("drukver")} strokeWidth={ok("drukver") ? 3 : 2} />
+        {[266, 280, 294].map((cx) => (
+          <circle key={cx} cx={cx} cy="463" r="4" fill="none" stroke={mark("drukver")} strokeWidth="1.8" />
         ))}
       </g>
     </svg>
