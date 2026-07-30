@@ -537,10 +537,8 @@ function SchachtOnderdelen({ placed }) {
       <line x1="296" y1="120" x2="296" y2="456" stroke={C.brownText} strokeWidth="2" />
       <line x1="272" y1="106" x2="272" y2="414" stroke={C.brownText} strokeWidth="2" />
       <line x1="288" y1="106" x2="288" y2="414" stroke={C.brownText} strokeWidth="2" />
-      {/* klein toegangsluikje op het kanaal zelf, op dezelfde hoogte als het inspectieluik in de wand */}
-      <rect x="290" y="378" width="18" height="24" rx="6" fill="white" stroke={C.brownText} strokeWidth="2" />
-      <line x1="295" y1="385" x2="303" y2="385" stroke={C.brownText} strokeWidth="1.5" />
-      <line x1="295" y1="395" x2="303" y2="395" stroke={C.brownText} strokeWidth="1.5" />
+      {/* klein toegangsluikje op het kanaal zelf, subtiel, op dezelfde hoogte als het inspectieluik in de wand */}
+      <rect x="290" y="381" width="12" height="18" rx="5" fill="white" stroke={C.brownText} strokeWidth="1.8" />
       {/* opvangbak in het kanaal, met conische bodem; hierop is de condensafvoer aangesloten */}
       <path d="M264 408 L277 424 H283 L296 408" fill="white" stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
 
