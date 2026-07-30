@@ -13,6 +13,7 @@ import {
   MCControle,
   EndScreen,
   StepBanner,
+  useDrag,
   useEersteFoutVrij,
   useAandacht,
   DrainageTrein,
@@ -505,9 +506,9 @@ function SchachtOnderdelen({ placed }) {
         </pattern>
       </defs>
 
-      {/* verwijslijnen van dropvlak naar onderdeel */}
+      {/* verwijslijnen van onderdeel naar de rand van de figuur (normfiguur-stijl) */}
       {R2_ONDERDELEN.map((o) => {
-        const x1 = o.side === "left" ? o.zone.x + R2_ZONE.w : o.zone.x;
+        const x1 = o.side === "left" ? 8 : R2_W - 8;
         const y1 = o.zone.y + R2_ZONE.h / 2;
         return (
           <g key={`lijn-${o.id}`}>
@@ -625,7 +626,11 @@ function Ronde2({ addScore, onDone, noteer }) {
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
   const gratisFout = useEersteFoutVrij();
+  const drag = useDrag();
   const allPlaced = R2_ONDERDELEN.every((o) => placed[o.id]);
+  // de vakken verschijnen pas als de speler een label sleept of heeft aangetikt;
+  // in rust is de figuur schoon, zoals de normfiguur
+  const bezig = drag.dragging || !!drag.selected;
 
   const dropOn = (target) => (payload, point) => {
     if (placed[target.id]) return undefined;
@@ -655,7 +660,7 @@ function Ronde2({ addScore, onDone, noteer }) {
         Ronde 2: De onderdelen van een CLV-systeem
       </h2>
       <p className="text-sm mb-3 max-w-lg text-center font-medium" style={{ color: C.brown }}>
-        Sleep (of tik) elk label naar het juiste onderdeel in de tekening.
+        Elke stippellijn wijst een onderdeel aan. Sleep (of tik) elk label naar het uiteinde van de juiste stippellijn.
       </p>
 
       <div className="relative w-full" style={{ maxWidth: R2_W }}>
@@ -674,19 +679,30 @@ function Ronde2({ addScore, onDone, noteer }) {
               height: `${(R2_ZONE.h / R2_H) * 100}%`,
             }}
           >
-            {({ isHover, flash }) => (
-              <div
-                className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[10px] font-bold text-center leading-tight px-1 transition-colors"
-                style={{
-                  borderStyle: placed[o.id] ? "solid" : "dashed",
-                  borderColor: placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
-                  backgroundColor: placed[o.id] ? C.greenLight : flash === "wrong" ? C.redLight : isHover ? C.oliveLight : "rgba(255,252,245,0.95)",
-                  color: placed[o.id] ? C.green : C.brown,
-                }}
-              >
-                {placed[o.id] ? o.label : "?"}
-              </div>
-            )}
+            {({ isHover, flash }) => {
+              const zichtbaar = placed[o.id] || flash === "wrong" || isHover || bezig;
+              return (
+                <div
+                  className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[10px] font-bold text-center leading-tight px-1 transition-colors"
+                  style={{
+                    borderStyle: placed[o.id] ? "solid" : "dashed",
+                    borderColor: !zichtbaar ? "transparent" : placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
+                    backgroundColor: !zichtbaar
+                      ? "transparent"
+                      : placed[o.id]
+                      ? C.greenLight
+                      : flash === "wrong"
+                      ? C.redLight
+                      : isHover
+                      ? C.oliveLight
+                      : "rgba(255,252,245,0.95)",
+                    color: placed[o.id] ? C.green : C.brown,
+                  }}
+                >
+                  {placed[o.id] ? o.label : zichtbaar ? "?" : ""}
+                </div>
+              );
+            }}
           </DropTarget>
         ))}
       </div>
