@@ -181,7 +181,18 @@ function ConfettiBurst({ x, y, onDone }) {
 // ─── STREAK INDICATOR ───
 
 function StreakIndicator({ streak }) {
-  if (streak < 2) return null;
+  // Combo-melding kort tonen en daarna vanzelf laten verdwijnen
+  const [zichtbaar, setZichtbaar] = useState(false);
+  useEffect(() => {
+    if (streak < 2) {
+      setZichtbaar(false);
+      return undefined;
+    }
+    setZichtbaar(true);
+    const timer = setTimeout(() => setZichtbaar(false), 1500);
+    return () => clearTimeout(timer);
+  }, [streak]);
+  if (!zichtbaar || streak < 2) return null;
   return (
     <div className="fixed top-20 right-4 z-[90] animate-bounce">
       <div
