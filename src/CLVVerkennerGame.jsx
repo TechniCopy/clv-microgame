@@ -408,7 +408,7 @@ function Ronde1({ addScore, onDone, noteer }) {
         <div className="w-full max-w-md">
           <div
             className="rounded-xl px-4 py-2 mb-2 text-center font-bold italic border-2"
-            style={{ backgroundColor: stand === "dak" ? C.oliveLight : "#FFF0D6", borderColor: C.brownText, color: C.brownText }}
+            style={{ backgroundColor: stand === "dak" ? C.oliveLight : "#FDEBDD", borderColor: C.brownText, color: C.brownText }}
           >
             {stand === "dak" ? "Dit is een CLV-systeem" : "Dit is een half-CLV-systeem"}
           </div>

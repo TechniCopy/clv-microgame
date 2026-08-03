@@ -270,7 +270,7 @@ function RecircSVG({ closed, gedemonteerd }) {
         return (
           <g key={id}>
             <rect x="364" y={y + 2} width="28" height="18" fill="white" stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
-            <ellipse cx="364" cy={y + 11} rx="4.5" ry="11" fill={dicht ? C.greenLight : open ? "#3B1E0A" : "white"} stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
+            <ellipse cx="364" cy={y + 11} rx="4.5" ry="11" fill={dicht ? C.greenLight : open ? "#242424" : "white"} stroke={dicht ? C.green : C.brownText} strokeWidth="2" />
             {dicht && <circle cx="364" cy={y + 11} r="5" fill={C.green} stroke="white" strokeWidth="1.5" />}
             <text x="356" y={y + 14} fontSize="8" fontWeight="600" fill={C.brown} textAnchor="end">{id}</text>
           </g>
@@ -311,7 +311,7 @@ function COMeter({ value }) {
     <div
       className="rounded-xl border-2 px-4 py-2 flex items-center gap-3 shadow-md"
       style={{
-        backgroundColor: danger ? C.redLight : warn ? "#FFF0D6" : C.greenLight,
+        backgroundColor: danger ? C.redLight : warn ? "#FDEBDD" : C.greenLight,
         borderColor: danger ? C.red : warn ? "#B8860B" : C.green,
       }}
     >
@@ -1101,7 +1101,7 @@ function Ronde2({ addScore, onDone, noteer }) {
             <div className="w-full max-w-md">
               <div
                 className="rounded-xl px-4 py-2 mb-2 text-center font-bold italic border-2"
-                style={{ backgroundColor: modus === "onderdruk" ? C.oliveLight : "#FFF0D6", borderColor: C.brownText, color: C.brownText }}
+                style={{ backgroundColor: modus === "onderdruk" ? C.oliveLight : "#FDEBDD", borderColor: C.brownText, color: C.brownText }}
               >
                 {modus === "onderdruk" ? "Concentrisch CLV met onderdruk (VR)" : "Concentrisch CLV met overdruk (HR)"}
               </div>
@@ -1317,7 +1317,7 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
       {/* bouwkundig inspectieluik in de schachtwand (opent tijdens de onderhoudsbeurt) */}
       {luikOpen ? (
         <>
-          <rect x="152" y="240" width="16" height="32" fill="#3B1E0A" stroke={C.brownText} strokeWidth="2" />
+          <rect x="152" y="240" width="16" height="32" fill="#242424" stroke={C.brownText} strokeWidth="2" />
           <g transform="rotate(-70 152 240)">
             <rect x="152" y="240" width="6" height="32" fill="white" stroke={C.brownText} strokeWidth="1.5" />
           </g>
@@ -1345,7 +1345,7 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
           ].map(({ x, y }, i) =>
             dekselsOpen ? (
               <g key={i}>
-                <rect x={x} y={y} width="11" height="9" fill="#3B1E0A" stroke={C.brownText} strokeWidth="1.3" />
+                <rect x={x} y={y} width="11" height="9" fill="#242424" stroke={C.brownText} strokeWidth="1.3" />
                 <rect x={x - 6} y={y - 7} width="11" height="6" fill="white" stroke={C.brownText} strokeWidth="1.2" transform={`rotate(-25 ${x} ${y})`} />
               </g>
             ) : (
@@ -1375,7 +1375,7 @@ function ControleSVG({ checked, running, onderhoudStap = 0 }) {
       )}
 
       {/* typeplaat-controle: gele gloed op de schoorsteenplaat */}
-      {s === 3 && <rect x="72" y="242" width="50" height="30" fill="#FBBF24" opacity="0.3" rx="4" />}
+      {s === 3 && <rect x="72" y="242" width="50" height="30" fill="#F9762E" opacity="0.3" rx="4" />}
 
       {/* condensafvoer (NPR 3378-40/41): opvangbak -> sifon 1 -> open verbinding -> sifon 2 -> riool */}
       <path d="M188 316 V320 H206" fill="none" stroke={hl("sifon")} strokeWidth={checked.includes("sifon") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />

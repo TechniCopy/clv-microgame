@@ -2,6 +2,9 @@
 
 body {
   margin: 0;
+  font-family: "Oxanium", ui-sans-serif, system-ui, sans-serif;
+  /* Swipe/pull-to-refresh mag de game niet verlaten of herladen */
+  overscroll-behavior: none;
 }
 
 @keyframes shake {

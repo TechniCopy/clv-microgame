@@ -91,6 +91,7 @@ function GameMenu({ game1Done, onPick }) {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: C.bgPage }}>
       <div className="max-w-[800px] w-full mx-auto flex flex-col min-h-screen shadow-lg" style={{ backgroundColor: C.bgPage }}>
         <div className="py-4 px-5 text-center" style={{ backgroundColor: C.bgHeader }}>
+          <img src="/brand/logo-light.png" alt="PractiQ" className="mx-auto mb-2" style={{ height: 30 }} />
           <div className="text-white font-bold italic text-xl">CLV-Systemen in Gestapelde Bouw</div>
           <div className="text-xs mt-1" style={{ color: C.beigeMid }}>
             Leerdoel 14 — twee microgames
@@ -155,13 +156,13 @@ function GameMenu({ game1Done, onPick }) {
                 {game1Done ? (
                   <Wrench className="w-12 h-12" style={{ color: C.brownText }} />
                 ) : (
-                  <Lock className="w-12 h-12" style={{ color: "#8B7355" }} />
+                  <Lock className="w-12 h-12" style={{ color: "#8C857C" }} />
                 )}
               </div>
-              <div className="font-bold italic text-lg" style={{ color: game1Done ? C.brownText : "#8B7355" }}>
+              <div className="font-bold italic text-lg" style={{ color: game1Done ? C.brownText : "#8C857C" }}>
                 2. De CLV-Monteur
               </div>
-              <p className="text-xs text-center" style={{ color: game1Done ? C.brown : "#8B7355" }}>
+              <p className="text-xs text-center" style={{ color: game1Done ? C.brown : "#8C857C" }}>
                 Sluit een toestel veilig aan, voorkom recirculatie en stel het systeem in bedrijf.
               </p>
               {game1Done ? (
@@ -169,7 +170,7 @@ function GameMenu({ game1Done, onPick }) {
                   Start de game
                 </span>
               ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#8B7355" }}>
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#8C857C" }}>
                   Rond eerst game 1 af
                 </span>
               )}
@@ -178,7 +179,7 @@ function GameMenu({ game1Done, onPick }) {
         </div>
 
         <div className="py-3 text-center text-[10px]" style={{ color: C.brown }}>
-          Studium B.V. — Vakmanschap CO · Leerdoel 14
+          PractiQ — Vakmanschap CO · Leerdoel 14
         </div>
       </div>
     </div>
