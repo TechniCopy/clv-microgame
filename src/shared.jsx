@@ -279,6 +279,36 @@ const DragCtx = createContext(null);
 
 const TAP_DREMPEL = 8; // px beweging voordat een aanraking als slepen telt
 
+// ─── SLEEPFIX MOBIEL ───
+//
+// Op een telefoon scrolde de pagina mee zodra je een kaartje versleepte: je
+// was dan eigenlijk aan het scrollen in plaats van aan het slepen. "touch-action:
+// none" op het element is daar niet genoeg voor (iOS negeert het zodra de
+// pagina zelf kan scrollen), en React registreert zijn touchmove-listener
+// passive, dus een preventDefault in een React-handler doet niets.
+//
+// Daarom: zodra een vinger op een sleepbaar element landt zetten we zelf een
+// non-passive touchmove-listener op document die de paginascroll blokkeert, en
+// bij het loslaten halen we hem weer weg. Elke sleepmechaniek roept deze twee
+// functies aan bij pointerdown en pointerup/cancel.
+let sleepBlokkade = null;
+
+export function blokkeerPaginaScroll() {
+  if (sleepBlokkade) return;
+  const blokkeer = (e) => {
+    if (e.cancelable) e.preventDefault();
+  };
+  document.addEventListener("touchmove", blokkeer, { passive: false });
+  sleepBlokkade = () => {
+    document.removeEventListener("touchmove", blokkeer);
+    sleepBlokkade = null;
+  };
+}
+
+export function herstelPaginaScroll() {
+  if (sleepBlokkade) sleepBlokkade();
+}
+
 export function DragProvider({ children }) {
   const zonesRef = useRef(new Map());
   const ghostRef = useRef(null);
@@ -382,6 +412,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
       onPointerDown={(e) => {
         if (disabled) return;
         e.preventDefault();
+        blokkeerPaginaScroll();
         try {
           e.currentTarget.setPointerCapture(e.pointerId);
         } catch {
@@ -404,6 +435,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
         api.move(e.clientX, e.clientY);
       }}
       onPointerUp={(e) => {
+        herstelPaginaScroll();
         if (!pressedRef.current) return;
         pressedRef.current = false;
         if (draggingRef.current) {
@@ -416,6 +448,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
         }
       }}
       onPointerCancel={() => {
+        herstelPaginaScroll();
         pressedRef.current = false;
         if (!draggingRef.current) return;
         draggingRef.current = false;
