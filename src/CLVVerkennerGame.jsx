@@ -11,15 +11,85 @@ import {
   GameButton,
   IntroScreen,
   MCControle,
-  EndScreen,
   StepBanner,
-  useEersteFoutVrij,
   useAandacht,
   DrainageTrein,
   playSound,
 } from "./shared.jsx";
+import { useSessie, maakZender, EindschermKern } from "./microgame/schil.jsx";
 
-const MAX_SCORE = 105;
+// Score, sterren, levens, het eindscherm en de telemetrie komen sinds route A
+// uit de gedeelde kern van MicroGames 2.0 (src/microgame/). Elke pilotronde
+// met zijn controlevraag is voor de kern een missie met een ronde en een
+// kennisvraag: r1 vier kaartjes, r2 zes onderdelen, r3 vijf toestellen.
+// Haalbaar: 1800.
+const GAME_ID = "clv-verkenner";
+
+const maakOpzet = () => ({
+  id: GAME_ID,
+  missies: [
+    { id: "m1", rondes: [{ id: "r1", handelingen: 4, slepen: true }], kennisvragen: [{ id: "k1" }] },
+    { id: "m2", rondes: [{ id: "r2", handelingen: 6, slepen: true }], kennisvragen: [{ id: "k2" }] },
+    { id: "m3", rondes: [{ id: "r3", handelingen: 5, slepen: true }], kennisvragen: [{ id: "k3" }] },
+  ],
+});
+
+// De game meet niets zolang hij op zijn eigen domein draait: besluit van
+// Peter (28 augustus 2026), meten en testen gebeurt pas als de games in de
+// lesstof-app staan. Zonder VITE_TELEMETRIE_URL geeft maakZender geen zender
+// terug en meldt de kern nergens heen. Zet die variabele dus niet.
+const zender = maakZender({ url: import.meta.env.VITE_TELEMETRIE_URL });
+
+const RONDE_NAMEN = {
+  r1: "Wat is een CLV?",
+  r2: "De onderdelen",
+  r3: "Welke toestellen mogen erop?",
+};
+
+const RONDE_SCHERMEN = ["r1", "r2", "r3"];
+
+// Controlemenu: zo ver moet de kern doorgespeeld zijn om op een scherm te
+// kunnen landen. Heel getal n: de eerste n rondes met kennisvraag af; met
+// een half erbij is ook de ronde erna af en staat haar kennisvraag nog open.
+const SPOEL_STAPPEN = {
+  intro: 0, r1: 0, r1mc: 0.5, r2: 1, r2mc: 1.5, r3: 2, r3mc: 2.5, end: 3,
+};
+
+function doorspelenTot(sessie, screen) {
+  const stappen = SPOEL_STAPPEN[screen];
+  if (!stappen) return;
+  // React StrictMode voert initializers dubbel uit; alleen een verse sessie spoelen
+  if (sessie.stand.rondes.some((r) => r.pogingen > 0)) return;
+  const rondes = sessie.stand.rondes;
+  const heel = Math.floor(stappen);
+  const speel = (index, metVraag) => {
+    sessie.startRonde();
+    for (let h = 0; h < rondes[index].handelingen; h += 1) sessie.beoordeel("goed");
+    sessie.verder();
+    if (metVraag) {
+      sessie.beantwoordKennisvraag(true);
+      sessie.volgendeKennisvraag();
+    }
+  };
+  for (let i = 0; i < heel; i += 1) speel(i, true);
+  if (stappen % 1) speel(heel, false);
+}
+
+// De kern sluit de ronde bij de derde fout en geeft verse hartjes; de game
+// toont alleen de uitleg. Herkansen kan aan het eind, met de beste poging.
+function RondeGefaald({ onVerder }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-4">
+      <div className="rounded-2xl border-2 shadow-2xl p-6 w-full max-w-sm text-center" style={{ backgroundColor: C.bgCard, borderColor: C.red }}>
+        <h2 className="font-bold italic text-xl mb-2" style={{ color: C.brownText }}>Je hartjes zijn op</h2>
+        <p className="text-sm mb-4" style={{ color: C.brown }}>
+          Geen probleem: van fouten leer je. Deze ronde sluit; je gaat verder met verse hartjes. Aan het eind kun je de ronde herkansen, en dan telt je beste poging.
+        </p>
+        <GameButton onClick={onVerder} className="w-full">Verder</GameButton>
+      </div>
+    </div>
+  );
+}
 
 // ─── VRAGENPOOLS ───
 
@@ -324,12 +394,11 @@ const R1_KAARTJES = [
   { id: "k4", label: "Luchttoevoer via het dak", col: "clv", aandacht: "Bij CLV komt de luchttoevoer via het dak" },
 ];
 
-function Ronde1({ addScore, onDone, noteer }) {
+function Ronde1({ beoordeel, onDone, noteer }) {
   const [stand, setStand] = useState("dak");
   const [seen, setSeen] = useState({ dak: true, gevel: false });
   const [placed, setPlaced] = useState({}); // id -> kolom
   const [hint, setHint] = useState(null);
-  const gratisFout = useEersteFoutVrij();
 
   const bothSeen = seen.dak && seen.gevel;
   const allPlaced = R1_KAARTJES.every((k) => placed[k.id]);
@@ -344,7 +413,7 @@ function Ronde1({ addScore, onDone, noteer }) {
     if (!kaart || placed[kaart.id]) return undefined;
     if (kaart.col === col) {
       setPlaced((prev) => ({ ...prev, [kaart.id]: col }));
-      addScore(5, point);
+      beoordeel("goed", point);
       setHint(null);
       return "correct";
     }
@@ -353,12 +422,7 @@ function Ronde1({ addScore, onDone, noteer }) {
       col === "clv"
         ? "Bij CLV gaan lucht en rookgas samen door het dak."
         : "Bij half-CLV is alleen het rookgas gedeeld; de lucht komt apart via de gevel.";
-    if (gratisFout()) {
-      playSound("wrong");
-      setHint(`${uitleg} (deze eerste misser telt niet mee — probeer opnieuw)`);
-      return "wrong";
-    }
-    addScore(-5, point);
+    beoordeel("fout", point, { slepen: true });
     setHint(uitleg);
     return "wrong";
   };
@@ -623,29 +687,23 @@ function SchachtOnderdelen({ placed }) {
   );
 }
 
-function Ronde2({ addScore, onDone, noteer }) {
+function Ronde2({ beoordeel, onDone, noteer }) {
   const [placed, setPlaced] = useState({});
   const [hint, setHint] = useState(null);
-  const gratisFout = useEersteFoutVrij();
   const allPlaced = R2_ONDERDELEN.every((o) => placed[o.id]);
 
   const dropOn = (target) => (payload, point) => {
     if (placed[target.id]) return undefined;
     if (payload === target.id) {
       setPlaced((prev) => ({ ...prev, [target.id]: true }));
-      addScore(5, point);
+      beoordeel("goed", point);
       setHint(null);
       playSound("drop");
       return "correct";
     }
     const dragged = R2_ONDERDELEN.find((o) => o.id === payload);
     noteer(dragged?.aandacht);
-    if (gratisFout()) {
-      playSound("wrong");
-      setHint(`${dragged?.hint ?? "Kijk nog eens naar de tekening."} (deze eerste misser telt niet mee)`);
-      return "wrong";
-    }
-    addScore(-5, point);
+    beoordeel("fout", point, { slepen: true });
     setHint(dragged?.hint ?? null);
     return "wrong";
   };
@@ -802,10 +860,9 @@ function BakIcoon({ type }) {
   );
 }
 
-function Ronde3({ addScore, onDone, noteer }) {
+function Ronde3({ beoordeel, onDone, noteer }) {
   const [placed, setPlaced] = useState({}); // toestelId -> bakId
   const [hint, setHint] = useState(null);
-  const gratisFout = useEersteFoutVrij();
   const allPlaced = R3_TOESTELLEN.every((t) => placed[t.id]);
 
   const dropIn = (bakId) => (payload, point) => {
@@ -813,7 +870,7 @@ function Ronde3({ addScore, onDone, noteer }) {
     if (!toestel || placed[toestel.id]) return undefined;
     if (toestel.bak === bakId) {
       setPlaced((prev) => ({ ...prev, [toestel.id]: bakId }));
-      addScore(5, point);
+      beoordeel("goed", point);
       setHint(null);
       playSound("drop");
       return "correct";
@@ -825,12 +882,7 @@ function Ronde3({ addScore, onDone, noteer }) {
         : toestel.bak === "onderdruk"
         ? "C4. (C42/C43) hoort bij het concentrische onderdruk-CLV (natuurlijke trek)."
         : "C8. (C82/C83) haalt de lucht individueel via de gevel — dat past bij half-CLV.";
-    if (gratisFout()) {
-      playSound("wrong");
-      setHint(`${uitleg} (deze eerste misser telt niet mee)`);
-      return "wrong";
-    }
-    addScore(-5, point);
+    beoordeel("fout", point, { slepen: true });
     setHint(uitleg);
     return "wrong";
   };
@@ -944,41 +996,71 @@ const LEERMOMENTEN = [
 
 export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGameComplete }) {
   const [screen, setScreen] = useState(initialScreen);
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(5);
   const { aandacht, noteer, reset: resetAandacht } = useAandacht();
   const juice = useGameJuice();
+  const { sessie, stand, herstart } = useSessie(maakOpzet, { zender });
 
-  const addScore = useCallback(
-    (pts, point) => {
-      setScore((prev) => Math.max(0, Math.min(MAX_SCORE, prev + pts)));
-      if (pts >= 0) juice.triggerCorrect(pts, point);
-      else juice.triggerWrong(pts, point);
+  // controlemenu-sprong: speel de kern door tot het gevraagde scherm
+  useState(() => doorspelenTot(sessie, initialScreen));
+
+  // De ronde begint zodra het rondescherm in beeld komt
+  // (startRonde is idempotent zolang de ronde al bezig is).
+  useEffect(() => {
+    if (RONDE_SCHERMEN.includes(screen)) sessie.startRonde();
+  }, [screen, sessie]);
+
+  // Een ronde meldt alleen wat de speler deed; de kern bepaalt de punten en
+  // de levens, en sluit de ronde als hij vol of gefaald is.
+  const beoordeel = useCallback(
+    (uitkomst, point, opties) => {
+      const gevolg = sessie.beoordeel(uitkomst, opties);
+      if (uitkomst === "fout") juice.triggerWrong(gevolg.punten, point);
+      else juice.triggerCorrect(gevolg.punten, point);
     },
-    [juice]
+    [sessie, juice]
   );
 
-  const loseLife = useCallback(() => {
-    setLives((prev) => Math.max(0, prev - 1));
-    juice.triggerWrong();
-  }, [juice]);
+  const beantwoord = useCallback((goed) => {
+    if (sessie.stand.fase !== "kennisvraag" || sessie.stand.kennisvraag?.beantwoord) return;
+    sessie.beantwoordKennisvraag(goed);
+    if (goed) juice.triggerCorrect(100);
+    else juice.triggerWrong();
+  }, [sessie, juice]);
+
+  // Staat de kern op het eind (ook direct na een herkansing), dan wint dat
+  // van het eigen schermpje; zo is er nooit een los eind-effect nodig.
+  const scherm = stand.fase === "eind" ? "end" : screen;
 
   const resetGame = () => {
+    herstart();
     setScreen("start");
-    setScore(0);
-    setLives(5);
     resetAandacht();
   };
 
-  useEffect(() => {
-    if (screen === "end") {
-      juice.triggerLevelUp();
-      onGameComplete?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen]);
+  // derde fout: de kern sloot de ronde als gefaald en gaf verse levens
+  const gefaald = stand.fase === "rondeklaar" && stand.ronde?.status === "gefaald";
 
-  const showProgress = !["start", "intro", "end"].includes(screen);
+  // Een ronde is af: door naar de controlevraag. Sluit de kernronde ook als
+  // er handelingen open bleven.
+  const rondeAf = (mcScreen) => {
+    sessie.rondeKlaar();
+    if (sessie.stand.fase === "rondeklaar") sessie.verder();
+    if (sessie.stand.fase === "kennisvraag") setScreen(mcScreen);
+  };
+
+  // na de kennisvraag door naar het volgende scherm
+  const vraagKlaar = (next) => () => {
+    sessie.volgendeKennisvraag();
+    if (next !== "end") setScreen(next);
+  };
+
+  const showProgress = !["start", "intro", "end"].includes(scherm);
+
+  // het menu markeert deze game als gespeeld zodra de kern klaar is
+  useEffect(() => {
+    if (scherm === "end") onGameComplete?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scherm]);
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden" style={{ backgroundColor: C.bgPage }}>
@@ -988,11 +1070,11 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
           className="max-w-[800px] w-full mx-auto flex flex-col min-h-screen shadow-lg overflow-x-hidden"
           style={{ backgroundColor: C.bgPage, animation: juice.shaking ? "shake 0.3s ease-in-out" : "none" }}
         >
-          {showProgress && <ProgressBar currentRound={SCREEN_ROUND[screen] ?? 1} score={score} lives={lives} />}
+          {showProgress && <ProgressBar currentRound={SCREEN_ROUND[scherm] ?? 1} score={Math.max(0, stand.punten)} lives={stand.levens} />}
 
-          {screen === "start" && <StartScreen onStart={() => setScreen("intro")} />}
+          {scherm === "start" && <StartScreen onStart={() => setScreen("intro")} />}
 
-          {screen === "intro" && (
+          {scherm === "intro" && (
             <IntroScreen title="Missie: het CLV-systeem" buttonText="Aan de slag" onNext={() => setScreen("r1")}>
               <div className="leading-relaxed" style={{ color: C.brownText }}>
                 <p className="mb-2">
@@ -1007,42 +1089,48 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
             </IntroScreen>
           )}
 
-          {screen === "r1" && <Ronde1 addScore={addScore} onDone={() => setScreen("r1mc")} noteer={noteer} />}
-          {screen === "r1mc" && (
+          {scherm === "r1" && <Ronde1 beoordeel={beoordeel} onDone={() => rondeAf("r1mc")} noteer={noteer} />}
+          {scherm === "r1mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R1} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r2")} />
+              <MCControle pool={POOL_R1} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r2")} />
             </div>
           )}
 
-          {screen === "r2" && <Ronde2 addScore={addScore} onDone={() => setScreen("r2mc")} noteer={noteer} />}
-          {screen === "r2mc" && (
+          {scherm === "r2" && <Ronde2 beoordeel={beoordeel} onDone={() => rondeAf("r2mc")} noteer={noteer} />}
+          {scherm === "r2mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R2} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("r3")} />
+              <MCControle pool={POOL_R2} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r3")} />
             </div>
           )}
 
-          {screen === "r3" && <Ronde3 addScore={addScore} onDone={() => setScreen("r3mc")} noteer={noteer} />}
-          {screen === "r3mc" && (
+          {scherm === "r3" && <Ronde3 beoordeel={beoordeel} onDone={() => rondeAf("r3mc")} noteer={noteer} />}
+          {scherm === "r3mc" && (
             <div className="flex-1 flex flex-col items-center p-6">
               <StepBanner step={2} />
-              <MCControle pool={POOL_R3} addScore={addScore} loseLife={loseLife} onFout={noteer} onComplete={() => setScreen("end")} lastRound />
+              <MCControle pool={POOL_R3} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("end")} lastRound />
             </div>
           )}
 
-          {screen === "end" && (
-            <EndScreen
-              score={score}
-              maxScore={MAX_SCORE}
-              lives={lives}
-              text="Je herkent nu CLV-systemen. In De CLV-Monteur ga je er ook echt mee aan de slag!"
+          {scherm === "end" && (
+            <EindschermKern
+              sessie={sessie}
+              stand={stand}
+              tekst="Sterk werk! Je weet nu wat een CLV-systeem is, uit welke onderdelen het bestaat en welke toestellen erop mogen. Daarmee herken je een CLV in het veld en weet je waar je op moet letten."
+              rondeNamen={RONDE_NAMEN}
               leermomenten={LEERMOMENTEN}
               aandacht={aandacht}
-              onRestart={resetGame}
-              onExit={onExit}
+              onHerkans={(rondeId) => setScreen(rondeId)}
+              onOpnieuw={resetGame}
             />
           )}
+          {scherm === "end" && onExit && (
+            <div className="flex justify-center pb-6">
+              <GameButton variant="secondary" onClick={onExit}>Terug naar het menu</GameButton>
+            </div>
+          )}
+          {gefaald && <RondeGefaald onVerder={() => rondeAf(`${stand.ronde.id}mc`)} />}
         </div>
       </DragProvider>
     </div>

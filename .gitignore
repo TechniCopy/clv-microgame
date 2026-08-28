@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .vercel
+.gstack/
+
+.claude/
+sessie.md
+.gstack/

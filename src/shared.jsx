@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import { LEVENS_PER_MISSIE } from "./microgame/schil.jsx";
 import { CheckCircle, XCircle, Star, ArrowRight, RotateCcw, Heart, Lightbulb, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 
 // ─── THEME COLORS (huisstijl PractiQ microgames) ───
@@ -572,7 +573,7 @@ export function ProgressBar({ currentRound, score, lives }) {
       </div>
       <div className="flex items-center gap-3">
         <div className="flex gap-0.5">
-          {[1, 2, 3, 4, 5].map((h) => (
+          {Array.from({ length: LEVENS_PER_MISSIE }, (_, i) => i + 1).map((h) => (
             <Heart
               key={h}
               className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-300"
@@ -696,7 +697,7 @@ function pickAndShuffle(pool) {
   };
 }
 
-export function MCControle({ pool, addScore, loseLife, onComplete, onFout, lastRound = false }) {
+export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = false }) {
   const [q] = useState(() => pickAndShuffle(pool));
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -708,12 +709,10 @@ export function MCControle({ pool, addScore, loseLife, onComplete, onFout, lastR
   const handleCheck = () => {
     setChecked(true);
     setAttempts((prev) => prev + 1);
-    if (isCorrect) {
-      addScore(attempts === 0 ? 10 : 5);
-    } else {
-      loseLife();
-      onFout?.(q.aandacht);
-    }
+    // alleen de eerste controle telt voor de kern; een tweede poging na de
+    // hint blijft leerzaam maar levert geen punten meer op
+    if (attempts === 0) beantwoord?.(isCorrect);
+    if (!isCorrect) onFout?.(q.aandacht);
   };
 
   const handleNext = () => {
@@ -814,7 +813,7 @@ export function EndScreen({
         {score}/{maxScore}
       </div>
       <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((h) => (
+        {Array.from({ length: LEVENS_PER_MISSIE }, (_, i) => i + 1).map((h) => (
           <Heart key={h} className="w-5 h-5" fill={h <= lives ? "#E74C3C" : "transparent"} stroke={h <= lives ? "#E74C3C" : "#D8C6B0"} />
         ))}
       </div>
