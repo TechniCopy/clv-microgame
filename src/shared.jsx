@@ -539,7 +539,10 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
 export function DragCard({ label, disabled, small = false }) {
   return (
     <div
-      className={`${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"} rounded-xl font-bold select-none shadow-md border-2 italic text-center`}
+      className={`${
+        // Op mobiel iets grotere tikvlakken; vanaf sm de oorspronkelijke maat.
+        small ? "px-3 py-2 text-sm sm:py-1.5 sm:text-xs" : "px-4 py-3 text-base sm:py-2.5 sm:text-sm"
+      } rounded-xl font-bold select-none shadow-md border-2 italic text-center`}
       style={{
         backgroundColor: disabled ? C.beigeMid : C.olive,
         color: disabled ? "#8C857C" : "white",

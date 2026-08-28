@@ -497,7 +497,7 @@ function Ronde1({ beoordeel, onDone, noteer }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 1: Recirculatie voorkomen
@@ -1067,7 +1067,7 @@ function Ronde2({ beoordeel, onDone, noteer }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 2: Aansluiten — onderdruk of overdruk?
@@ -1548,7 +1548,7 @@ function Ronde3({ beoordeel, onDone, noteer }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 3: Inbedrijfstellen &amp; Onderhoud
@@ -1889,7 +1889,7 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
 
           {scherm === "r1" && <Ronde1 beoordeel={beoordeel} onDone={() => rondeAf("r1mc")} noteer={noteer} />}
           {scherm === "r1mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R1} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r2")} />
             </div>
@@ -1897,7 +1897,7 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
 
           {scherm === "r2" && <Ronde2 beoordeel={beoordeel} onDone={() => rondeAf("r2mc")} noteer={noteer} />}
           {scherm === "r2mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R2} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r3")} />
             </div>
@@ -1905,7 +1905,7 @@ export default function CLVMonteurGame({ initialScreen = "start", onExit }) {
 
           {scherm === "r3" && <Ronde3 beoordeel={beoordeel} onDone={() => rondeAf("r3mc")} noteer={noteer} />}
           {scherm === "r3mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R3} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("end")} lastRound />
             </div>

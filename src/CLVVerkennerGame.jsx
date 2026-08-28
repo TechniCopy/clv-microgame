@@ -459,7 +459,7 @@ function Ronde1({ beoordeel, onDone, noteer }) {
   );
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 1: CLV of half-CLV?
@@ -709,7 +709,7 @@ function Ronde2({ beoordeel, onDone, noteer }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 2: De onderdelen van een CLV-systeem
@@ -805,7 +805,7 @@ function BakIcoon({ type }) {
   const half = type === "half";
   const sx = half ? 55 : 40; // hart van de gemeenschappelijke rookgasafvoer
   return (
-    <svg viewBox="0 0 80 70" className="w-20 h-16 mx-auto">
+    <svg viewBox="0 0 80 70" className="w-14 h-12 sm:w-20 sm:h-16 mx-auto">
       {/* gearceerde vloer */}
       <line x1="6" y1="58" x2="74" y2="58" stroke={C.brownText} strokeWidth="1.5" />
       {[12, 20, 28, 36, 44, 52, 60, 68].map((x) => (
@@ -888,7 +888,7 @@ function Ronde3({ beoordeel, onDone, noteer }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6">
+    <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
       <StepBanner step={1} />
       <h2 className="text-xl font-bold italic mb-1" style={{ color: C.brownText }}>
         Ronde 3: Welk toestel op welk systeem?
@@ -897,12 +897,14 @@ function Ronde3({ beoordeel, onDone, noteer }) {
         Sleep (of tik) elke toestelcodering naar het systeem waarop hij mag worden aangesloten.
       </p>
 
-      <div className="flex gap-3 w-full max-w-3xl mb-4 flex-col sm:flex-row">
+      {/* Op mobiel de drie bakken naast elkaar houden (compact), zodat je ze
+          alle drie tegelijk ziet terwijl je een codering sleept. */}
+      <div className="flex gap-1.5 sm:gap-3 w-full max-w-3xl mb-3 sm:mb-4 flex-row">
         {R3_BAKKEN.map((bak) => (
-          <DropTarget key={bak.id} id={`r3-${bak.id}`} onDropItem={dropIn(bak.id)} className="flex-1">
+          <DropTarget key={bak.id} id={`r3-${bak.id}`} onDropItem={dropIn(bak.id)} className="flex-1 min-w-0">
             {({ isHover, flash }) => (
               <div
-                className="rounded-2xl border-2 p-3 min-h-[190px] transition-colors"
+                className="rounded-2xl border-2 p-1.5 sm:p-3 min-h-[135px] sm:min-h-[190px] transition-colors"
                 style={{
                   borderStyle: "dashed",
                   borderColor: flash === "wrong" ? C.red : flash === "correct" ? C.green : isHover ? C.olive : C.brownText,
@@ -910,17 +912,17 @@ function Ronde3({ beoordeel, onDone, noteer }) {
                 }}
               >
                 <BakIcoon type={bak.id} />
-                <div className="text-center font-bold italic text-sm" style={{ color: C.brownText }}>
+                <div className="text-center font-bold italic text-xs sm:text-sm leading-tight" style={{ color: C.brownText }}>
                   {bak.titel}
                 </div>
-                <div className="text-center text-[10px] mb-2" style={{ color: C.brown }}>
+                <div className="text-center text-[10px] mb-1.5 sm:mb-2" style={{ color: C.brown }}>
                   {bak.sub}
                 </div>
-                <div className="flex gap-1.5 flex-wrap justify-center">
+                <div className="flex gap-1 sm:gap-1.5 flex-wrap justify-center">
                   {R3_TOESTELLEN.filter((t) => placed[t.id] === bak.id).map((t) => (
                     <span
                       key={t.id}
-                      className="rounded-lg px-2.5 py-1 text-xs font-bold border-2"
+                      className="rounded-lg px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold border-2"
                       style={{ backgroundColor: C.greenLight, borderColor: C.green, color: C.green }}
                     >
                       {t.label}
@@ -1091,7 +1093,7 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
 
           {scherm === "r1" && <Ronde1 beoordeel={beoordeel} onDone={() => rondeAf("r1mc")} noteer={noteer} />}
           {scherm === "r1mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R1} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r2")} />
             </div>
@@ -1099,7 +1101,7 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
 
           {scherm === "r2" && <Ronde2 beoordeel={beoordeel} onDone={() => rondeAf("r2mc")} noteer={noteer} />}
           {scherm === "r2mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R2} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("r3")} />
             </div>
@@ -1107,7 +1109,7 @@ export default function CLVVerkennerGame({ initialScreen = "start", onExit, onGa
 
           {scherm === "r3" && <Ronde3 beoordeel={beoordeel} onDone={() => rondeAf("r3mc")} noteer={noteer} />}
           {scherm === "r3mc" && (
-            <div className="flex-1 flex flex-col items-center p-6">
+            <div className="flex-1 flex flex-col items-center p-3 sm:p-6">
               <StepBanner step={2} />
               <MCControle pool={POOL_R3} beantwoord={beantwoord} onFout={noteer} onComplete={vraagKlaar("end")} lastRound />
             </div>
