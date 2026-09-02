@@ -1141,7 +1141,7 @@ export function UitlegStrook({ title = "Spiekbriefje", children, defaultOpen = t
     <div className="w-full max-w-lg mb-3 rounded-xl border-2 overflow-hidden" style={{ borderColor: C.brown, backgroundColor: "#FDF4E9" }}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold"
+        className="w-full flex items-center justify-between px-3 py-2.5 sm:py-1.5 text-sm sm:text-xs font-bold"
         style={{ color: C.brown }}
       >
         <span className="flex items-center gap-1.5">
