@@ -1707,8 +1707,8 @@ function Ronde3({ beoordeel, onDone, noteer }) {
                 <button
                   key={h.id}
                   onClick={() => openHotspot(h.id)}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${(h.x / 280) * 100}%`, top: `${(h.y / 400) * 100}%`, width: 26, height: 26 }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 w-10 h-10 sm:w-[26px] sm:h-[26px]"
+                  style={{ left: `${(h.x / 280) * 100}%`, top: `${(h.y / 400) * 100}%` }}
                   aria-label={h.naam}
                 >
                   {!klaar && (
@@ -1718,7 +1718,7 @@ function Ronde3({ beoordeel, onDone, noteer }) {
                     />
                   )}
                   <span
-                    className="absolute inset-1 rounded-full border-2 flex items-center justify-center text-[11px] font-bold text-white"
+                    className="absolute inset-1.5 sm:inset-1 rounded-full border-2 flex items-center justify-center text-[13px] sm:text-[11px] font-bold text-white"
                     style={{
                       backgroundColor: klaar ? C.green : isActief ? C.olive : C.red,
                       borderColor: "white",

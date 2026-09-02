@@ -309,6 +309,8 @@ export function herstelPaginaScroll() {
   if (sleepBlokkade) sleepBlokkade();
 }
 
+const RAAKMARGE = 18;
+
 export function DragProvider({ children }) {
   const zonesRef = useRef(new Map());
   const ghostRef = useRef(null);
@@ -316,14 +318,46 @@ export function DragProvider({ children }) {
   const [hoverZone, setHoverZone] = useState(null);
   const [selected, setSelected] = useState(null); // { payload } bij tik-selectie
 
-  const findZone = useCallback((x, y) => {
+  // Raakzone: een vlak dat exact onder de vinger ligt wint; anders het
+  // dichtstbijzijnde vlak binnen RAAKMARGE px. Op een telefoon zijn de
+  // sleepvlakken vaak maar 20-30 px hoog; zonder marge mis je ze net.
+  const findZone = useCallback((x, y, marge = RAAKMARGE) => {
     let found = null;
+    let dichtst = Infinity;
     zonesRef.current.forEach((zone, id) => {
       const r = zone.getRect();
-      if (r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) found = id;
+      if (!r || r.width === 0) return;
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      const afstand = Math.hypot(dx, dy);
+      if (afstand === 0) {
+        found = id;
+        dichtst = -1;
+      } else if (dichtst >= 0 && afstand <= marge && afstand < dichtst) {
+        found = id;
+        dichtst = afstand;
+      }
     });
     return found;
   }, []);
+
+  // Tik-om-te-plaatsen met dezelfde marge: een tik vlak naast het vlak telt
+  // ook. Het vlak zelf handelt een exacte tik al af (handleTap), dus hier
+  // alleen de tikken die net misten. Tikken op een kaartje tellen nooit.
+  const selectedRef = useRef(null);
+  selectedRef.current = selected;
+  useEffect(() => {
+    const opTik = (e) => {
+      const sel = selectedRef.current;
+      if (!sel || e.target.closest?.("[data-draggable]")) return;
+      if (findZone(e.clientX, e.clientY, 0)) return;
+      const id = findZone(e.clientX, e.clientY);
+      if (!id) return;
+      zonesRef.current.get(id)?.onDrop(sel.payload, { clientX: e.clientX, clientY: e.clientY, viaTik: true });
+    };
+    document.addEventListener("click", opTik);
+    return () => document.removeEventListener("click", opTik);
+  }, [findZone]);
 
   const api = {
     hoverZone,
@@ -409,6 +443,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
 
   return (
     <div
+      data-draggable=""
       onPointerDown={(e) => {
         if (disabled) return;
         e.preventDefault();
@@ -497,7 +532,12 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
     return api.registerZone(
       id,
       () => ref.current?.getBoundingClientRect(),
-      (payload, point) => handleResult(cbRef.current?.(payload, point))
+      (payload, point) => {
+        const result = cbRef.current?.(payload, point);
+        handleResult(result);
+        if (point?.viaTik && result === "correct") api.clearSelect();
+        return result;
+      }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -516,13 +556,14 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
 
   if (render)
     return (
-      <div ref={ref} className={className} style={{ ...armedStyle, ...style }} onClick={handleTap}>
+      <div ref={ref} data-dropzone={id} className={className} style={{ ...armedStyle, ...style }} onClick={handleTap}>
         {render({ isHover, flash })}
       </div>
     );
   return (
     <div
       ref={ref}
+      data-dropzone={id}
       className={className}
       style={{ ...armedStyle, ...style }}
       onClick={handleTap}

@@ -726,17 +726,20 @@ function Ronde2({ beoordeel, onDone, noteer }) {
             key={o.id}
             id={`r2-${o.id}`}
             onDropItem={dropOn(o)}
-            className="absolute"
+            className="absolute -translate-y-1/2"
             style={{
+              // Verticaal gecentreerd op de verwijslijn; op een smal scherm
+              // schaalt het vlak niet onder de 30 px, anders wordt het te klein
+              // om te raken.
               left: `${(o.zone.x / R2_W) * 100}%`,
-              top: `${(o.zone.y / R2_H) * 100}%`,
+              top: `${((o.zone.y + R2_ZONE.h / 2) / R2_H) * 100}%`,
               width: `${(R2_ZONE.w / R2_W) * 100}%`,
-              height: `${(R2_ZONE.h / R2_H) * 100}%`,
+              height: `max(${(R2_ZONE.h / R2_H) * 100}%, 30px)`,
             }}
           >
             {({ isHover, flash }) => (
               <div
-                className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[10px] font-bold text-center leading-tight px-1 transition-colors"
+                className="w-full h-full rounded-lg border-2 flex items-center justify-center text-[11px] sm:text-[10px] font-bold text-center leading-tight px-1 transition-colors"
                 style={{
                   borderStyle: placed[o.id] ? "solid" : "dashed",
                   borderColor: placed[o.id] ? C.green : flash === "wrong" ? C.red : isHover ? C.olive : C.brown,
