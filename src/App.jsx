@@ -218,8 +218,23 @@ function GameMenu({ voltooid, onPick }) {
   );
 }
 
+// QA-sprong voor screenshots zonder klikken: ?qa=1&spring=verkenner-r3 opent
+// game 1 in ronde 3; &fase=opdracht slaat daar de introkaart over.
+function leesQaSprong() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("qa") !== "1") return null;
+    const [game, screen] = (p.get("spring") ?? "").split("-");
+    if (!GAMES.some((g) => g.id === game)) return null;
+    return { game, screen: screen || "start", fase: p.get("fase") };
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
-  const [view, setView] = useState({ game: null, screen: "start", key: 0 });
+  const [qa] = useState(leesQaSprong);
+  const [view, setView] = useState(() => (qa ? { game: qa.game, screen: qa.screen, key: 0 } : { game: null, screen: "start", key: 0 }));
   const [voltooid, setVoltooid] = useState(leesVoltooid);
   const [devOpen, setDevOpen] = useState(false);
 
@@ -258,6 +273,8 @@ export default function App() {
     initialScreen: view.screen,
     onExit: toMenu,
     onGameComplete: () => markeerVoltooid(id),
+    // alleen bij de allereerste weergave na een QA-sprong
+    qaFase: qa && view.key === 0 ? qa.fase : null,
   });
 
   return (
