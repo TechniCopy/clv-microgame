@@ -31,33 +31,23 @@ function getAudioCtx() {
   return audioCtxRef.current;
 }
 
-// Zachte, klokachtige tonen: een sinus met een lichte boventoon, korte
-// aanzet (geen tik bij het begin) en een natuurlijke uitklank, door een
-// laagdoorlaatfilter zodat niets schel klinkt. Elke noot is een eigen
-// oscillator; dus geen harde toonsprongen binnen een toon.
-function noot(ctx, uit, freq, start, duur, volume, { boventoon = 0.25, glijNaar = null } = {}) {
+// Doffe, warme tonen in het lage register (nooit hoger dan 523 Hz): een
+// zuivere sinus zonder boventoon, een zachte aanzet en een korte uitklank,
+// door een laag laagdoorlaatfilter. Klinkt als een houten marimba, niet als
+// een piepje. Elke noot is een eigen oscillator, dus geen toonsprongen.
+function noot(ctx, uit, freq, start, duur, volume, { glijNaar = null, aanzet = 0.025 } = {}) {
   const env = ctx.createGain();
   env.gain.setValueAtTime(0.0001, start);
-  env.gain.linearRampToValueAtTime(volume, start + 0.012);
+  env.gain.linearRampToValueAtTime(volume, start + aanzet);
   env.gain.exponentialRampToValueAtTime(0.0001, start + duur);
   env.connect(uit);
-  const delen = [
-    { mult: 1, vol: 1, type: "sine" },
-    { mult: 2, vol: boventoon, type: "sine" },
-  ];
-  for (const deel of delen) {
-    if (!deel.vol) continue;
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = deel.type;
-    osc.frequency.setValueAtTime(freq * deel.mult, start);
-    if (glijNaar) osc.frequency.exponentialRampToValueAtTime(glijNaar * deel.mult, start + Math.min(duur, 0.12));
-    g.gain.value = deel.vol;
-    osc.connect(g);
-    g.connect(env);
-    osc.start(start);
-    osc.stop(start + duur + 0.05);
-  }
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, start);
+  if (glijNaar) osc.frequency.exponentialRampToValueAtTime(glijNaar, start + Math.min(duur, 0.15));
+  osc.connect(env);
+  osc.start(start);
+  osc.stop(start + duur + 0.05);
 }
 
 export function playSound(type) {
@@ -67,28 +57,28 @@ export function playSound(type) {
     const t = ctx.currentTime + 0.01;
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 3200;
+    filter.frequency.value = 1100;
+    filter.Q.value = 0.5;
     const master = ctx.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = 0.8;
     filter.connect(master);
     master.connect(ctx.destination);
 
     if (type === "correct") {
-      // twee heldere klokjes omhoog (grote terts)
-      noot(ctx, filter, 784, t, 0.45, 0.16);
-      noot(ctx, filter, 988, t + 0.09, 0.6, 0.14);
+      // zacht "dum-die": twee lage, ronde tonen omhoog (kwart)
+      noot(ctx, filter, 392, t, 0.28, 0.2);
+      noot(ctx, filter, 523, t + 0.1, 0.38, 0.18);
     } else if (type === "wrong") {
-      // zachte, lage "hmm": twee doffe tonen omlaag, geen gezoem
-      filter.frequency.value = 900;
-      noot(ctx, filter, 330, t, 0.28, 0.16, { boventoon: 0.1 });
-      noot(ctx, filter, 262, t + 0.13, 0.4, 0.15, { boventoon: 0.1 });
+      // een doffe, lage "bonk" die iets zakt
+      filter.frequency.value = 600;
+      noot(ctx, filter, 220, t, 0.32, 0.24, { glijNaar: 165 });
     } else if (type === "drop") {
-      // kort houten tikje, als een kaartje dat neerkomt
-      filter.frequency.value = 2200;
-      noot(ctx, filter, 700, t, 0.12, 0.12, { boventoon: 0.15, glijNaar: 480 });
+      // heel zacht houten tikje
+      filter.frequency.value = 800;
+      noot(ctx, filter, 300, t, 0.09, 0.12, { glijNaar: 200, aanzet: 0.008 });
     } else if (type === "levelup") {
-      // vrolijk akkoord dat oploopt en even naklinkt
-      [523, 659, 784, 1047].forEach((f, i) => noot(ctx, filter, f, t + i * 0.085, 0.9 - i * 0.1, 0.12));
+      // rustig, warm akkoord dat zich opbouwt (C-groot, laag)
+      [262, 330, 392, 523].forEach((f, i) => noot(ctx, filter, f, t + i * 0.09, 0.8 - i * 0.08, 0.12, { aanzet: 0.04 }));
     }
   } catch {
     /* geen geluid beschikbaar */
