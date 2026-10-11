@@ -1,34 +1,79 @@
 import { useState, useEffect, useCallback } from "react";
-import { Building2, Wrench, Lock, X } from "lucide-react";
-import { C, GameButton } from "./shared.jsx";
+import { Building2, Wrench, ClipboardCheck, Lock, X } from "lucide-react";
+import { C } from "./shared.jsx";
 import CLVVerkennerGame from "./CLVVerkennerGame.jsx";
 import CLVMonteurGame from "./CLVMonteurGame.jsx";
+import CLVServiceGame from "./CLVServiceGame.jsx";
 
-const STORAGE_KEY = "clv_game1_voltooid";
+// Elke game ontgrendelt de volgende. De sleutel van game 1 bestond al;
+// spelers die game 1 eerder voltooiden, houden game 2 dus open.
+const VOLTOOID_SLEUTEL = {
+  verkenner: "clv_game1_voltooid",
+  monteur: "clv_game2_voltooid",
+  service: "clv_game3_voltooid",
+};
 
-// Alle schermen per game, voor het Ctrl-D controlemenu
-const DEV_SCREENS_BASIS = [
-  { id: "start", label: "Startscherm" },
-  { id: "intro", label: "Missie-intro" },
-  { id: "r1", label: "Ronde 1 — interactie" },
-  { id: "r1mc", label: "Ronde 1 — MC-controle" },
-  { id: "r2", label: "Ronde 2 — interactie" },
-  { id: "r2mc", label: "Ronde 2 — MC-controle" },
-  { id: "r3", label: "Ronde 3 — interactie" },
-  { id: "r3mc", label: "Ronde 3 — MC-controle" },
-  { id: "end", label: "Eindscherm" },
+const GAMES = [
+  {
+    id: "verkenner",
+    nummer: 1,
+    titel: "De CLV-Verkenner",
+    tekst: "Hoe werkt een CLV, uit welke onderdelen bestaat het en welke toestellen mogen erop?",
+    Icoon: Building2,
+    rondes: 4,
+    vereist: null,
+  },
+  {
+    id: "monteur",
+    nummer: 2,
+    titel: "De CLV-Monteur",
+    tekst: "Haal een oude ketel weg, sluit een nieuwe veilig aan en lever het werk netjes op.",
+    Icoon: Wrench,
+    rondes: 3,
+    vereist: "verkenner",
+  },
+  {
+    id: "service",
+    nummer: 3,
+    titel: "De CLV-Servicemonteur",
+    tekst: "Beoordeel een bestaand CLV, adviseer bij vervanging en voer het onderhoud uit.",
+    Icoon: ClipboardCheck,
+    rondes: 3,
+    vereist: "monteur",
+  },
 ];
 
-const DEV_SCREENS = {
-  verkenner: DEV_SCREENS_BASIS,
-  monteur: DEV_SCREENS_BASIS,
-};
+// Alle schermen per game, voor het Ctrl-D controlemenu
+function devSchermen(rondes) {
+  const lijst = [
+    { id: "start", label: "Startscherm" },
+    { id: "intro", label: "Missie-intro" },
+  ];
+  for (let r = 1; r <= rondes; r += 1) {
+    lijst.push({ id: `r${r}`, label: `Ronde ${r}: opdracht` });
+    lijst.push({ id: `r${r}mc`, label: `Ronde ${r}: controlevragen` });
+  }
+  lijst.push({ id: "end", label: "Eindscherm" });
+  return lijst;
+}
+
+function leesVoltooid() {
+  const stand = {};
+  for (const g of GAMES) {
+    try {
+      stand[g.id] = localStorage.getItem(VOLTOOID_SLEUTEL[g.id]) === "1";
+    } catch {
+      stand[g.id] = false;
+    }
+  }
+  return stand;
+}
 
 function DevMenu({ onJump, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="rounded-2xl border-2 shadow-2xl p-5 w-full max-w-2xl max-h-[85vh] overflow-y-auto"
+        className="rounded-2xl border-2 shadow-2xl p-5 w-full max-w-3xl max-h-[85vh] overflow-y-auto"
         style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -40,20 +85,17 @@ function DevMenu({ onJump, onClose }) {
             <X className="w-5 h-5" style={{ color: C.brownText }} />
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {[
-            { game: "verkenner", titel: "Game 1 — De CLV-Verkenner" },
-            { game: "monteur", titel: "Game 2 — De CLV-Monteur" },
-          ].map(({ game, titel }) => (
-            <div key={game}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {GAMES.map((g) => (
+            <div key={g.id}>
               <div className="font-bold text-sm mb-2 italic" style={{ color: C.olive }}>
-                {titel}
+                Game {g.nummer}: {g.titel}
               </div>
               <div className="flex flex-col gap-1">
-                {DEV_SCREENS[game].map((s) => (
+                {devSchermen(g.rondes).map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => onJump(game, s.id)}
+                    onClick={() => onJump(g.id, s.id)}
                     className="text-left px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors hover:shadow"
                     style={{ borderColor: C.beigeMid, color: C.brownText, backgroundColor: "white" }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = C.oliveLight)}
@@ -69,13 +111,17 @@ function DevMenu({ onJump, onClose }) {
         <div className="mt-4 flex justify-between items-center">
           <button
             onClick={() => {
-              localStorage.removeItem(STORAGE_KEY);
+              try {
+                for (const sleutel of Object.values(VOLTOOID_SLEUTEL)) localStorage.removeItem(sleutel);
+              } catch {
+                /* geen opslag beschikbaar */
+              }
               window.location.reload();
             }}
             className="text-xs underline"
             style={{ color: C.red }}
           >
-            Voortgang wissen (game 2 weer vergrendelen)
+            Voortgang wissen (game 2 en 3 weer op slot)
           </button>
           <button onClick={() => onJump(null, null)} className="text-xs underline" style={{ color: C.brown }}>
             Naar het hoofdmenu
@@ -86,100 +132,86 @@ function DevMenu({ onJump, onClose }) {
   );
 }
 
-function GameMenu({ game1Done, onPick }) {
+function GameKaart({ game, open, voltooid, vorige, onPick }) {
+  const { Icoon } = game;
+  const grijs = "#8C857C";
+  return (
+    <button
+      onClick={() => open && onPick(game.id)}
+      disabled={!open}
+      className={`flex-1 rounded-2xl border-2 p-5 flex flex-col items-center gap-3 shadow-md transition-all ${
+        open ? "hover:shadow-xl hover:-translate-y-0.5" : "cursor-not-allowed"
+      }`}
+      style={{
+        backgroundColor: open ? C.bgCard : C.beigeLight,
+        borderColor: open ? C.brownText : C.beigeMid,
+        opacity: open ? 1 : 0.75,
+      }}
+    >
+      <div
+        className="rounded-full p-4"
+        style={{ backgroundColor: open ? C.beigeLight : C.beigeMid, border: `3px solid ${open ? C.brownText : C.beigeMid}` }}
+      >
+        {open ? <Icoon className="w-10 h-10" style={{ color: C.brownText }} /> : <Lock className="w-10 h-10" style={{ color: grijs }} />}
+      </div>
+      <div className="font-bold italic text-lg text-center" style={{ color: open ? C.brownText : grijs }}>
+        {game.nummer}. {game.titel}
+      </div>
+      <p className="text-xs text-center" style={{ color: open ? C.brown : grijs }}>
+        {game.tekst}
+      </p>
+      {open ? (
+        <span className="px-4 py-1.5 rounded-xl text-xs font-bold text-white" style={{ backgroundColor: C.olive }}>
+          {voltooid ? "Opnieuw spelen" : game.nummer === 1 ? "Start hier" : "Start de game"}
+        </span>
+      ) : (
+        <span className="text-[10px] font-bold uppercase tracking-wide text-center" style={{ color: grijs }}>
+          Rond eerst game {vorige} af
+        </span>
+      )}
+      {voltooid && (
+        <span className="text-[10px] font-bold" style={{ color: C.green }}>
+          ✓ voltooid
+        </span>
+      )}
+    </button>
+  );
+}
+
+function GameMenu({ voltooid, onPick }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: C.bgPage }}>
-      <div className="max-w-[800px] w-full mx-auto flex flex-col min-h-screen shadow-lg" style={{ backgroundColor: C.bgPage }}>
+      <div className="max-w-[900px] w-full mx-auto flex flex-col min-h-screen shadow-lg" style={{ backgroundColor: C.bgPage }}>
         <div className="py-4 px-5 text-center" style={{ backgroundColor: C.bgHeader }}>
           <img src="/brand/logo-light.png" alt="PractiQ" className="mx-auto mb-2" style={{ height: 30 }} />
           <div className="text-white font-bold italic text-xl">CLV-Systemen in Gestapelde Bouw</div>
           <div className="text-xs mt-1" style={{ color: C.beigeMid }}>
-            Leerdoel 14 — twee microgames
+            Leerdoel 14: drie microgames
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-5 sm:p-8">
           <p className="max-w-md text-center text-sm font-medium" style={{ color: C.brown }}>
-            In een flat delen meerdere woningen dezelfde rookgasafvoer. Leer eerst hoe zo&rsquo;n CLV-systeem werkt, en ga er
-            daarna als monteur mee aan de slag.
+            In een flat delen meerdere woningen dezelfde rookgasafvoer. Leer eerst hoe zo&rsquo;n CLV-systeem werkt. Daarna sluit
+            je als monteur een ketel aan en tot slot beoordeel en onderhoud je een bestaand systeem.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-5 w-full max-w-xl">
-            {/* Game 1 */}
-            <button
-              onClick={() => onPick("verkenner")}
-              className="flex-1 rounded-2xl border-2 p-6 flex flex-col items-center gap-3 shadow-md transition-all hover:shadow-xl hover:-translate-y-0.5"
-              style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
-            >
-              <div className="rounded-full p-4 border-3" style={{ backgroundColor: C.beigeLight, border: `3px solid ${C.brownText}` }}>
-                <Building2 className="w-12 h-12" style={{ color: C.brownText }} />
-              </div>
-              <div className="font-bold italic text-lg" style={{ color: C.brownText }}>
-                1. De CLV-Verkenner
-              </div>
-              <p className="text-xs text-center" style={{ color: C.brown }}>
-                Begrijp en herken het CLV-systeem: werking, onderdelen en toesteltypes.
-              </p>
-              <span
-                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white"
-                style={{ backgroundColor: C.olive }}
-              >
-                {game1Done ? "Opnieuw spelen" : "Start hier"}
-              </span>
-              {game1Done && (
-                <span className="text-[10px] font-bold" style={{ color: C.green }}>
-                  ✓ voltooid
-                </span>
-              )}
-            </button>
-
-            {/* Game 2 */}
-            <button
-              onClick={() => game1Done && onPick("monteur")}
-              disabled={!game1Done}
-              className={`flex-1 rounded-2xl border-2 p-6 flex flex-col items-center gap-3 shadow-md transition-all ${
-                game1Done ? "hover:shadow-xl hover:-translate-y-0.5" : "cursor-not-allowed"
-              }`}
-              style={{
-                backgroundColor: game1Done ? C.bgCard : C.beigeLight,
-                borderColor: game1Done ? C.brownText : C.beigeMid,
-                opacity: game1Done ? 1 : 0.75,
-              }}
-            >
-              <div
-                className="rounded-full p-4"
-                style={{
-                  backgroundColor: game1Done ? C.beigeLight : C.beigeMid,
-                  border: `3px solid ${game1Done ? C.brownText : C.beigeMid}`,
-                }}
-              >
-                {game1Done ? (
-                  <Wrench className="w-12 h-12" style={{ color: C.brownText }} />
-                ) : (
-                  <Lock className="w-12 h-12" style={{ color: "#8C857C" }} />
-                )}
-              </div>
-              <div className="font-bold italic text-lg" style={{ color: game1Done ? C.brownText : "#8C857C" }}>
-                2. De CLV-Monteur
-              </div>
-              <p className="text-xs text-center" style={{ color: game1Done ? C.brown : "#8C857C" }}>
-                Sluit een toestel veilig aan, voorkom recirculatie en stel het systeem in bedrijf.
-              </p>
-              {game1Done ? (
-                <span className="px-4 py-1.5 rounded-xl text-xs font-bold text-white" style={{ backgroundColor: C.olive }}>
-                  Start de game
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#8C857C" }}>
-                  Rond eerst game 1 af
-                </span>
-              )}
-            </button>
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            {GAMES.map((g) => (
+              <GameKaart
+                key={g.id}
+                game={g}
+                open={!g.vereist || voltooid[g.vereist]}
+                voltooid={voltooid[g.id]}
+                vorige={g.nummer - 1}
+                onPick={onPick}
+              />
+            ))}
           </div>
         </div>
 
         <div className="py-3 text-center text-[10px]" style={{ color: C.brown }}>
-          PractiQ — Vakmanschap CO · Leerdoel 14
+          PractiQ · Vakmanschap CO · Leerdoel 14
         </div>
       </div>
     </div>
@@ -188,7 +220,7 @@ function GameMenu({ game1Done, onPick }) {
 
 export default function App() {
   const [view, setView] = useState({ game: null, screen: "start", key: 0 });
-  const [game1Done, setGame1Done] = useState(() => localStorage.getItem(STORAGE_KEY) === "1");
+  const [voltooid, setVoltooid] = useState(leesVoltooid);
   const [devOpen, setDevOpen] = useState(false);
 
   useEffect(() => {
@@ -202,9 +234,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const markGame1Done = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "1");
-    setGame1Done(true);
+  const markeerVoltooid = useCallback((id) => {
+    try {
+      localStorage.setItem(VOLTOOID_SLEUTEL[id], "1");
+    } catch {
+      /* geen opslag beschikbaar: alleen deze sessie */
+    }
+    setVoltooid((prev) => ({ ...prev, [id]: true }));
   }, []);
 
   const toMenu = useCallback(() => setView((prev) => ({ game: null, screen: "start", key: prev.key + 1 })), []);
@@ -218,14 +254,19 @@ export default function App() {
     setView((prev) => ({ game, screen, key: prev.key + 1 }));
   };
 
+  const gameProps = (id) => ({
+    initialScreen: view.screen,
+    onExit: toMenu,
+    onGameComplete: () => markeerVoltooid(id),
+  });
+
   return (
     <>
-      {view.game === "verkenner" && (
-        <CLVVerkennerGame key={`v-${view.key}`} initialScreen={view.screen} onExit={toMenu} onGameComplete={markGame1Done} />
-      )}
-      {view.game === "monteur" && <CLVMonteurGame key={`m-${view.key}`} initialScreen={view.screen} onExit={toMenu} />}
+      {view.game === "verkenner" && <CLVVerkennerGame key={`verkenner-${view.key}`} {...gameProps("verkenner")} />}
+      {view.game === "monteur" && <CLVMonteurGame key={`monteur-${view.key}`} {...gameProps("monteur")} />}
+      {view.game === "service" && <CLVServiceGame key={`service-${view.key}`} {...gameProps("service")} />}
       {view.game === null && (
-        <GameMenu game1Done={game1Done} onPick={(game) => setView((prev) => ({ game, screen: "start", key: prev.key + 1 }))} />
+        <GameMenu voltooid={voltooid} onPick={(game) => setView((prev) => ({ game, screen: "start", key: prev.key + 1 }))} />
       )}
       {devOpen && <DevMenu onJump={devJump} onClose={() => setDevOpen(false)} />}
     </>

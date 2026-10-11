@@ -181,18 +181,14 @@ function ConfettiBurst({ x, y, onDone }) {
 
 // ─── STREAK INDICATOR ───
 
+// Wordt per streakwaarde opnieuw gemount (key={streak}), zodat elke nieuwe
+// combo zichtbaar begint en na 1,5 seconde vanzelf verdwijnt.
 function StreakIndicator({ streak }) {
-  // Combo-melding kort tonen en daarna vanzelf laten verdwijnen
-  const [zichtbaar, setZichtbaar] = useState(false);
+  const [zichtbaar, setZichtbaar] = useState(true);
   useEffect(() => {
-    if (streak < 2) {
-      setZichtbaar(false);
-      return undefined;
-    }
-    setZichtbaar(true);
     const timer = setTimeout(() => setZichtbaar(false), 1500);
     return () => clearTimeout(timer);
-  }, [streak]);
+  }, []);
   if (!zichtbaar || streak < 2) return null;
   return (
     <div className="fixed top-20 right-4 z-[90] animate-bounce">
@@ -259,7 +255,7 @@ export function useGameJuice() {
         {confettis.map((c) => (
           <ConfettiBurst key={c.id} x={c.x} y={c.y} onDone={() => removeConfetti(c.id)} />
         ))}
-        <StreakIndicator streak={streak} />
+        <StreakIndicator key={streak} streak={streak} />
       </>
     ),
     [floatingPoints, confettis, streak, removeFloat, removeConfetti]
@@ -345,7 +341,9 @@ export function DragProvider({ children }) {
   // ook. Het vlak zelf handelt een exacte tik al af (handleTap), dus hier
   // alleen de tikken die net misten. Tikken op een kaartje tellen nooit.
   const selectedRef = useRef(null);
-  selectedRef.current = selected;
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   useEffect(() => {
     const opTik = (e) => {
       const sel = selectedRef.current;
@@ -417,7 +415,7 @@ export function DragProvider({ children }) {
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center"
           style={{ backgroundColor: C.olive, color: "white", borderColor: C.oliveDark, maxWidth: "90vw" }}
         >
-          Tik op de plek waar dit hoort — of tik nogmaals op het kaartje om te annuleren
+          Tik op de plek waar dit hoort. Nog een keer op het kaartje tikken is annuleren.
         </div>
       )}
     </DragCtx.Provider>
@@ -598,8 +596,8 @@ export function DragCard({ label, disabled, small = false }) {
 
 // ─── PROGRESS BAR (3 bolletjes + 5 hartjes) ───
 
-export function ProgressBar({ currentRound, score, lives }) {
-  const rounds = [1, 2, 3];
+export function ProgressBar({ currentRound, score, lives, totalRounds = 3 }) {
+  const rounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
   const [displayScore, setDisplayScore] = useState(score);
   const [scorePop, setScorePop] = useState(false);
 
@@ -1003,7 +1001,7 @@ export function UitlegItem({ term, children }) {
       <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: C.olive }} />
       <p className="text-sm leading-snug" style={{ color: C.brownText }}>
         <span className="font-bold">{term}</span>
-        {term && children ? " — " : ""}
+        {term && children ? ": " : ""}
         {children}
       </p>
     </div>
