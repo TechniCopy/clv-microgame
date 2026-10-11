@@ -196,9 +196,9 @@ function StreakIndicator({ streak }) {
   }, []);
   if (!zichtbaar || streak < 2) return null;
   return (
-    <div className="fixed top-20 right-4 z-[90] animate-bounce">
+    <div className="fixed top-14 right-2 z-[90] pointer-events-none">
       <div
-        className="rounded-xl px-4 py-2 shadow-lg border-2 font-bold italic text-sm"
+        className="rounded-lg px-2.5 py-1 shadow-md border font-bold italic text-xs"
         style={{ backgroundColor: "#F9762E", borderColor: C.brownText, color: "white" }}
       >
         {streak}x op rij! {streak >= 5 ? "ONSTOPBAAR!" : streak >= 3 ? "COMBO!" : ""}
@@ -318,6 +318,16 @@ export function DragProvider({ children }) {
   const [ghost, setGhost] = useState(null);
   const [hoverZone, setHoverZone] = useState(null);
   const [selected, setSelected] = useState(null); // { payload } bij tik-selectie
+  // De tikmelding is alleen nodig zolang de speler het tikken nog leert: de
+  // eerste twee selecties, en dan steeds hooguit 2,5 seconde.
+  const [tikHintTeller, setTikHintTeller] = useState(0);
+  const [tikHintVerlopen, setTikHintVerlopen] = useState(false);
+  const toonTikHint = tikHintTeller <= 2 && !tikHintVerlopen;
+  useEffect(() => {
+    if (!selected) return undefined;
+    const timer = setTimeout(() => setTikHintVerlopen(true), 2500);
+    return () => clearTimeout(timer);
+  }, [selected]);
 
   // Raakzone: een vlak dat exact onder de vinger ligt wint; anders het
   // dichtstbijzijnde vlak binnen RAAKMARGE px. Op een telefoon zijn de
@@ -399,6 +409,11 @@ export function DragProvider({ children }) {
       setHoverZone(null);
     },
     toggleSelect(payload) {
+      const wordtGekozen = !(selected && selected.payload === payload);
+      if (wordtGekozen) {
+        setTikHintTeller((n) => n + 1);
+        setTikHintVerlopen(false);
+      }
       setSelected((s) => (s && s.payload === payload ? null : { payload }));
     },
     clearSelect() {
@@ -413,18 +428,23 @@ export function DragProvider({ children }) {
         <div
           className="fixed pointer-events-none z-[95]"
           style={{
-            // binnen het scherm houden, ook als je vlak langs de rand sleept
-            left: Math.min(Math.max(ghost.x, 72), (typeof window !== "undefined" ? window.innerWidth : 800) - 72),
+            // binnen het scherm houden: het kaartje is hooguit 60% van de breedte
+            // en het midden blijft daarom minstens 30% van de rand af
+            left: Math.min(
+              Math.max(ghost.x, (typeof window !== "undefined" ? window.innerWidth : 800) * 0.3 + 8),
+              (typeof window !== "undefined" ? window.innerWidth : 800) * 0.7 - 8
+            ),
             top: ghost.y,
-            // met een vinger zweeft het kaartje erboven, zodat je ziet waar je het neerlegt
-            transform: ghost.aanraking ? "translate(-50%, calc(-100% - 28px)) scale(1.05)" : "translate(-50%, -50%) scale(1.05)",
+            maxWidth: "60vw",
+            // met een vinger zweeft het kaartje er net boven, zodat je ziet waar je het neerlegt
+            transform: ghost.aanraking ? "translate(-50%, calc(-100% - 14px)) scale(1.05)" : "translate(-50%, -50%) scale(1.05)",
             opacity: 0.9,
           }}
         >
           {ghost.render}
         </div>
       )}
-      {selected && !ghost && (
+      {selected && !ghost && toonTikHint && (
         <div
           className="fixed top-3 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center pointer-events-none"
           style={{ backgroundColor: C.olive, color: "white", borderColor: C.oliveDark, maxWidth: "90vw" }}
@@ -1022,20 +1042,61 @@ export function RondeIntro({ title, intro, children, onStart, buttonText = "Aan 
 // telefoon in een balk die vast onderin het scherm zit. Zo ziet de speler de
 // uitleg altijd, ook als de tekening langer is dan het scherm. Vanaf md-breedte
 // staat de balk gewoon in de pagina. Geef de pagina eronder ruimte met
-// RUIMTE_VOOR_BALK, anders valt de onderkant van de tekening achter de balk.
-export const RUIMTE_VOOR_BALK = "pb-56 md:pb-6";
+// RUIMTE_VOOR_BALK: die groeit mee met de echte hoogte van de balk (de balk
+// zet zijn hoogte in de CSS-variabele --balk-hoogte), zodat de speler alles
+// boven de balk kan scrollen, ook als de uitleg lang is.
+export const RUIMTE_VOOR_BALK = "pb-[calc(var(--balk-hoogte,0px)+1rem)] md:pb-6";
 
 export function VasteBalk({ children, className = "" }) {
+  const buitenRef = useRef(null);
+  const binnenRef = useRef(null);
+  const [meer, setMeer] = useState(false);
+
+  useEffect(() => {
+    const buiten = buitenRef.current;
+    const binnen = binnenRef.current;
+    if (!buiten || !binnen) return undefined;
+    const meet = () => {
+      const vast = window.matchMedia("(max-width: 767px)").matches;
+      document.documentElement.style.setProperty("--balk-hoogte", vast ? `${buiten.offsetHeight}px` : "0px");
+      setMeer(binnen.scrollHeight - binnen.clientHeight - binnen.scrollTop > 6);
+    };
+    meet();
+    const ro = new ResizeObserver(meet);
+    ro.observe(buiten);
+    ro.observe(binnen);
+    binnen.addEventListener("scroll", meet, { passive: true });
+    window.addEventListener("resize", meet);
+    return () => {
+      ro.disconnect();
+      binnen.removeEventListener("scroll", meet);
+      window.removeEventListener("resize", meet);
+      document.documentElement.style.setProperty("--balk-hoogte", "0px");
+    };
+  }, []);
+
   return (
     <div
+      ref={buitenRef}
       className={`fixed inset-x-0 bottom-0 z-[80] p-2 md:static md:p-0 md:z-auto ${className}`}
       style={{ filter: "drop-shadow(0 -4px 12px rgba(0,0,0,0.15))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
     >
-      <div
-        className="rounded-2xl border-2 p-3 max-w-xl mx-auto flex flex-col gap-2 max-h-[55vh] overflow-y-auto"
-        style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
-      >
-        {children}
+      <div className="relative max-w-xl mx-auto">
+        <div
+          ref={binnenRef}
+          className="rounded-2xl border-2 p-3 flex flex-col gap-2 max-h-[48vh] overflow-y-auto"
+          style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
+        >
+          {children}
+        </div>
+        {meer && (
+          <div
+            className="pointer-events-none absolute inset-x-[2px] bottom-[2px] h-9 rounded-b-2xl flex items-end justify-center pb-1 text-xs font-bold"
+            style={{ background: `linear-gradient(to bottom, rgba(255,255,255,0), ${C.bgCard} 70%)`, color: C.brown }}
+          >
+            veeg omhoog voor meer &#8595;
+          </div>
+        )}
       </div>
     </div>
   );
