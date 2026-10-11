@@ -31,52 +31,67 @@ function getAudioCtx() {
   return audioCtxRef.current;
 }
 
+// Zachte, klokachtige tonen: een sinus met een lichte boventoon, korte
+// aanzet (geen tik bij het begin) en een natuurlijke uitklank, door een
+// laagdoorlaatfilter zodat niets schel klinkt. Elke noot is een eigen
+// oscillator; dus geen harde toonsprongen binnen een toon.
+function noot(ctx, uit, freq, start, duur, volume, { boventoon = 0.25, glijNaar = null } = {}) {
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.0001, start);
+  env.gain.linearRampToValueAtTime(volume, start + 0.012);
+  env.gain.exponentialRampToValueAtTime(0.0001, start + duur);
+  env.connect(uit);
+  const delen = [
+    { mult: 1, vol: 1, type: "sine" },
+    { mult: 2, vol: boventoon, type: "sine" },
+  ];
+  for (const deel of delen) {
+    if (!deel.vol) continue;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = deel.type;
+    osc.frequency.setValueAtTime(freq * deel.mult, start);
+    if (glijNaar) osc.frequency.exponentialRampToValueAtTime(glijNaar * deel.mult, start + Math.min(duur, 0.12));
+    g.gain.value = deel.vol;
+    osc.connect(g);
+    g.connect(env);
+    osc.start(start);
+    osc.stop(start + duur + 0.05);
+  }
+}
+
 export function playSound(type) {
   try {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    const t = ctx.currentTime;
+    if (ctx.state === "suspended") ctx.resume();
+    const t = ctx.currentTime + 0.01;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 3200;
+    const master = ctx.createGain();
+    master.gain.value = 0.9;
+    filter.connect(master);
+    master.connect(ctx.destination);
 
     if (type === "correct") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(523, t);
-      osc.frequency.setValueAtTime(659, t + 0.08);
-      osc.frequency.setValueAtTime(784, t + 0.16);
-      gain.gain.setValueAtTime(0.15, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-      osc.start(t);
-      osc.stop(t + 0.3);
+      // twee heldere klokjes omhoog (grote terts)
+      noot(ctx, filter, 784, t, 0.45, 0.16);
+      noot(ctx, filter, 988, t + 0.09, 0.6, 0.14);
     } else if (type === "wrong") {
-      osc.type = "square";
-      osc.frequency.setValueAtTime(200, t);
-      osc.frequency.setValueAtTime(150, t + 0.1);
-      gain.gain.setValueAtTime(0.08, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-      osc.start(t);
-      osc.stop(t + 0.2);
-    } else if (type === "levelup") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(523, t);
-      osc.frequency.setValueAtTime(659, t + 0.1);
-      osc.frequency.setValueAtTime(784, t + 0.2);
-      osc.frequency.setValueAtTime(1047, t + 0.3);
-      gain.gain.setValueAtTime(0.15, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-      osc.start(t);
-      osc.stop(t + 0.5);
+      // zachte, lage "hmm": twee doffe tonen omlaag, geen gezoem
+      filter.frequency.value = 900;
+      noot(ctx, filter, 330, t, 0.28, 0.16, { boventoon: 0.1 });
+      noot(ctx, filter, 262, t + 0.13, 0.4, 0.15, { boventoon: 0.1 });
     } else if (type === "drop") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, t);
-      gain.gain.setValueAtTime(0.1, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-      osc.start(t);
-      osc.stop(t + 0.1);
+      // kort houten tikje, als een kaartje dat neerkomt
+      filter.frequency.value = 2200;
+      noot(ctx, filter, 700, t, 0.12, 0.12, { boventoon: 0.15, glijNaar: 480 });
+    } else if (type === "levelup") {
+      // vrolijk akkoord dat oploopt en even naklinkt
+      [523, 659, 784, 1047].forEach((f, i) => noot(ctx, filter, f, t + i * 0.085, 0.9 - i * 0.1, 0.12));
     }
   } catch {
-    /* audio not available */
+    /* geen geluid beschikbaar */
   }
 }
 
@@ -656,7 +671,7 @@ export function ProgressBar({ currentRound, score, lives, totalRounds = 3 }) {
                   borderColor: isComplete || isCurrent ? "#F7E3CF" : C.beigeMid,
                 }}
               >
-                {isComplete && <span style={{ color: C.brownText }} className="text-[8px]">&#10003;</span>}
+                {isComplete && <span style={{ color: C.brownText }} className="text-[11px]">&#10003;</span>}
               </div>
             );
           })}
@@ -973,7 +988,7 @@ export function StepBanner({ step }) {
   const s = map[step] ?? map[1];
   return (
     <div
-      className="rounded-lg px-3 py-1 mb-3 text-[11px] font-bold uppercase tracking-widest border"
+      className="rounded-lg px-3 py-1 mb-3 text-xs font-bold uppercase tracking-widest border"
       style={{ backgroundColor: s.bg, borderColor: s.border, color: s.color }}
     >
       {s.txt}

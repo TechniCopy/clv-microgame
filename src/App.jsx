@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Building2, Wrench, ClipboardCheck, Lock, X } from "lucide-react";
-import { C } from "./shared.jsx";
+import { C, playSound } from "./shared.jsx";
 
 // Elke game laadt pas als hij geopend wordt; zo blijft de eerste download klein.
 const CLVVerkennerGame = lazy(() => import("./CLVVerkennerGame.jsx"));
@@ -112,6 +112,26 @@ function DevMenu({ onJump, onClose }) {
                 ))}
               </div>
             </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold" style={{ color: C.brownText }}>
+            Geluiden testen:
+          </span>
+          {[
+            { soort: "correct", tekst: "Goed" },
+            { soort: "wrong", tekst: "Fout" },
+            { soort: "drop", tekst: "Neerleggen" },
+            { soort: "levelup", tekst: "Ronde klaar" },
+          ].map((g) => (
+            <button
+              key={g.soort}
+              onClick={() => playSound(g.soort)}
+              className="px-3 py-1.5 rounded-lg border text-xs font-medium"
+              style={{ borderColor: C.beigeMid, color: C.brownText, backgroundColor: "white" }}
+            >
+              {g.tekst}
+            </button>
           ))}
         </div>
         <div className="mt-4 flex justify-between items-center">
