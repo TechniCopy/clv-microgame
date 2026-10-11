@@ -321,6 +321,8 @@ export function DragProvider({ children }) {
     let found = null;
     let dichtst = Infinity;
     zonesRef.current.forEach((zone, id) => {
+      // een gevuld of uitgeschakeld vlak vangt niets meer, ook niet in de raakmarge
+      if (zone.isActief && !zone.isActief()) return;
       const r = zone.getRect();
       if (!r || r.width === 0) return;
       const dx = Math.max(r.left - x, 0, x - r.right);
@@ -361,13 +363,13 @@ export function DragProvider({ children }) {
     hoverZone,
     dragging: !!ghost,
     selected,
-    registerZone(id, getRect, onDrop) {
-      zonesRef.current.set(id, { getRect, onDrop });
+    registerZone(id, getRect, onDrop, isActief) {
+      zonesRef.current.set(id, { getRect, onDrop, isActief });
       return () => zonesRef.current.delete(id);
     },
-    begin(payload, render, x, y) {
+    begin(payload, render, x, y, aanraking = false) {
       setSelected(null);
-      ghostRef.current = { payload, render, x, y };
+      ghostRef.current = { payload, render, x, y, aanraking };
       setGhost(ghostRef.current);
     },
     move(x, y) {
@@ -405,14 +407,21 @@ export function DragProvider({ children }) {
       {ghost && (
         <div
           className="fixed pointer-events-none z-[95]"
-          style={{ left: ghost.x, top: ghost.y, transform: "translate(-50%, -50%) scale(1.05)", opacity: 0.9 }}
+          style={{
+            // binnen het scherm houden, ook als je vlak langs de rand sleept
+            left: Math.min(Math.max(ghost.x, 72), (typeof window !== "undefined" ? window.innerWidth : 800) - 72),
+            top: ghost.y,
+            // met een vinger zweeft het kaartje erboven, zodat je ziet waar je het neerlegt
+            transform: ghost.aanraking ? "translate(-50%, calc(-100% - 28px)) scale(1.05)" : "translate(-50%, -50%) scale(1.05)",
+            opacity: 0.9,
+          }}
         >
           {ghost.render}
         </div>
       )}
       {selected && !ghost && (
         <div
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center"
+          className="fixed top-3 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center pointer-events-none"
           style={{ backgroundColor: C.olive, color: "white", borderColor: C.oliveDark, maxWidth: "90vw" }}
         >
           Tik op de plek waar dit hoort. Nog een keer op het kaartje tikken is annuleren.
@@ -463,7 +472,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
           // genoeg beweging: dit is slepen, geen tik
           draggingRef.current = true;
           setDragging(true);
-          api.begin(payload, renderRef.current, e.clientX, e.clientY);
+          api.begin(payload, renderRef.current, e.clientX, e.clientY, e.pointerType === "touch" || e.pointerType === "pen");
         }
         api.move(e.clientX, e.clientY);
       }}
@@ -510,13 +519,19 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
 // "wrong" geeft een korte rode flash (terugveer-effect: de ghost verdwijnt en
 // het origineel staat nog op zijn plek). Werkt voor slepen en voor tikken:
 // is er een kaartje geselecteerd, dan plaatst een tik op het vlak het kaartje.
-export function DropTarget({ id, onDropItem, children, className = "", style, render }) {
+// actief={false} (bijv. als het vlak al gevuld is): het vlak vangt dan niets,
+// zodat een kaartje dat er vlak naast landt naar het lege buurvlak gaat.
+export function DropTarget({ id, onDropItem, children, className = "", style, render, actief = true }) {
   const api = useContext(DragCtx);
   const ref = useRef(null);
   const cbRef = useRef(onDropItem);
+  const actiefRef = useRef(actief);
   useEffect(() => {
     cbRef.current = onDropItem;
   }, [onDropItem]);
+  useEffect(() => {
+    actiefRef.current = actief;
+  }, [actief]);
   const [flash, setFlash] = useState(null);
 
   const handleResult = useCallback((result) => {
@@ -535,20 +550,21 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
         handleResult(result);
         if (point?.viaTik && result === "correct") api.clearSelect();
         return result;
-      }
+      },
+      () => actiefRef.current
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleTap = (e) => {
-    if (!api.selected) return;
+    if (!api.selected || !actief) return;
     const result = cbRef.current?.(api.selected.payload, { clientX: e.clientX, clientY: e.clientY });
     handleResult(result);
     if (result === "correct") api.clearSelect();
   };
 
   const isHover = api.hoverZone === id && api.dragging;
-  const armedStyle = api.selected
+  const armedStyle = api.selected && actief
     ? { outline: `2px dashed ${C.olive}`, outlineOffset: 3, borderRadius: 14, cursor: "pointer" }
     : {};
 
@@ -990,6 +1006,31 @@ export function RondeIntro({ title, intro, children, onStart, buttonText = "Aan 
         {buttonText}
         <ArrowRight className="w-4 h-4" />
       </GameButton>
+    </div>
+  );
+}
+
+// ─── VASTE BALK ONDERIN (telefoon) ───
+//
+// Vraag, keuzeknoppen, uitleg na goed of fout en de knop "Verder" staan op een
+// telefoon in een balk die vast onderin het scherm zit. Zo ziet de speler de
+// uitleg altijd, ook als de tekening langer is dan het scherm. Vanaf md-breedte
+// staat de balk gewoon in de pagina. Geef de pagina eronder ruimte met
+// RUIMTE_VOOR_BALK, anders valt de onderkant van de tekening achter de balk.
+export const RUIMTE_VOOR_BALK = "pb-56 md:pb-6";
+
+export function VasteBalk({ children, className = "" }) {
+  return (
+    <div
+      className={`fixed inset-x-0 bottom-0 z-[80] p-2 md:static md:p-0 md:z-auto ${className}`}
+      style={{ filter: "drop-shadow(0 -4px 12px rgba(0,0,0,0.15))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
+      <div
+        className="rounded-2xl border-2 p-3 max-w-xl mx-auto flex flex-col gap-2 max-h-[55vh] overflow-y-auto"
+        style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
