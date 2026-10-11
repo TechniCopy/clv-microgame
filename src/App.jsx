@@ -1,9 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Building2, Wrench, ClipboardCheck, Lock, X } from "lucide-react";
 import { C } from "./shared.jsx";
-import CLVVerkennerGame from "./CLVVerkennerGame.jsx";
-import CLVMonteurGame from "./CLVMonteurGame.jsx";
-import CLVServiceGame from "./CLVServiceGame.jsx";
+
+// Elke game laadt pas als hij geopend wordt; zo blijft de eerste download klein.
+const CLVVerkennerGame = lazy(() => import("./CLVVerkennerGame.jsx"));
+const CLVMonteurGame = lazy(() => import("./CLVMonteurGame.jsx"));
+const CLVServiceGame = lazy(() => import("./CLVServiceGame.jsx"));
+
+function Laden() {
+  return <div className="min-h-screen" style={{ backgroundColor: C.bgPage }} />;
+}
 
 // Elke game ontgrendelt de volgende. De sleutel van game 1 bestond al;
 // spelers die game 1 eerder voltooiden, houden game 2 dus open.
@@ -279,9 +285,11 @@ export default function App() {
 
   return (
     <>
-      {view.game === "verkenner" && <CLVVerkennerGame key={`verkenner-${view.key}`} {...gameProps("verkenner")} />}
-      {view.game === "monteur" && <CLVMonteurGame key={`monteur-${view.key}`} {...gameProps("monteur")} />}
-      {view.game === "service" && <CLVServiceGame key={`service-${view.key}`} {...gameProps("service")} />}
+      <Suspense fallback={<Laden />}>
+        {view.game === "verkenner" && <CLVVerkennerGame key={`verkenner-${view.key}`} {...gameProps("verkenner")} />}
+        {view.game === "monteur" && <CLVMonteurGame key={`monteur-${view.key}`} {...gameProps("monteur")} />}
+        {view.game === "service" && <CLVServiceGame key={`service-${view.key}`} {...gameProps("service")} />}
+      </Suspense>
       {view.game === null && (
         <GameMenu voltooid={voltooid} onPick={(game) => setView((prev) => ({ game, screen: "start", key: prev.key + 1 }))} />
       )}

@@ -772,7 +772,7 @@ function pickAndShuffle(pool) {
   };
 }
 
-export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = false }) {
+export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = false, volgendeTekst = "Volgende ronde" }) {
   const [q] = useState(() => pickAndShuffle(pool));
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -849,7 +849,7 @@ export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = f
             {isCorrect ? q.feedbackCorrect : q.feedbackWrong}
           </p>
           <GameButton onClick={handleNext} variant={isCorrect || attempts >= 2 ? "green" : "danger"} className="w-full">
-            {isCorrect || attempts >= 2 ? (lastRound ? "Bekijk je resultaat" : "Volgende ronde") : "Probeer opnieuw"}
+            {isCorrect || attempts >= 2 ? (lastRound ? "Bekijk je resultaat" : volgendeTekst) : "Probeer opnieuw"}
           </GameButton>
         </div>
       )}
