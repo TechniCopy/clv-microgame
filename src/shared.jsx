@@ -563,7 +563,8 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
       (payload, point) => {
         const result = cbRef.current?.(payload, point);
         handleResult(result);
-        if (point?.viaTik && result === "correct") api.clearSelect();
+        // na goed en na fout de selectie loslaten, zodat de tikmelding de uitleg niet afdekt
+        if (point?.viaTik && result) api.clearSelect();
         return result;
       },
       () => actiefRef.current
@@ -575,7 +576,7 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
     if (!api.selected || !actief) return;
     const result = cbRef.current?.(api.selected.payload, { clientX: e.clientX, clientY: e.clientY });
     handleResult(result);
-    if (result === "correct") api.clearSelect();
+    if (result) api.clearSelect();
   };
 
   const isHover = api.hoverZone === id && api.dragging;
