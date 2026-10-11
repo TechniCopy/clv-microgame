@@ -293,7 +293,7 @@ function Toestel({ dy, status, label }) {
     <g>
       <rect x="240" y={397 + dy} width="83" height="99" fill="white" stroke={LIJN} strokeWidth="1" />
       {label && (
-        <text x={dy ? 319 : 281.5} y={(dy ? 490 : 452) + dy} fontSize="12" fontWeight="700" fill={C.brown} textAnchor={dy ? "end" : "middle"}>
+        <text data-spel="label" x={dy ? 319 : 281.5} y={(dy ? 490 : 452) + dy} fontSize="12" fontWeight="700" fill={C.brown} textAnchor={dy ? "end" : "middle"}>
           {label}
         </text>
       )}
@@ -304,7 +304,7 @@ function Toestel({ dy, status, label }) {
 // terugslagklep als scharnierend klepje (spelonderdeel, plek volgens de normtekst)
 function Klepje({ x, y, kleur = C.green }) {
   return (
-    <g>
+    <g data-spel="klep">
       <circle cx={x} cy={y} r="1.8" fill={kleur} />
       <line x1={x} y1={y} x2={x + 5} y2={y + 5} stroke={kleur} strokeWidth="1.8" strokeLinecap="round" />
     </g>
@@ -345,9 +345,11 @@ function SchachtC10({
       <rect x={uitsnede.x} y={uitsnede.y} width={uitsnede.w} height={uitsnede.h} fill="white" />
 
       {/* stromen (spel, licht): rookgas omhoog naast de pijlen, lucht omlaag in de ring */}
-      <path d="M171 752 V60" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.35" style={flowOp} />
-      <path d="M140.5 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
-      <path d="M194 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
+      <g data-spel="stroom">
+        <path d="M171 752 V60" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.35" style={flowOp} />
+        <path d="M140.5 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
+        <path d="M194 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
+      </g>
 
       {/* kap: gaas tussen twee platen, binnenbuis door het gaas, buitenbuis verwijdt naar boven */}
       <rect x="117" y="74" width="102" height="56.6" fill="url(#gaasMon)" />
@@ -401,24 +403,26 @@ function SchachtC10({
 
       {/* BOVENSTE VERDIEPING */}
       {stompDicht && (
-        <g>
+        <g data-spel="dop">
           <line x1={K.xr} y1="330" x2={K.xr} y2="346" stroke={LIJN} strokeWidth="1.7" />
           <line x1={K.xi2} y1="332.5" x2={K.xi2} y2="343.5" stroke={LIJN} strokeWidth="1.7" />
           <rect x="197.5" y="328.5" width="4" height="19" rx="1" fill={C.olive} />
         </g>
       )}
       {routes && (
-        <g>
+        <g data-spel="route">
           <g fill="none" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" stroke={C.olive} opacity="0.8" strokeDasharray="5 4">
             <path d="M282 397 V338 H202" />
             <path d="M282 397 V375 H318 V292 H212 V338 H202" />
+            <path d="M282 397 V386 H266 V374 H250 V362 H234 V350 H218 V338 H202" />
           </g>
-          <text x="238" y="358" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">A</text>
+          <text x="264" y="331" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">A</text>
           <text x="300" y="286" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">B</text>
+          <text x="228" y="378" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">C</text>
         </g>
       )}
       {boven.leiding === "gat" && (
-        <path d="M282 397 V338 H202" fill="none" stroke={C.olive} strokeWidth="5" strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+        <path data-spel="route" d="M282 397 V338 H202" fill="none" stroke={C.olive} strokeWidth="5" strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
       )}
       {bovenLeidingZichtbaar && (
         <g stroke={LIJN} strokeWidth="1.4" fill="none">
@@ -430,14 +434,14 @@ function SchachtC10({
         </g>
       )}
       {bovenLeidingZichtbaar && boven.ketel === "aan" && (
-        <path d="M282 395 V338.5 H172" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
+        <path data-spel="stroom" d="M282 395 V338.5 H172" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
       )}
       {bovenLeidingZichtbaar && boven.klep && <Klepje x={280} y={372} />}
       <Toestel dy={0} status={boven.ketel === "weg" ? "weg" : "aan"} label={boven.label} />
 
       {/* rookgas komt de woning in uit de open aansluitleiding */}
       {rookgasUit === "leiding" && (
-        <g>
+        <g data-spel="rookgas">
           <path d="M172 338.5 H282 V412" fill="none" stroke={C.red} strokeWidth="2.6" style={flowOp} />
           <path d="M277.5 406 L282 414 L286.5 406" fill="none" stroke={C.red} strokeWidth="2" strokeLinecap="round" />
           <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
@@ -456,7 +460,7 @@ function SchachtC10({
         <path d={`M175 ${338.5 + VERD} Q168 ${338 + VERD} 167.5 ${331 + VERD}`} stroke={GRIJS} strokeWidth="0.8" />
       </g>
       {onder.ketel === "aan" && (
-        <path d={`M282 ${395 + VERD} V${338.5 + VERD} H172`} fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
+        <path data-spel="stroom" d={`M282 ${395 + VERD} V${338.5 + VERD} H172`} fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
       )}
       {klepOnder && <Klepje x={280} y={372 + VERD} />}
       <Toestel dy={VERD} status="aan" label={onder.label} />
@@ -478,7 +482,7 @@ function SchachtC10({
         <path d="M227 806 L218 823" />
       </g>
       {plaatOnder && (
-        <g>
+        <g data-spel="typeplaat">
           <rect x="246" y="798" width="18" height="13" rx="1.5" fill="#C9D6EA" stroke={LIJN} strokeWidth="0.8" />
           <path d="M249 802 H261 M249 805 H259 M249 808 H260" stroke={LIJN} strokeWidth="0.5" />
         </g>
@@ -495,121 +499,140 @@ function SchachtC10({
 
 // ─── TEKENING 2: AANSLUITSTOMP DOOR DE SCHACHTWAND (C10 figuur 3, PDF-pagina 10) ───
 //
-// Links het gemeenschappelijke kanaal (ring omlaag, binnenbuis omhoog), rechts
-// de gearceerde schachtwand, de concentrische stomp met d1 en D1, de maat L
-// en (als hij er is) de eventuele brandmanchet boven en onder de stomp.
-// In ronde 2 komt daar de nieuwe aansluitleiding aan vast (niet in de figuur).
+// Nagetekend op de uitsnede van de normfiguur (clv-gauntlet\tekenen\F6.png,
+// 920 x 767 px = 4 px per PDF-punt). Coordinaten zijn dus de pixels van die
+// uitsnede: links het kanaal (twee wanden), de binnenbuis en de ring die in
+// de stomp ombuigen, de licht gearceerde schachtwand, de concentrische stomp
+// met maten L, d1 en D1 en de eventuele brandmanchet met label. Alles wat
+// niet in de figuur staat (doppen, rookgas, aansluitleiding, klep, wijslijnen)
+// is spel en heeft data-spel.
 
-function StompDetail({ rookgasUit = false, dop = {}, leiding = false, klep = false, manchet = false, children }) {
-  const flowUit = { strokeDasharray: "6 5", animation: "flowDash 0.8s linear infinite" };
+const DIK = 5.5; // dikke lijnen van de figuur
+const DUN = 2.6; // schachtwandlijnen en maatstrepen
+
+function arceer(x0, x1, y0, y1) {
+  // lichte arcering "/" om de 50 px, alleen binnen het vak
+  const lijnen = [];
+  for (let c = x0 + y0 - 44; c < x1 + y1 + 50; c += 50) {
+    const ya = Math.max(y0, c - x1);
+    const yb = Math.min(y1, c - x0);
+    if (yb > ya) lijnen.push(`M${c - ya} ${ya} L${c - yb} ${yb}`);
+  }
+  return lijnen.join(" ");
+}
+
+function StompDetail({ rookgasUit = false, dop = {}, leiding = false, klep = false, manchet = true, children }) {
+  const flowUit = { strokeDasharray: "14 12", animation: "flowDash 0.8s linear infinite" };
   return (
-    <svg viewBox="10 0 440 345" className="w-full h-auto select-none" role="img" aria-label="Aansluitstomp door de schachtwand">
-      <defs>
-        <pattern id="arceerMon" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="7" stroke={GRIJS} strokeWidth="0.8" />
-        </pattern>
-      </defs>
-      <rect x="10" y="0" width="440" height="345" fill="white" />
+    <svg viewBox="0 0 920 767" className="w-full h-auto select-none" role="img" aria-label="Aansluitstomp door de schachtwand">
+      <rect x="0" y="0" width="920" height="767" fill="white" />
 
-      {/* afbreeklijnen boven en onder (grijs, met stippen) */}
-      <g stroke={GRIJS} strokeWidth="0.7">
-        <line x1="15" y1="15" x2="67.5" y2="22.5" />
-        <line x1="115" y1="31" x2="260" y2="55" />
-        <line x1="15" y1="302" x2="67.5" y2="310" />
-        <line x1="115" y1="322" x2="260" y2="342" />
+      {/* afbreeklijnen boven en onder (licht), met stippen */}
+      <g stroke="#DADADA" strokeWidth="2.4" fill="none">
+        <path d="M0 8 L120 28 M230 46 L565 102" />
+        <path d="M0 665 L120 685 M230 703 L565 759" />
       </g>
-      <g fill={GRIJS}>
-        <circle cx="91.5" cy="26" r="0.9" />
-        <circle cx="185" cy="43" r="0.9" />
-        <circle cx="91.5" cy="314" r="0.9" />
-        <circle cx="185" cy="330" r="0.9" />
+      <g fill={LIJN}>
+        <rect x="176" y="35" width="3" height="6" />
+        <rect x="389" y="71" width="4" height="6" />
+        <rect x="176" y="690" width="3" height="3" />
+        <rect x="389" y="723" width="4" height="6" />
       </g>
 
-      {/* kanaal: linkerwanden doorlopend, rechterwanden buigen af in de stomp */}
-      <g stroke={LIJN} strokeWidth="1.8" fill="none" strokeLinejoin="miter">
-        <path d="M36.5 16 V300" />
-        <path d="M69 20 V305" />
-        <path d="M172.5 37 V198.5 H345" />
-        <path d="M172.5 322 V224 H345" />
-        <path d="M205 44 V189 H345" />
-        <path d="M205 328 V235 H345" />
-        {!leiding && <path d="M345 189 V235" />}
+      {/* schachtwand: lichte arcering tussen twee dunne lijnen */}
+      <path d={`${arceer(461, 537, 85, 409)} ${arceer(461, 537, 523, 750)}`} stroke="#D3D3D3" strokeWidth="2.6" fill="none" />
+      <g stroke={LIJN} strokeWidth={DUN}>
+        <line x1="460" y1="83" x2="460" y2="409" />
+        <line x1="538" y1="95" x2="538" y2="409" />
+        <line x1="460" y1="523" x2="460" y2="740" />
+        <line x1="538" y1="523" x2="538" y2="752" />
       </g>
 
-      {/* schachtwand, gearceerd, onderbroken door de stomp */}
-      <rect x="222.5" y="47" width="35" height="140" fill="url(#arceerMon)" />
-      <rect x="222.5" y="237" width="35" height="98" fill="url(#arceerMon)" />
-      <g stroke={LIJN} strokeWidth="0.8">
-        <line x1="222.5" y1="47" x2="222.5" y2="187" />
-        <line x1="257.5" y1="51" x2="257.5" y2="187" />
-        <line x1="222.5" y1="237" x2="222.5" y2="331" />
-        <line x1="257.5" y1="237" x2="257.5" y2="335" />
+      {/* waar de stomp door de wand gaat, vallen wandrand en stomplijn samen tot een dikke band */}
+      <g fill={LIJN}>
+        <rect x="460" y="403" width="80" height="11" />
+        <rect x="460" y="517" width="80" height="11" />
       </g>
 
-      {/* stroompijlen van de figuur */}
-      {pijlV(189, 110, 158, "ringneer", 2)}
-      <path d="M160 211.25 H202.5" stroke={GRIJS} strokeWidth="0.8" fill="none" />
-      <path d="M160 211.25 Q145 211 144 196" stroke={GRIJS} strokeWidth="0.8" fill="none" />
-      {pijlV(144, 194, 158, "binnenop", 2)}
+      {/* kanaal en stomp */}
+      <g stroke={LIJN} strokeWidth={DIK} fill="none" strokeLinejoin="miter">
+        <path d="M33 11 V671" strokeWidth="11" />
+        <path d="M107 26 V683" />
+        <path d="M347 62 V434.5 H747" />
+        <path d="M347 722 V497.5 H747" />
+        <path d="M422.5 77 V410.5 H747" />
+        <path d="M422.5 734 V521.5 H747" />
+        <path d="M747 408 V524" />
+      </g>
+
+      {/* stroompijlen van de figuur: ring omlaag, binnenbuis omhoog met bocht uit de stomp */}
+      <g fill={LIJN} stroke="none">
+        <rect x="381.5" y="224" width="5" height="98" />
+        <path d="M377.5 320 L390.5 320 L384 337 Z" />
+        <rect x="294.5" y="350" width="5" height="90" />
+        <path d="M290.5 352 L303.5 352 L297 335 Z" />
+        <rect x="323" y="464.5" width="94" height="3.4" />
+      </g>
+      <path d="M297 440 Q300 466 323 466" stroke="#C8C8C8" strokeWidth="2.6" fill="none" />
 
       {/* maat L */}
-      <line x1="278.5" y1="155" x2="345" y2="155" stroke={LIJN} strokeWidth="0.8" />
-      <text x="310" y="147" fontSize="16" fill={LIJN} textAnchor="middle">L</text>
+      <line x1="591" y1="330" x2="746" y2="330" stroke={LIJN} strokeWidth={DUN} />
+      <text x="660" y="320" fontSize="37" fontFamily="Arial, sans-serif" fill={LIJN}>L</text>
 
-      {/* d1 en D1 aan het eind van de stomp */}
-      {!leiding && (
-        <g fill={LIJN} fontSize="16">
-          <text x="361" y="219">d<tspan fontSize="15" dy="3">1</tspan></text>
-          <line x1="388" y1="198.5" x2="388" y2="224" stroke={LIJN} strokeWidth="1" />
-          <text x="395" y="219">D<tspan fontSize="15" dy="3">1</tspan></text>
-          <line x1="426" y1="188" x2="426" y2="235" stroke={LIJN} strokeWidth="1" />
+      {/* d1 en D1 */}
+      <g fill={LIJN} fontFamily="Arial, sans-serif">
+        <text x="784" y="480" fontSize="37">d</text>
+        <text x="806" y="484" fontSize="32">1</text>
+        <line x1="825" y1="432" x2="825" y2="500" stroke={LIJN} strokeWidth={DUN + 1} />
+        <text x="860" y="480" fontSize="37">D</text>
+        <text x="886" y="484" fontSize="32">1</text>
+        <line x1="906" y1="411" x2="906" y2="521" stroke={LIJN} strokeWidth={DUN + 1} />
+      </g>
+
+      {/* eventuele brandmanchet: rood blokje boven en onder de stomp, label met holle pijl */}
+      {manchet && (
+        <g>
+          <rect x="540" y="389" width="52" height="20" fill="#D00000" stroke={LIJN} strokeWidth="1.5" />
+          <rect x="540" y="523" width="52" height="20" fill="#D00000" stroke={LIJN} strokeWidth="1.5" />
+          <line x1="606" y1="582" x2="580" y2="562" stroke="#BDBDBD" strokeWidth={DUN} />
+          <path d="M567 551 L590 557 L578 571 Z" fill="white" stroke="#BDBDBD" strokeWidth="2" />
+          <text x="620" y="594" fontSize="33" textLength="246" lengthAdjust="spacingAndGlyphs" fontFamily="Arial, sans-serif" fill={LIJN}>evt. brandmanchet</text>
+          <line x1="615" y1="604" x2="890" y2="604" stroke={LIJN} strokeWidth={DUN} />
         </g>
       )}
 
-      {/* nieuwe aansluitleiding (ronde 2): concentrisch, schuift op de stomp */}
+      {/* SPEL: nieuwe aansluitleiding (ronde 2), schuift over de stomp */}
       {leiding && (
-        <g stroke={LIJN} strokeWidth="1.6" fill="none">
-          <rect x="338" y="185" width="16" height="54" fill="white" />
-          <path d="M354 189 H450 M354 235 H450" />
-          <path d="M346 198.5 H450 M346 224 H450" strokeWidth="1.2" />
-          <text x="446" y="178" fontSize="15" fontWeight="600" fill={C.brown} stroke="none" textAnchor="end">naar de ketel</text>
+        <g data-spel="leiding" stroke="#6B6B6B" strokeWidth="4" fill="none">
+          <rect x="735" y="398" width="34" height="136" fill="white" />
+          <path d="M769 410.5 H920 M769 521.5 H920" />
+          <path d="M769 434.5 H920 M769 497.5 H920" strokeWidth="3" />
+          <text x="915" y="388" fontSize="32" fontWeight="600" fill={C.brown} stroke="none" textAnchor="end">naar de ketel</text>
         </g>
       )}
       {leiding && klep && (
-        <g>
-          <circle cx="392" cy="201" r="2.8" fill={C.green} />
-          <line x1="392" y1="201" x2="403" y2="221" stroke={C.green} strokeWidth="3" strokeLinecap="round" />
-          <text x="448" y="256" fontSize="15" fontWeight="700" fill={C.green} textAnchor="end">klep</text>
+        <g data-spel="klep">
+          <circle cx="845" cy="441" r="6" fill={C.green} />
+          <line x1="845" y1="441" x2="871" y2="490" stroke={C.green} strokeWidth="7" strokeLinecap="round" />
+          <text x="915" y="560" fontSize="34" fontWeight="700" fill={C.green} textAnchor="end">klep</text>
         </g>
       )}
 
-      {/* rookgas uit de open stomp (ronde 1) */}
+      {/* SPEL: rookgas uit de open stomp (ronde 1) */}
       {rookgasUit && (
-        <g>
-          <path d="M150 211.25 H356 Q362 211.25 362 204 V120" fill="none" stroke={C.red} strokeWidth="3" style={flowUit} />
-          <path d="M356 127 L362 117 L368 127" fill="none" stroke={C.red} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <g data-spel="rookgas">
+          <path d="M290 466 H760 Q775 466 775 450 V300" fill="none" stroke={C.red} strokeWidth="7" style={flowUit} />
+          <path d="M762 316 L775 292 L788 316" fill="none" stroke={C.red} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
           <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
-            <circle cx="300" cy="104" r="16" fill={C.red} opacity="0.14" />
-            <circle cx="276" cy="112" r="10" fill={C.red} opacity="0.12" />
+            <circle cx="690" cy="240" r="38" fill={C.red} opacity="0.14" />
+            <circle cx="640" cy="262" r="24" fill={C.red} opacity="0.12" />
           </g>
         </g>
       )}
 
-      {/* doppen (ronde 1): de 60 mm-dop in de rookgasopening, de 100 mm-dop over het hele uiteinde */}
-      {dop.rookgas && <rect x="332" y="199.5" width="12" height="23.5" rx="1.5" fill={C.green} stroke={C.oliveDark} strokeWidth="1" />}
-      {dop.lucht && <rect x="345" y="185" width="12" height="54" rx="2" fill={C.olive} fillOpacity="0.85" stroke={C.oliveDark} strokeWidth="1" />}
-
-      {/* eventuele brandmanchet: rood blokje boven en onder de stomp, zoals in het voorbeeld */}
-      {manchet && (
-        <g>
-          <rect x="256" y="181" width="22" height="8" fill="#C8102E" stroke={LIJN} strokeWidth="0.5" />
-          <rect x="256" y="235" width="22" height="9" fill="#C8102E" stroke={LIJN} strokeWidth="0.5" />
-          <line x1="284" y1="262" x2="274" y2="251" stroke={LIJN} strokeWidth="0.8" />
-          <path d="M270 246 L279 249.5 L273.5 254.5 Z" fill="white" stroke={LIJN} strokeWidth="0.8" />
-          <text x="285" y="270" fontSize="15" fill={LIJN}>evt. brandmanchet</text>
-          <line x1="283" y1="274" x2="414" y2="274" stroke={LIJN} strokeWidth="0.6" />
-        </g>
-      )}
+      {/* SPEL: doppen (ronde 1): de 60 mm-dop in de rookgasopening, de 100 mm-dop over het hele uiteinde */}
+      {dop.rookgas && <rect data-spel="dop" x="712" y="438" width="32" height="57" rx="4" fill={C.green} stroke={C.oliveDark} strokeWidth="2" />}
+      {dop.lucht && <rect data-spel="dop" x="748" y="400" width="28" height="132" rx="5" fill={C.olive} fillOpacity="0.85" stroke={C.oliveDark} strokeWidth="2" />}
       {children}
     </svg>
   );
@@ -624,20 +647,20 @@ function vakStijl(vb, x, y, w, h) {
     height: `${(h / vb.h) * 100}%`,
   };
 }
-const VB_STOMP = { x: 10, y: 0, w: 440, h: 345 };
+const VB_STOMP = { x: 0, y: 0, w: 920, h: 767 };
 
 // stippellijn van een vak naar de plek in de tekening
 function Wijslijnen({ vakken }) {
   return (
-    <g stroke={C.olive} strokeWidth="1.4" fill="none" strokeDasharray="4 3">
+    <g data-spel="wijslijn" stroke={C.olive} strokeWidth="3.2" fill="none" strokeDasharray="9 7">
       {vakken.map((p) => {
         const [x, y, w, h] = p.vak;
-        const bx = x + w / 2;
-        const by = y < 150 ? y + h : y;
+        const bx = x + w * 0.75;
+        const by = y < 380 ? y + h : y;
         return (
           <g key={p.id}>
             <path d={`M${p.doel[0]} ${p.doel[1]} L${bx} ${by}`} />
-            <circle cx={p.doel[0]} cy={p.doel[1]} r="3.5" fill={C.olive} />
+            <circle cx={p.doel[0]} cy={p.doel[1]} r="8" fill={C.olive} />
           </g>
         );
       })}
@@ -649,13 +672,13 @@ function Wijslijnen({ vakken }) {
 
 function PlaatTabel({ rijen, waarschuwing }) {
   return (
-    <div className="rounded-md border overflow-hidden text-xs" style={{ borderColor: "#5C6F8C" }}>
-      <table className="w-full border-collapse" style={{ backgroundColor: "#C9D6EA", color: C.brownText }}>
+    <div className="shrink-0 rounded-md border overflow-hidden text-xs" style={{ borderColor: "#5C6F8C" }}>
+      <table className="w-full border-collapse" style={{ backgroundColor: "#B8CCE4", color: C.brownText }}>
         <tbody>
           {rijen.map(([k, v]) => (
             <tr key={k} style={{ borderBottom: "1px solid #5C6F8C" }}>
-              <td className="px-2 py-0.5" style={{ borderRight: "1px solid #5C6F8C" }}>{k}</td>
-              <td className="px-2 py-0.5 font-semibold">{v}</td>
+              <td className="px-2 py-0.5 align-top" style={{ borderRight: "1px solid #5C6F8C" }}>{k}</td>
+              <td className="px-2 py-0.5 font-semibold align-top">{v}</td>
             </tr>
           ))}
         </tbody>
@@ -675,29 +698,29 @@ const C10_3 = (
   </span>
 );
 
-// Typeplaat per aansluiting (figuur B1): zes rijen en de waarschuwing
+// Typeplaat per aansluiting (figuur B1): zes regels in dezelfde volgorde, dan de waarschuwing
 function TypeplaatAansluiting() {
   return (
     <PlaatTabel
       rijen={[
-        ["Fabrikant", "(naam CLV-fabrikant)"],
-        ["Alleen geschikt voor", C10_3],
-        ["Maximaal toelaatbare massastroom", "15 gram/sec"],
-        ["Maximaal toelaatbare belasting", "35 kW op bovenwaarde"],
-        ["Maximale CW klasse", "CW 4"],
-        ["Temperatuurklasse", "T120"],
+        ["Fabrikant:", "(naam CLV-fabrikant)"],
+        ["Alleen geschikt voor:", C10_3],
+        ["Maximaal toelaatbare massastroom:", "15 gram/sec"],
+        ["Maximaal toelaatbare belasting:", "35 kW op bovenwaarde"],
+        ["Maximale CW klasse:", "CW 4"],
+        ["Temperatuurklasse:", "T120"],
       ]}
       waarschuwing="Waarschuwing: haal je het toestel weg, sluit dan de opening voor rookgas en de opening voor lucht ieder apart af."
     />
   );
 }
 
-// Typeplaat onderaan het CLV (figuur B2): tien rijen
+// Typeplaat onderaan het CLV (figuur B2): tien regels in dezelfde volgorde
 function TypeplaatOnderaan({ temp, corrosie, materiaal }) {
   return (
     <PlaatTabel
       rijen={[
-        ["Fabrikant", "(naam CLV-fabrikant)"],
+        ["Fabrikant:", "(naam CLV-fabrikant)"],
         ["Installateur", "(naam installateur)"],
         ["Installatie datum", "(datum)"],
         ["Diameter afvoerkanaal (uitwendig) in mm", "180"],
@@ -712,23 +735,33 @@ function TypeplaatOnderaan({ temp, corrosie, materiaal }) {
   );
 }
 
-// Uitklapbare typeplaat: de speler leest hem zelf als hij wil (geen spiekbriefje)
-function PlaatKnop({ open, onToggle }) {
+// Typeplaat als venster over het scherm: de balk onderin blijft kort en
+// niets wordt afgedekt zolang de speler sleept (het venster is dan dicht).
+function PlaatVenster({ titel, children, onSluit }) {
   return (
-    <div>
-      <button
-        onClick={onToggle}
-        className="w-full min-h-[44px] rounded-xl border-2 px-3 text-sm font-bold text-left"
-        style={{ borderColor: "#5C6F8C", backgroundColor: "#E4EBF5", color: C.brownText }}
+    <div className="fixed inset-0 z-[140] bg-black/50 flex items-center justify-center p-3" onClick={onSluit}>
+      <div
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border-2 p-3 flex flex-col gap-2"
+        style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {open ? "Typeplaat bij de aansluiting (tik om te sluiten)" : "Typeplaat bij de aansluiting: tik om te lezen"}
-      </button>
-      {open && (
-        <div className="mt-2">
-          <TypeplaatAansluiting />
-        </div>
-      )}
+        <p className="text-sm font-bold" style={{ color: C.brownText }}>{titel}</p>
+        {children}
+        <GameButton onClick={onSluit} className="w-full">Sluiten</GameButton>
+      </div>
     </div>
+  );
+}
+
+function PlaatKnop({ label, onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      className="w-full min-h-[44px] rounded-xl border-2 px-3 text-sm font-bold text-left shrink-0"
+      style={{ borderColor: "#5C6F8C", backgroundColor: "#E4EBF5", color: C.brownText }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -790,7 +823,7 @@ const POOL_R1 = [
   {
     question: "De nieuwe ketel is een C43. Mag die op een C(10)-aansluiting?",
     options: [
-      "Nee: de typeplaat zegt alleen geschikt voor C(10) toestellen",
+      "Nee: op deze aansluiting mag alleen een C(10)-ketel",
       "Ja: een C43 is ook een gesloten toestel met ventilator",
       "Ja, als hij niet zwaarder is dan de oude ketel",
       "Ja, als de aansluitleiding ook 60/100 is",
@@ -809,17 +842,17 @@ const POOL_R1 = [
     aandacht: "C(10)-stomp: rookgas 60 mm in het midden, lucht 100 mm eromheen",
   },
   {
-    question: "Waar begint het CLV-systeem? Van wie is dat stuk?",
+    question: "Waar begint het CLV-systeem? Wie is daarvoor verantwoordelijk?",
     options: [
-      "Bij de aansluitstomp in de schachtwand; die is van de CLV-fabrikant",
-      "Bij de ketel; alles daarachter is van de CLV-fabrikant",
-      "Bij de aansluitstomp; die is van de installateur",
-      "Bij het inspectieluik onderaan; daarboven is alles van de installateur",
+      "Bij de aansluitstomp in de schachtwand; die valt onder de CLV-fabrikant",
+      "Bij de ketel; alles daarachter valt onder de CLV-fabrikant",
+      "Bij de aansluitstomp; die valt onder de installateur",
+      "Bij het inspectieluik onderaan; daarboven valt alles onder de installateur",
     ],
     correct: 0,
     feedbackCorrect: "Klopt. Het CLV begint bij de aansluitstomp en die valt onder de CLV-fabrikant. Vanaf de stomp sluit de installateur aan.",
     feedbackWrong: "Het CLV begint bij de aansluitstomp in de schachtwand; die valt onder de CLV-fabrikant. Vanaf daar sluit de installateur de ketel aan.",
-    aandacht: "Het CLV begint bij de aansluitstomp; die is van de CLV-fabrikant",
+    aandacht: "Het CLV begint bij de aansluitstomp; die valt onder de CLV-fabrikant",
   },
 ];
 
@@ -851,12 +884,25 @@ const POOL_R2 = [
     aandacht: "Aansluitleiding: alles van hetzelfde fabricaat, type en materiaal",
   },
   {
+    question: "Wat moet er volgens de handleiding van de ketel kloppen aan de aansluitleiding?",
+    options: [
+      "De lengte en de totale weerstand blijven onder het maximum van de fabrikant",
+      "Alleen dat hij zo kort mogelijk is",
+      "Alleen dat de maat 60/100 is",
+      "Dat hij net zo lang is als de oude leiding",
+    ],
+    correct: 0,
+    feedbackCorrect: "Klopt. De maximale lengte en de maximale weerstand staan in de handleiding van de ketel. Daarbinnen houd je de leiding zo kort als het kan.",
+    feedbackWrong: "Lengte en totale weerstand van de aansluitleiding moeten onder het maximum van de ketelfabrikant blijven.",
+    aandacht: "Aansluitleiding: lengte en totale weerstand onder het maximum van de fabrikant",
+  },
+  {
     question: "Waar vind je hoe lang de aansluitleiding maximaal mag zijn?",
     options: [
       "In de handleiding van de ketel",
       "Op de typeplaat bij de aansluiting",
       "Op de typeplaat onderaan het CLV",
-      "In de wbdbo-eis van het gebouw",
+      "In het voorschrift van de fabrikant van de doorvoer",
     ],
     correct: 0,
     feedbackCorrect: "Klopt. De maximale lengte staat in de installatievoorschriften van de ketel. Houd de leiding daarbinnen en zo kort als het kan.",
@@ -937,9 +983,9 @@ const POOL_R2 = [
       "Er is geen eis voor de doorvoer",
     ],
     correct: 0,
-    feedbackCorrect: "Klopt. De wbdbo-eis stel je eerst vast; die kan 20, 30 of 60 minuten zijn. De 60 minuten is de eis voor de schacht van een C(10)-CLV.",
-    feedbackWrong: "De wbdbo-eis stel je eerst vast: 20, 30 of 60 minuten. De 60 minuten is de eis voor de schacht van een C(10)-CLV zelf.",
-    aandacht: "Wbdbo-eis eerst vaststellen (20, 30 of 60 minuten); de schacht van een C(10)-CLV is 60 minuten",
+    feedbackCorrect: "Klopt. De wbdbo-eis wordt eerst vastgesteld; die kan 20, 30 of 60 minuten zijn. De 60 minuten is de eis voor de schacht van een C(10)-CLV.",
+    feedbackWrong: "De wbdbo-eis wordt eerst vastgesteld: 20, 30 of 60 minuten. De 60 minuten is de eis voor de schacht van een C(10)-CLV zelf.",
+    aandacht: "Wbdbo-eis wordt eerst vastgesteld (20, 30 of 60 minuten); de schacht van een C(10)-CLV is 60 minuten",
   },
   {
     question: "Hoe sluit je een ketel aan op een half-CLV?",
@@ -1030,7 +1076,7 @@ const POOL_R3 = [
   },
   {
     question: "Wat is verplicht voor het gemeenschappelijke afvoersysteem van een C(10)-CLV?",
-    options: ["Een CE-markering", "Een KOMO-keur van de installateur", "Een rode kleur van het kanaal", "Een eigen sifon per woning"],
+    options: ["Een CE-markering", "Een KOMO-keur van de installateur", "Een typeplaat op elke ketel", "Een eigen sifon per woning"],
     correct: 0,
     feedbackCorrect: "Klopt. De gemeenschappelijke voorziening van een C(10)-CLV moet een CE-markering hebben.",
     feedbackWrong: "De gemeenschappelijke voorziening van een C(10)-CLV moet een CE-markering hebben.",
@@ -1152,12 +1198,24 @@ const R1_DOPPEN = [
 
 // twee vakken boven en onder de stomp; welk vak welke opening is, staat niet in de DOM
 const R1_VAKKEN = [
-  { id: "r1-vak-1", opening: "lucht", vak: [330, 12, 110, 64], doel: [349, 191] },
-  { id: "r1-vak-2", opening: "rookgas", vak: [330, 270, 110, 64], doel: [349, 211] },
+  { id: "r1-vak-1", vak: [600, 10, 300, 130] },
+  { id: "r1-vak-2", vak: [600, 625, 300, 130] },
 ];
 
+// Per beurt willekeurig welk vak naar de ring (lucht) en welk naar het midden
+// (rookgas) wijst; de ring wordt aangewezen aan de kant van het vak.
+function maakR1Vakken() {
+  const luchtBoven = Math.random() < 0.5;
+  return R1_VAKKEN.map((v, i) => {
+    const boven = i === 0;
+    const opening = boven === luchtBoven ? "lucht" : "rookgas";
+    const doel = opening === "rookgas" ? [752, 466] : boven ? [752, 422] : [752, 510];
+    return { ...v, opening, doel };
+  });
+}
+
 const R1_C43 = [
-  { id: "goed", label: "Nee: deze aansluiting is alleen geschikt voor C(10) toestellen", goed: true },
+  { id: "goed", label: "Nee: hier mag alleen een C(10)-ketel op", goed: true },
   {
     id: "gesloten",
     label: "Ja: een C43 is ook een gesloten toestel met ventilator",
@@ -1183,6 +1241,7 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
   const [fout, setFout] = useState(null);
   const [co, setCo] = useState(qaStap === 2 ? 180 : 0);
   const [doppen] = useState(() => schud(R1_DOPPEN));
+  const [vakken] = useState(maakR1Vakken);
   const [c43Opties] = useState(() => schud(R1_C43));
   const stand = useRef({ ketelWeg, dicht });
   useEffect(() => {
@@ -1307,7 +1366,7 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
           de ventilatoren van de ketels duwen het rookgas door het kanaal. Het afvoerkanaal staat daardoor onder overdruk.
         </UitlegItem>
         <UitlegItem term="Waar het CLV begint">
-          bij de aansluitstomp in de schachtwand. Die is van de CLV-fabrikant. Daartussen en de ketel zit de aansluitleiding van de installateur.
+          bij de aansluitstomp in de schachtwand. Die valt onder de CLV-fabrikant. Tussen de stomp en de ketel zit de aansluitleiding van de installateur.
         </UitlegItem>
         <UitlegItem term="Typeplaat">bij elke C(10)-aansluiting hangt een typeplaat van de CLV-fabrikant. Lees hem voordat je iets losmaakt.</UitlegItem>
       </RondeIntro>
@@ -1356,10 +1415,10 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
           </p>
           <div className="relative w-full" style={{ maxWidth: 460 }}>
             <StompDetail rookgasUit={!dicht.rookgas} dop={dicht}>
-              {fase === "doppen" && <Wijslijnen vakken={R1_VAKKEN.filter((v) => !dicht[v.opening])} />}
+              {fase === "doppen" && <Wijslijnen vakken={vakken.filter((v) => !dicht[v.opening])} />}
             </StompDetail>
             {fase === "doppen" &&
-              R1_VAKKEN.map((v) =>
+              vakken.map((v) =>
                 dicht[v.opening] ? null : (
                   <DropTarget key={v.id} id={v.id} onDropItem={dropOpening(v.opening)} className="absolute" style={vakStijl(VB_STOMP, ...v.vak)}>
                     {({ isHover, flash }) => (
@@ -1381,8 +1440,15 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
         </div>
       )}
 
+      {plaatOpen && (
+        <PlaatVenster titel="Typeplaat bij de aansluiting" onSluit={() => setPlaatOpen(false)}>
+          <TypeplaatAansluiting />
+        </PlaatVenster>
+      )}
+
       <VasteBalk>
         {fase !== "plaat" && fase !== "klaar" && <COMeter value={co} />}
+        {fase !== "plaat" && <Melding melding={melding} />}
         {fase === "weg" && (
           <div className="flex gap-2">
             {[
@@ -1408,7 +1474,7 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
         )}
         {fase === "doppen" && (
           <>
-            <PlaatKnop open={plaatOpen} onToggle={() => setPlaatOpen((o) => !o)} />
+            <PlaatKnop label="Typeplaat bij de aansluiting: tik om te lezen" onOpen={() => setPlaatOpen(true)} />
             <div className="flex gap-2 justify-center">
               {doppen.filter((d) => !(d.id === "dop60" && dicht.rookgas) && !(d.id === "dop100" && dicht.lucht)).map((d) => (
                 <Draggable key={d.id} payload={d.id} ghost={<DopKaart label={d.label} sub={d.sub} />}>
@@ -1422,9 +1488,9 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
           <>
             <TypeplaatAansluiting />
             <Keuzes vraag="De nieuwe ketel die morgen komt, is een C43. Mag die op deze aansluiting?" opties={c43Opties} onKies={kiesC43} fout={fout} />
+            <Melding melding={melding} />
           </>
         )}
-        <Melding melding={melding} />
         {fase === "klaar" && (
           <GameButton onClick={onDone} variant="green" className="w-full">Naar de controlevragen</GameButton>
         )}
@@ -1435,12 +1501,19 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
 
 // ─── RONDE 2: NIEUWE KETEL AANSLUITEN ───
 
+// Spelwaarden: alle drie de routes blijven binnen de 3 m; de keuze zit in
+// de weerstand (maximum van de fabrikant) en in zo kort als het kan.
 const R2_ROUTES = [
-  { id: "A", label: "Route A: 1,6 m aansluitleiding", goed: true },
+  { id: "A", label: "Route A: 1,6 m, 2 bochten, weerstand 60 % van het maximum", goed: true },
   {
     id: "B",
-    label: "Route B: 4,2 m aansluitleiding",
-    uitleg: "Route B is langer dan de 3 m uit de handleiding van de ketel. En hoe langer de leiding, hoe groter de kans dat verbindingen losraken.",
+    label: "Route B: 2,8 m, 4 bochten, weerstand 95 % van het maximum",
+    uitleg: "Route B mag volgens de handleiding, maar is langer dan nodig. Hoe langer de leiding, hoe groter de kans dat verbindingen losraken.",
+  },
+  {
+    id: "C",
+    label: "Route C: 1,4 m, 6 bochten, weerstand 115 % van het maximum",
+    uitleg: "Route C is het kortst, maar de totale weerstand komt boven het maximum uit de handleiding. De weerstand van de aansluitleiding moet onder dat maximum blijven.",
   },
 ];
 
@@ -1521,7 +1594,7 @@ const R2_CONTROLE = [
   {
     id: "zestig",
     label: "Alleen of de schacht 60 minuten brandwerend is",
-    uitleg: "60 minuten is de eis voor de schacht van een C(10)-CLV. De wbdbo-eis voor de doorvoer stel je eerst vast: 20, 30 of 60 minuten.",
+    uitleg: "60 minuten is de eis voor de schacht van een C(10)-CLV. De wbdbo-eis voor de doorvoer wordt eerst vastgesteld: 20, 30 of 60 minuten.",
   },
 ];
 
@@ -1541,37 +1614,37 @@ const R2_HALF = [
 
 // plekken op de stomptekening (vak in viewBox-coordinaten en de plek waar de lijn naar wijst)
 const KLEP_PLEKKEN = [
-  { id: "p1", label: "Rookgasdeel aansluitleiding", doel: [392, 211], vak: [290, 12, 150, 64], goed: true },
+  { id: "p1", label: "Rookgasdeel aansluitleiding", doel: [845, 466], vak: [600, 10, 300, 130], goed: true },
   {
     id: "p2",
     label: "Luchtdeel aansluitleiding",
-    doel: [400, 230],
-    vak: [290, 270, 150, 64],
+    doel: [860, 510],
+    vak: [600, 625, 300, 130],
     uitleg: "In het luchtdeel stroomt verbrandingslucht. De klep hoort in het rookgasdeel van de aansluitleiding.",
   },
   {
     id: "p3",
     label: "Kanaal in de schacht",
-    doel: [120, 150],
-    vak: [22, 12, 150, 64],
+    doel: [230, 300],
+    vak: [120, 10, 300, 130],
     uitleg: "Het kanaal is van het CLV en wordt gedeeld met de buren. De klep hoort in jouw aansluitleiding, bij de ketel.",
   },
 ];
 
 const MANCHET_PLEKKEN = [
-  { id: "m1", label: "Bij de doorvoer door de wand", doel: [266, 184], vak: [290, 12, 150, 64], goed: true },
+  { id: "m1", label: "Om de leiding bij de schachtwand", doel: [566, 398], vak: [600, 10, 300, 130], goed: true },
   {
     id: "m2",
     label: "Bij de ketel",
-    doel: [446, 237],
-    vak: [320, 270, 120, 64],
+    doel: [905, 535],
+    vak: [600, 625, 300, 130],
     uitleg: "Een eventuele brandmanchet zit om de aansluitleiding waar die door de schachtwand gaat, niet bij de ketel.",
   },
   {
     id: "m3",
     label: "Om het kanaal in de schacht",
-    doel: [120, 150],
-    vak: [22, 12, 150, 64],
+    doel: [230, 300],
+    vak: [120, 10, 300, 130],
     uitleg: "Een eventuele brandmanchet zit om de aansluitleiding waar die door de schachtwand gaat, niet om het kanaal.",
   },
 ];
@@ -1685,12 +1758,12 @@ function Ronde2({ beoordeel, onDone, noteer, skipIntro }) {
   }
 
   const opdrachten = {
-    route: "kies de route voor de aansluitleiding. Lees eerst de handleiding.",
+    route: "kies de route voor de aansluitleiding. Kijk naar de handleiding van de ketel.",
     leiding: "sleep de juiste aansluitleiding naar de gestippelde route.",
     montage: "hoe monteer je de leiding?",
     klepEerst: "de terugslagklep zit los bij de ketel. Wat doe je eerst?",
     klepPlek: "tik op de plek waar de terugslagklep komt.",
-    manchet: "de doorvoer vraagt een brandmanchet. Sleep hem naar de goede plek.",
+    manchet: "waar hoort een eventuele brandmanchet? Sleep hem naar de goede plek.",
     voorschrift: "volgens welk voorschrift werk je de doorvoer af?",
     controle: "wat controleer jij daarna bij de doorvoer?",
     half: "stel: dit gebouw had een half-CLV. Waar sluit je dan de luchtleiding aan?",
@@ -1776,15 +1849,16 @@ function Ronde2({ beoordeel, onDone, noteer, skipIntro }) {
       )}
 
       <VasteBalk>
+        <Melding melding={melding} />
         {fase === "route" && (
           <>
             <p className="text-sm rounded-lg px-2 py-1.5" style={{ backgroundColor: C.beigeLight, color: C.brownText }}>
-              <span className="font-bold">Handleiding ketel:</span> aansluitleiding maximaal 3 m.
+              <span className="font-bold">Handleiding ketel:</span> aansluitleiding maximaal 3 m, totale weerstand onder het maximum.
             </p>
             <Keuzes
               opties={opties.route}
               fout={fout}
-              onKies={kies("leiding", "Goed: binnen de maximale lengte uit de handleiding van de ketel en kort. Hoe korter de leiding, hoe kleiner de kans dat verbindingen losraken.", "Aansluitleiding: binnen de maximale lengte uit de ketelhandleiding en zo kort als het kan")}
+              onKies={kies("leiding", "Goed: binnen de maximale lengte en onder de maximale weerstand uit de handleiding van de ketel. En zo kort als het kan: hoe korter, hoe kleiner de kans dat verbindingen losraken.", "Aansluitleiding: binnen lengte en weerstand uit de ketelhandleiding en zo kort als het kan")}
             />
           </>
         )}
@@ -1814,12 +1888,11 @@ function Ronde2({ beoordeel, onDone, noteer, skipIntro }) {
           <Keuzes opties={opties.voorschrift} fout={fout} onKies={kies("controle", "Goed: de doorvoer en een eventuele brandmanchet breng je aan volgens het voorschrift van de fabrikant van de doorvoer.", "Brandwerende voorzieningen: volgens de fabrikant van de doorvoer")} />
         )}
         {fase === "controle" && (
-          <Keuzes opties={opties.controle} fout={fout} onKies={kies("half", "Goed. De CLV-fabrikant ontwerpt de doorvoer; jij controleert of het geheel de wbdbo-eis haalt. Die eis stel je eerst vast: 20, 30 of 60 minuten.", "Bij de doorvoer controleer je of het geheel de wbdbo-eis haalt")} />
+          <Keuzes opties={opties.controle} fout={fout} onKies={kies("half", "Goed. De CLV-fabrikant ontwerpt de doorvoer; jij controleert of het geheel de wbdbo-eis haalt. Die eis wordt eerst vastgesteld: 20, 30 of 60 minuten. De schacht van een C(10)-CLV zelf is altijd 60 minuten brandwerend.", "Bij de doorvoer controleer je of het geheel de wbdbo-eis haalt")} />
         )}
         {fase === "half" && (
           <Keuzes opties={opties.half} fout={fout} onKies={kies("klaar", "Goed: bij een half-CLV is alleen de afvoer gemeenschappelijk. Het rookgas gaat naar de schacht, de lucht sluit je apart aan op de eigen luchttoevoer.", "Half-CLV: rookgas op de gemeenschappelijke afvoer, lucht apart")} />
         )}
-        <Melding melding={melding} />
         {fase === "klaar" && (
           <GameButton onClick={onDone} variant="green" className="w-full">Naar de controlevragen</GameButton>
         )}
@@ -1936,18 +2009,18 @@ const PUNTEN = [
     y: 818,
     doel: [264, 806],
     ok: [
-      { temp: "120", corrosie: "W", materiaal: "316L", ce: true },
+      { temp: "120", corrosie: "W", materiaal: "RVS (316L)", ce: true },
       { temp: "120", corrosie: "W", materiaal: "PP (kunststof)", ce: true },
     ],
     gebreken: [
-      { temp: "80", corrosie: "W", materiaal: "316L", ce: true },
-      { temp: "120", corrosie: "alleen droog", materiaal: "316L", ce: true },
+      { temp: "80", corrosie: "W", materiaal: "RVS (316L)", ce: true },
+      { temp: "120", corrosie: "(niet vermeld)", materiaal: "RVS (316L)", ce: true, droog: true },
       { temp: "120", corrosie: "W", materiaal: "PP (kunststof)", ce: false },
     ],
     goedOk: "Klopt: CE-markering aanwezig, minstens T120 en corrosieklasse W (geschikt voor condens). Een C(10)-CLV mag van metaal of kunststof zijn.",
     goedGebrek: "Goed gezien: een C(10)-systeem heeft een CE-markering, minstens T120 en corrosieklasse W (geschikt voor condens). Metaal of kunststof mag allebei.",
     foutOk: "Dit klopt wel: CE-markering, T120, corrosieklasse W. Een C(10)-CLV mag van metaal of kunststof zijn.",
-    foutGebrek: "Afkeuren: een C(10)-systeem moet een CE-markering hebben, minstens T120 en corrosieklasse W (geschikt voor condens).",
+    foutGebrek: "Afkeuren: een C(10)-systeem moet een CE-markering hebben, minstens T120 en corrosieklasse W (geschikt voor condens). Een systeem dat alleen geschikt is voor droge toepassingen, mag niet.",
     aandacht: "C(10)-systeem: CE-markering, minimaal T120, corrosieklasse W; metaal of kunststof",
   },
 ];
@@ -1966,32 +2039,37 @@ function maakSituatie() {
   return situatie;
 }
 
-function Observatie({ punt, data }) {
+// Wat de speler bij een punt ziet. De typeplaten openen in een venster, zodat
+// de balk kort blijft en de tekening met het punt in beeld blijft.
+function PlaatOnderaanInhoud({ data }) {
+  return (
+    <>
+      <TypeplaatOnderaan temp={data.temp} corrosie={data.corrosie} materiaal={data.materiaal} />
+      <p className="text-sm" style={{ color: C.brownText }}>
+        CE-markering op het kanaal: <span className="font-bold">{data.ce ? "aanwezig" : "ontbreekt"}</span>
+      </p>
+      {data.droog && (
+        <p className="text-sm" style={{ color: C.brownText }}>
+          Productinformatie: <span className="font-bold">alleen geschikt voor droge toepassingen.</span>
+        </p>
+      )}
+    </>
+  );
+}
+
+function Observatie({ punt, data, onPlaat }) {
   if (punt.id === "ketel") {
     return (
-      <div className="flex flex-col gap-2">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-wide mb-0.5" style={{ color: C.brown }}>Typeplaat bij de aansluiting</div>
-          <TypeplaatAansluiting />
+      <>
+        <div className="rounded-md border px-2 py-1 text-sm font-semibold self-start" style={{ borderColor: C.brownText, backgroundColor: "#EDEDED", color: C.brownText }}>
+          Typeplaatje ketel: gesloten cv-toestel, type {data.ketel}
         </div>
-        <div>
-          <div className="text-xs font-bold uppercase tracking-wide mb-0.5" style={{ color: C.brown }}>Typeplaatje van de ketel</div>
-          <div className="rounded-md border px-2 py-1 text-sm font-semibold inline-block" style={{ borderColor: C.brownText, backgroundColor: "#EDEDED", color: C.brownText }}>
-            Gesloten cv-toestel, type {data.ketel}
-          </div>
-        </div>
-      </div>
+        <PlaatKnop label="Bekijk de typeplaat bij de aansluiting" onOpen={onPlaat} />
+      </>
     );
   }
   if (punt.id === "plaat") {
-    return (
-      <div className="flex flex-col gap-1.5">
-        <TypeplaatOnderaan temp={data.temp} corrosie={data.corrosie} materiaal={data.materiaal} />
-        <p className="text-sm" style={{ color: C.brownText }}>
-          CE-markering op het kanaal: <span className="font-bold">{data.ce ? "aanwezig" : "ontbreekt"}</span>
-        </p>
-      </div>
-    );
+    return <PlaatKnop label="Bekijk de typeplaat onderaan het CLV" onOpen={onPlaat} />;
   }
   return <p className="text-sm" style={{ color: C.brownText }}>{data.tekst}</p>;
 }
@@ -2004,6 +2082,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
   const [actief, setActief] = useState(qaStap === 1 ? "ketel" : null);
   const [melding, setMelding] = useState(null);
   const [fout, setFout] = useState(null);
+  const [plaatOpen, setPlaatOpen] = useState(false);
   const [keuze, setKeuze] = useState([]); // besluit: aangetikte punten of "geen"
   const [besloten, setBesloten] = useState(false);
 
@@ -2012,11 +2091,13 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
   const klaar = Object.keys(oordelen).length + (besloten ? 1 : 0);
   const punt = actief ? PUNTEN.find((p) => p.id === actief) : null;
 
-  const open = (id) => {
+  const open = (id, e) => {
     if (oordelen[id]) return;
     setActief(id);
     setFout(null);
     setMelding(null);
+    const stip = e?.currentTarget;
+    setTimeout(() => stip?.scrollIntoView?.({ block: "center", behavior: "smooth" }), 60);
   };
 
   const oordeel = (afkeuren) => {
@@ -2040,6 +2121,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
   const tikKeuze = (id) => {
     if (besloten) return;
     setFout(null);
+    setMelding(null);
     setKeuze((k) => {
       if (id === "geen") return k.includes("geen") ? [] : ["geen"];
       const zonder = k.filter((x) => x !== "geen");
@@ -2059,8 +2141,8 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
         soort: "goed",
         tekst:
           gebrekIds.length > 0
-            ? "Goed: met deze gebreken is de installatie niet deugdelijk en veilig. De ketel gaat pas in bedrijf als ze hersteld zijn."
-            : "Goed: alle punten kloppen. De installatie is deugdelijk en veilig, dus de ketel mag in bedrijf.",
+            ? "Goed: deze punten herstel je eerst. Pas als de checklist klopt, is de installatie deugdelijk en veilig en lever je op."
+            : "Goed: alle punten kloppen. De installatie is deugdelijk en veilig: je levert op en de ketel mag in bedrijf.",
       });
       return;
     }
@@ -2072,8 +2154,8 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
       soort: "fout",
       tekst:
         gebrekIds.length > 0
-          ? `Niet goed. Gebreken zaten bij: ${namen.join("; ")}. Met een gebrek gaat de ketel niet aan. Pas je keuze aan.`
-          : "Niet goed. Alle zeven punten klopten: er is niets dat de ketel tegenhoudt. Pas je keuze aan.",
+          ? `Niet goed. ${namen.length === 1 ? "Een punt had" : `${namen.length} punten hadden`} een gebrek. Kijk terug naar wat je afkeurde en pas je keuze aan.`
+          : "Niet goed. Alle zeven punten klopten: er hoeft niets hersteld te worden. Pas je keuze aan.",
     });
   };
 
@@ -2088,7 +2170,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
           CE-markering verplicht, van metaal of kunststof, minstens temperatuurklasse T120 en geschikt voor condens (corrosieklasse W).
         </UitlegItem>
         <UitlegItem term="Luchttoevoer">minder dan 5 m³/h lek per verdieping, gemeten bij 50 Pa.</UitlegItem>
-        <UitlegItem term="In bedrijf">pas als alle punten kloppen.</UitlegItem>
+        <UitlegItem term="Opleveren">pas als alle punten kloppen. Dan mag de ketel in bedrijf.</UitlegItem>
       </RondeIntro>
     );
   }
@@ -2098,7 +2180,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
   const tekst = !alleGedaan
     ? "tik op elk rood punt en keur het goed of af."
     : !besloten
-      ? "welke punten houden de ketel uit bedrijf? Tik ze aan, of tik Geen."
+      ? "welke punten moeten eerst hersteld worden? Tik ze aan, of tik Geen."
       : "klaar. Ga door naar de controlevragen.";
 
   return (
@@ -2114,7 +2196,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
           klepOnder={!klepWeg}
           plaatOnder
         >
-          <g stroke={C.red} strokeWidth="1.3" strokeDasharray="3 3" fill="none" opacity="0.8">
+          <g data-spel="wijslijn" stroke={C.red} strokeWidth="1.3" strokeDasharray="3 3" fill="none" opacity="0.8">
             {PUNTEN.filter((p) => p.doel && !oordelen[p.id]).map((p) => (
               <path key={p.id} d={`M${p.x} ${p.y} L${p.doel[0]} ${p.doel[1]}`} />
             ))}
@@ -2126,7 +2208,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
           return (
             <button
               key={p.id}
-              onClick={() => open(p.id)}
+              onClick={(e) => open(p.id, e)}
               className="absolute -translate-x-1/2 -translate-y-1/2 w-11 h-11"
               style={{ left: `${((p.x - vb.x) / vb.w) * 100}%`, top: `${((p.y - vb.y) / vb.h) * 100}%` }}
               aria-label={p.naam}
@@ -2143,12 +2225,22 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
         })}
       </div>
 
+      {plaatOpen && punt && (
+        <PlaatVenster
+          titel={punt.id === "ketel" ? "Typeplaat bij de aansluiting" : "Typeplaat onderaan het CLV"}
+          onSluit={() => setPlaatOpen(false)}
+        >
+          {punt.id === "ketel" ? <TypeplaatAansluiting /> : <PlaatOnderaanInhoud data={situatie.plaat.data} />}
+        </PlaatVenster>
+      )}
+
       <VasteBalk>
+        <Melding melding={melding} />
         {!alleGedaan &&
           (punt ? (
             <>
               <p className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>{punt.naam}</p>
-              <Observatie punt={punt} data={situatie[punt.id].data} />
+              <Observatie punt={punt} data={situatie[punt.id].data} onPlaat={() => setPlaatOpen(true)} />
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { id: "goed", label: "Goedkeuren", af: false },
@@ -2174,7 +2266,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
           ))}
         {alleGedaan && !besloten && (
           <>
-            <p className="text-sm font-bold" style={{ color: C.brownText }}>Besluit: welke punten houden de ketel uit bedrijf?</p>
+            <p className="text-sm font-bold" style={{ color: C.brownText }}>Besluit: welke punten moeten eerst hersteld worden?</p>
             <div className="grid grid-cols-2 gap-2">
               {[...PUNTEN.map((p) => ({ id: p.id, label: p.naam })), { id: "geen", label: "Geen: alles klopt" }].map((o) => {
                 const aan = keuze.includes(o.id);
@@ -2197,7 +2289,6 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
             </GameButton>
           </>
         )}
-        <Melding melding={melding} />
         {besloten && (
           <GameButton onClick={onDone} variant="green" className="w-full">Naar de controlevragen</GameButton>
         )}
@@ -2238,11 +2329,11 @@ const LEERMOMENTEN = [
   "Rookgasopening en luchtopening sluit je ieder apart af; dat staat op de typeplaat bij de aansluiting",
   "Het CLV begint bij de aansluitstomp (van de CLV-fabrikant); de C(10)-stomp is concentrisch: 60 mm rookgas, 100 mm lucht",
   "Op een C(10)-aansluiting alleen C(10)-toestellen; een C43 hoort bij onderdruk",
-  "Aansluitleiding: hetzelfde fabricaat, type en materiaal; binnen de lengte uit de ketelhandleiding en kort; spanningsvrij en voldoende diep ingestoken",
+  "Aansluitleiding: hetzelfde fabricaat, type en materiaal; lengte en totale weerstand binnen het maximum van de ketelhandleiding en kort; spanningsvrij en voldoende diep ingestoken",
   "Terugslagklep: verplicht op een overdruk-CLV, hoort bij de ketel, in het rookgasdeel van de aansluitleiding; inbouwen volgens de ketelhandleiding",
-  "Doorvoer: eventuele brandmanchet volgens de fabrikant van de doorvoer; jij controleert of het geheel de wbdbo-eis haalt",
+  "Doorvoer: eventuele brandmanchet volgens de fabrikant van de doorvoer; jij controleert of het geheel de wbdbo-eis haalt; de schacht van een C(10)-CLV is 60 minuten brandwerend",
   "C(10)-systeem: CE-markering, metaal of kunststof, minstens T120 en corrosieklasse W; luchttoevoer minder dan 5 m³/h lek per verdieping bij 50 Pa",
-  "Pas in bedrijf als alles klopt",
+  "Pas opleveren en in bedrijf stellen als alle punten kloppen",
 ];
 
 export default function CLVMonteurGame({ initialScreen = "start", onExit, onGameComplete, qaFase = null }) {
