@@ -222,78 +222,72 @@ function Keuzes({ vraag, opties, onKies, fout }) {
   );
 }
 
-// ─── TEKENING 1: C(10)-PRINCIPE (C10 figuur 1, PDF-pagina 5) ───
+// ─── TEKENING 1: OVERDRUK-CLV C(10) (naar C10 figuur 1, PDF-pagina 5) ───
 //
-// Coordinaten zijn de normfiguur op schaal: kanaal, kap, vloeren, twee
-// toestellen met concentrische aansluitleiding (vier lijnen, omhoog en dan
-// links het kanaal in), breeklijnen en de onderzijde (binnenbuis dicht met
-// sifon, twee inspectiedeksels rechts, gebogen bodem met afvoer door de wand).
-// Per ronde wordt een uitsnede getoond, steeds vanaf een breeklijn.
+// Eigen tekening in gamestijl, vereenvoudigd tot twee verdiepingen. De
+// details van de normfiguur zitten er allemaal in (toetslijst F4 in
+// clv-gauntlet\tekenen\DETAILLIJST.md): kap van gaas tussen twee platen met
+// de binnenbuis erdoor, taps deel onder de kap, concentrisch kanaal zonder
+// schachtwanden (vloeren met een sparing), per ketel een concentrische
+// aansluitleiding waarvan de binnenpijp op de binnenbuis aansluit, en
+// onderaan een dichte binnenbuis met zijstukje, een sifon in de ring, twee
+// deksels, een holle opvangbodem met afvoer door de wand en een gesloten voet
+// op de vloer. Rood = rookgas, blauw = lucht; beide bewegen over de hele route.
 
-const K = { xl: 137, xi1: 149.5, xi2: 185, xr: 197 }; // kanaal: buiten links, binnenbuis, buiten rechts
-const VERD = 286; // afstand tussen de twee verdiepingen in de figuur
-const UITSNEDE_BOVEN = { x: 40, y: 222, w: 290, h: 301 };
-const UITSNEDE_ONDER = { x: 40, y: 512, w: 290, h: 360 };
+const VB_SCHACHT = { x: 0, y: 0, w: 340, h: 540 };
+const KN = { cx: 104, bl: 64, br: 144, il: 78, ir: 130, top: 20 }; // kanaal: buitenbuis, binnenbuis, bovenkant binnenbuis
+const VERDIEPINGEN = [
+  { vloer: 114, leiding: 146, ketel: 186 },
+  { vloer: 272, leiding: 304, ketel: 344 },
+];
+const KETEL = { x: 210, w: 104, h: 70, aansluiting: 262 };
+const ONDER = { bodem: 438, opvang: 478, voet: 520 };
+const VLOER_DIK = 12;
+// concentrische aansluitleiding: buitenpijp en binnenpijp (verhouding ongeveer 6 op 10)
+const PIJP = { buiten: 23, buitenWit: 20, binnen: 12, binnenWit: 10 };
+const STOMP_EIND = KN.br + 18;
 
-function pijlV(x, y1, y2, sleutel, s = 1) {
-  const dir = y2 > y1 ? 1 : -1;
+const stroomOp = { strokeDasharray: "8 4", animation: "flowDash 0.9s linear infinite" };
+const stroomNeer = { strokeDasharray: "6 6", animation: "flowDash 1.2s linear infinite" };
+const stroomUit = { strokeDasharray: "8 4", animation: "flowDash 0.5s linear infinite" };
+
+// open pijlpunt; richting r, l, o (omhoog) of n (omlaag)
+function Pijlpunt({ x, y, richting, kleur, maat = 6, dik = 2.4 }) {
+  const m = maat;
+  const d = {
+    r: `M${x - m} ${y - m} L${x} ${y} L${x - m} ${y + m}`,
+    l: `M${x + m} ${y - m} L${x} ${y} L${x + m} ${y + m}`,
+    o: `M${x - m} ${y + m} L${x} ${y} L${x + m} ${y + m}`,
+    n: `M${x - m} ${y - m} L${x} ${y} L${x + m} ${y - m}`,
+  }[richting];
+  return <path d={d} fill="none" stroke={kleur} strokeWidth={dik} strokeLinecap="round" strokeLinejoin="round" />;
+}
+
+// concentrische pijp: buitenpijp tot de buitenbuis, binnenpijp tot de binnenbuis
+function ConcPijp({ d, dBinnen }) {
   return (
-    <g key={sleutel}>
-      <line x1={x} y1={y1} x2={x} y2={y2 - dir * 3 * s} stroke={LIJN} strokeWidth={0.9 * s} />
-      <path d={`M${x - 2 * s} ${y2 - dir * 5 * s} L${x} ${y2} L${x + 2 * s} ${y2 - dir * 5 * s} Z`} fill={LIJN} />
+    <g fill="none" strokeLinejoin="round">
+      <path d={`${d} H${KN.br + 1}`} stroke={LIJN} strokeWidth={PIJP.buiten} />
+      <path d={`${d} H${KN.br - 2}`} stroke="white" strokeWidth={PIJP.buitenWit} />
+      <path d={`${dBinnen} H${KN.ir + 1}`} stroke={LIJN} strokeWidth={PIJP.binnen} />
+      <path d={`${dBinnen} H${KN.ir - 2}`} stroke="white" strokeWidth={PIJP.binnenWit} />
     </g>
   );
 }
 
-function Breek({ y }) {
-  return (
-    <g>
-      {[
-        [131, 155],
-        [179, 203],
-      ].map(([a, b]) => (
-        <g key={a}>
-          <line x1={a} y1={y - 2.5} x2={b} y2={y + 2.5} stroke="white" strokeWidth="3.4" />
-          <line x1={a} y1={y - 4.2} x2={b} y2={y + 0.8} stroke={GRIJS} strokeWidth="0.6" />
-          <line x1={a} y1={y - 0.8} x2={b} y2={y + 4.2} stroke={GRIJS} strokeWidth="0.6" />
-        </g>
-      ))}
-      <circle cx="167.5" cy={y - 1.6} r="0.6" fill={GRIJS} />
-      <circle cx="167.5" cy={y + 1.6} r="0.6" fill={GRIJS} />
-    </g>
-  );
-}
-
-// verticale lijn met openingen (waar de aansluitleidingen het kanaal ingaan)
-function wandPad(x, y1, y2, gaten) {
-  let d = "";
-  let y = y1;
-  for (const [a, b] of gaten) {
-    d += `M${x} ${y} V${a} `;
-    y = b;
-  }
-  return `${d}M${x} ${y} V${y2}`;
-}
-
-// concentrische aansluitleiding zoals in de figuur: vier lijnen
-function leidingPaden(dy) {
-  return [
-    `M${K.xr} ${330 + dy} H290 V${397 + dy}`,
-    `M${K.xi2} ${332.5 + dy} H287.7 V${397 + dy}`,
-    `M${K.xi2} ${343.5 + dy} H276 V${397 + dy}`,
-    `M${K.xr} ${346 + dy} H273.5 V${397 + dy}`,
-  ];
-}
-
-function Toestel({ dy, status, label }) {
+function Ketel({ v, status, label }) {
+  const { x, w, h } = KETEL;
+  const y = v.ketel;
   if (status === "weg") {
-    return <rect x="240" y={397 + dy} width="83" height="99" fill="none" stroke={GRIJS} strokeWidth="1" strokeDasharray="4 3" />;
+    return <rect x={x} y={y} width={w} height={h} rx="6" fill="none" stroke={GRIJS} strokeWidth="2" strokeDasharray="6 5" />;
   }
   return (
     <g>
-      <rect x="240" y={397 + dy} width="83" height="99" fill="white" stroke={LIJN} strokeWidth="1" />
+      <rect x={x} y={y} width={w} height={h} rx="6" fill={status === "aan" ? "white" : "#F1F1F1"} stroke={LIJN} strokeWidth="2.2" />
+      <rect x={x + 10} y={y + h - 22} width="24" height="12" rx="2" fill={C.beigeLight} stroke={LIJN} strokeWidth="1.4" />
+      <circle cx={x + w - 16} cy={y + h - 16} r="5" fill="white" stroke={LIJN} strokeWidth="1.4" />
       {label && (
-        <text data-spel="label" x={dy ? 319 : 281.5} y={(dy ? 490 : 452) + dy} fontSize="12" fontWeight="700" fill={C.brown} textAnchor={dy ? "end" : "middle"}>
+        <text data-spel="label" x={x + w / 2} y={y + 28} fontSize="14" fontWeight="700" fill={C.brown} textAnchor="middle">
           {label}
         </text>
       )}
@@ -301,18 +295,17 @@ function Toestel({ dy, status, label }) {
   );
 }
 
-// terugslagklep als scharnierend klepje (spelonderdeel, plek volgens de normtekst)
+// terugslagklep als scharnierend klepje in de binnenpijp (spelonderdeel, plek volgens de normtekst)
 function Klepje({ x, y, kleur = C.green }) {
   return (
     <g data-spel="klep">
-      <circle cx={x} cy={y} r="1.8" fill={kleur} />
-      <line x1={x} y1={y} x2={x + 5} y2={y + 5} stroke={kleur} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx={x - 3} cy={y} r="2.2" fill={kleur} />
+      <line x1={x - 3} y1={y} x2={x + 3.5} y2={y + 6} stroke={kleur} strokeWidth="2.4" strokeLinecap="round" />
     </g>
   );
 }
 
 function SchachtC10({
-  uitsnede,
   boven = { ketel: "aan", leiding: "aan", label: null },
   onder = { ketel: "aan", label: null },
   rookgasUit = null, // null | "leiding"
@@ -321,318 +314,272 @@ function SchachtC10({
   plaatOnder = false,
   children,
 }) {
-  const flowOp = { strokeDasharray: "6 5", animation: "flowDash 0.9s linear infinite" };
-  const flowNeer = { strokeDasharray: "5 5", animation: "flowDash 1.2s linear infinite" };
-  const gatenXr = [
-    [330, 346],
-    [330 + VERD, 346 + VERD],
-  ];
-  const gatenXi2 = [
-    [332.5, 343.5],
-    [332.5 + VERD, 343.5 + VERD],
-  ];
-  const bovenLeidingZichtbaar = boven.leiding === "aan";
+  const [v1, v2] = VERDIEPINGEN;
+  const { cx, bl, br, il, ir } = KN;
+  const ka = KETEL.aansluiting;
+  const bovenLeiding = boven.leiding === "aan";
   const stompDicht = boven.leiding === "geen" || boven.leiding === "gat";
-  const vb = `${uitsnede.x} ${uitsnede.y} ${uitsnede.w} ${uitsnede.h}`;
+  const bovenAan = boven.ketel === "aan" && bovenLeiding;
+  const onderAan = onder.ketel === "aan";
+  const laagste = onderAan ? v2 : bovenAan ? v1 : null;
+  const leidingD = (v) => `M${ka} ${v.ketel} V${v.leiding}`;
+  const ringR = (ir + br) / 2;
+  const ringL = (bl + il) / 2;
+
+  // lucht en rookgas door een aangesloten ketel
+  const ketelStroom = (v) => (
+    <g key={`s${v.leiding}`} data-stroom="ketel" fill="none">
+      <path d={`M${br - 4} ${v.leiding - 8} H${ka} A8 8 0 0 1 ${ka + 8} ${v.leiding} V${v.ketel}`} stroke={BLAUW} strokeWidth="1.6" style={stroomNeer} />
+      <path d={`M${br - 4} ${v.leiding + 8} H${ka - 8} V${v.ketel}`} stroke={BLAUW} strokeWidth="1.6" style={stroomNeer} />
+      <path d={`M${ka} ${v.ketel} V${v.leiding} H${cx + 10} Q${cx} ${v.leiding} ${cx} ${v.leiding - 10}`} stroke={C.red} strokeWidth="2.4" style={stroomOp} />
+    </g>
+  );
 
   return (
-    <svg viewBox={vb} className="w-full h-auto select-none" role="img" aria-label="Doorsnede van een overdruk-CLV met twee ketels">
+    <svg viewBox={`0 0 ${VB_SCHACHT.w} ${VB_SCHACHT.h}`} className="w-full h-auto select-none" role="img" aria-label="Doorsnede van een overdruk-CLV met twee ketels">
       <defs>
-        <pattern id="gaasMon" width="4.2" height="4" patternUnits="userSpaceOnUse">
-          <path d="M0 0 V4 M0 0 H4.2" fill="none" stroke={LIJN} strokeWidth="0.45" />
+        <pattern id="gaasC10" width="6" height="6" patternUnits="userSpaceOnUse">
+          <path d="M0 0 V6 M0 0 H6" fill="none" stroke={LIJN} strokeWidth="0.9" />
         </pattern>
       </defs>
-      <rect x={uitsnede.x} y={uitsnede.y} width={uitsnede.w} height={uitsnede.h} fill="white" />
+      <rect x="0" y="0" width={VB_SCHACHT.w} height={VB_SCHACHT.h} fill="white" />
 
-      {/* stromen (spel, licht): rookgas omhoog naast de pijlen, lucht omlaag in de ring */}
-      <g data-spel="stroom">
-        <path d="M171 752 V60" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.35" style={flowOp} />
-        <path d="M140.5 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
-        <path d="M194 130 V798" fill="none" stroke={BLAUW} strokeWidth="1.3" opacity="0.3" style={flowNeer} />
-      </g>
-
-      {/* kap: gaas tussen twee platen, binnenbuis door het gaas, buitenbuis verwijdt naar boven */}
-      <rect x="117" y="74" width="102" height="56.6" fill="url(#gaasMon)" />
-      <line x1="115.8" y1="74" x2="219.5" y2="74" stroke={LIJN} strokeWidth="1.4" />
-      <line x1="115.8" y1="130.6" x2="219.5" y2="130.6" stroke={LIJN} strokeWidth="1.4" />
-      <path d="M125.2 131.3 L137 215.6" stroke={LIJN} strokeWidth="1.1" fill="none" />
-      <path d="M209.5 131.3 L197 215.6" stroke={LIJN} strokeWidth="1.1" fill="none" />
-      <path d="M141.4 65.6 L149.5 146.9" stroke={LIJN} strokeWidth="1.1" fill="none" />
-      <path d="M193.9 65.6 L185 150" stroke={LIJN} strokeWidth="1.1" fill="none" />
-      <path d="M181.5 100 Q183 55.3 192 55.3 H224" stroke={GRIJS} strokeWidth="0.8" fill="none" />
-      <path d="M222 53.4 L227 55.3 L222 57.2 Z" fill={LIJN} />
-      <line x1="202.7" y1="120.3" x2="194.6" y2="169" stroke={GRIJS} strokeWidth="0.8" />
-      <path d="M193 168.5 L194 173.4 L196.2 169 Z" fill={LIJN} />
-      <line x1="206.4" y1="118.1" x2="233" y2="118.1" stroke={LIJN} strokeWidth="0.6" />
-      {pijlV(167.4, 215.5, 181.3, "kapop")}
-
-      {/* kanaalwanden */}
-      <g stroke={LIJN} strokeWidth="1.7" fill="none">
-        <path d={`M${K.xl} 215.6 V843.7`} />
-        <path d={`M${K.xi1} 146.9 V754.5`} />
-        <path d={wandPad(K.xi2, 150, 754.5, gatenXi2)} />
-        <path d={wandPad(K.xr, 215.6, 843.7, gatenXr)} />
-        <path d={`M${K.xi1} 754.5 H${K.xi2}`} />
-        <path d={`M${K.xl} 843.7 H${K.xr}`} />
-      </g>
-
-      {/* verdiepingsvloeren (twee lijnen, eindigen vlak bij het kanaal) */}
-      {[261, 261 + VERD].map((y) => (
-        <g key={y} stroke={LIJN} strokeWidth="0.8" fill="none">
-          <path d={`M47.5 ${y} H133 V${y + 21.5} H47.5`} />
-          <path d={`M287.5 ${y} H201.5 V${y + 21.5} H287.5`} />
+      {/* vloeren: platen links en rechts met een sparing om het kanaal; de onderste vloer loopt door */}
+      {[v1.vloer, v2.vloer].map((y) => (
+        <g key={y} fill={C.beigeMid} stroke={LIJN} strokeWidth="1.8">
+          <rect x="6" y={y} width={bl - 6 - 6} height={VLOER_DIK} />
+          <rect x={br + 6} y={y} width={334 - br - 6} height={VLOER_DIK} />
         </g>
       ))}
-      <g stroke={LIJN} strokeWidth="0.8">
-        <line x1="47.5" y1="844.5" x2="287.5" y2="844.5" />
-        <line x1="47.5" y1="864.5" x2="287.5" y2="864.5" />
+      <rect x="6" y={ONDER.voet} width="328" height={VLOER_DIK} fill={C.beigeMid} stroke={LIJN} strokeWidth="1.8" />
+
+      {/* kap: blok gaas tussen twee platen, binnenbuis erdoor; daaronder wordt de buitenbuis taps */}
+      <rect x="44" y="32" width="120" height="34" fill="url(#gaasC10)" />
+      <rect x="40" y="28" width="128" height="4" rx="1" fill={LIJN} />
+      <rect x="40" y="66" width="128" height="4" rx="1" fill={LIJN} />
+      <g stroke={LIJN} strokeWidth="2" fill="none">
+        <path d={`M48 70 L${bl} 104`} />
+        <path d={`M160 70 L${br} 104`} />
       </g>
 
-      {/* stroompijlen van de figuur: onder elke vloer ring omlaag en de bocht omhoog;
-          de tweede set staat in de figuur alleen onder de bovenste aansluitleiding */}
-      {[0, VERD].map((dy) => (
-        <g key={dy}>
-          {pijlV(143.5, 282.5 + dy, 315 + dy, `l1${dy}`)}
-          {pijlV(191.5, 282.5 + dy, 315 + dy, `r1${dy}`)}
-          {pijlV(167.5, 330 + dy, 300 + dy, `m1${dy}`)}
+      {/* kanaal: buitenbuis en binnenbuis; binnenbuis onderaan dicht */}
+      <g stroke={LIJN} strokeWidth="2" fill="none">
+        <path d={`M${bl} 104 V${ONDER.voet}`} />
+        <path d={`M${br} 104 V${ONDER.voet}`} />
+        <path d={`M${il} ${KN.top} V${ONDER.bodem}`} />
+        <path d={`M${ir} ${KN.top} V${ONDER.bodem}`} />
+        <path d={`M${il} ${ONDER.bodem} H${ir}`} strokeWidth="3.2" />
+        <path d={`M${bl} ${ONDER.voet} H${br}`} strokeWidth="3.2" />
+      </g>
+
+      {/* onderzijde: zijstukje met deksel op de binnenbuis, sifon in de ring, twee deksels op de buitenbuis */}
+      <g stroke={LIJN} strokeWidth="1.8" fill="none">
+        <path d={`M${ir} 425 H${ir + 8} M${ir} 433 H${ir + 8}`} />
+        <path d={`M${ir + 8} 422 V436`} strokeWidth="3" />
+      </g>
+      <path d={`M${cx - 7} ${ONDER.bodem} V456 A6 6 0 0 0 ${cx + 5} 456 V448`} fill="none" stroke={LIJN} strokeWidth="5.4" />
+      <path d={`M${cx - 7} ${ONDER.bodem + 1} V456 A6 6 0 0 0 ${cx + 5} 456 V447.5`} fill="none" stroke="white" strokeWidth="2.2" />
+      {[426, 450].map((y) => (
+        <g key={y} stroke={LIJN} strokeWidth="1.8">
+          <rect x={br} y={y} width="8" height="20" fill="white" />
+          <path d={`M${br + 8} ${y + 5} Q${br + 17} ${y + 10} ${br + 8} ${y + 15}`} fill="none" />
         </g>
       ))}
-      {pijlV(143.5, 415, 447.5, "l2")}
-      {pijlV(191.5, 415, 447.5, "r2")}
-      {pijlV(167.5, 467.5, 430, "m2")}
 
-      {/* BOVENSTE VERDIEPING */}
-      {stompDicht && (
-        <g data-spel="dop">
-          <line x1={K.xr} y1="330" x2={K.xr} y2="346" stroke={LIJN} strokeWidth="1.7" />
-          <line x1={K.xi2} y1="332.5" x2={K.xi2} y2="343.5" stroke={LIJN} strokeWidth="1.7" />
-          <rect x="197.5" y="328.5" width="4" height="19" rx="1" fill={C.olive} />
+      {/* holle opvangbodem over de volle breedte, afvoer omlaag en door de wand (afgebroken) */}
+      <path d={`M${bl} ${ONDER.opvang} Q${cx} 498 ${br} ${ONDER.opvang}`} fill="none" stroke={LIJN} strokeWidth="2" />
+      <path d="M110 488 V504 Q110 508 114 508 H180" fill="none" stroke={LIJN} strokeWidth="7" strokeLinejoin="round" />
+      <path d="M110 489 V504 Q110 508 114 508 H181" fill="none" stroke="white" strokeWidth="3.6" strokeLinejoin="round" />
+      <path d="M175 500 L185 516" stroke={LIJN} strokeWidth="1.6" />
+      {plaatOnder && (
+        <g data-spel="typeplaat">
+          <rect x="45" y="466" width="18" height="15" rx="1.5" fill="#C9D6EA" stroke={LIJN} strokeWidth="1" />
+          <path d="M48 470.5 H60 M48 474 H58 M48 477.5 H59" stroke={LIJN} strokeWidth="0.7" />
         </g>
       )}
+
+      {/* BOVENSTE VERDIEPING: aansluitleiding, of alleen de stomp met dop */}
+      {bovenLeiding && <ConcPijp d={leidingD(v1)} dBinnen={leidingD(v1)} />}
+      {stompDicht && (
+        <g>
+          <ConcPijp d={`M${STOMP_EIND} ${v1.leiding}`} dBinnen={`M${STOMP_EIND} ${v1.leiding}`} />
+          <rect data-spel="dop" x={STOMP_EIND - 1} y={v1.leiding - 13} width="6" height="26" rx="2" fill={C.olive} stroke={C.oliveDark} strokeWidth="1" />
+        </g>
+      )}
+      <Ketel v={v1} status={boven.ketel === "weg" ? "weg" : boven.ketel} label={boven.label} />
+
+      {/* ONDERSTE VERDIEPING */}
+      <ConcPijp d={leidingD(v2)} dBinnen={leidingD(v2)} />
+      <Ketel v={v2} status={onder.ketel} label={onder.label} />
+
+      {/* STROMEN: lucht door het gaas omlaag in de ring, rookgas in de binnenbuis omhoog en rechts de kap uit */}
+      {laagste && (
+        <g data-stroom="kanaal" fill="none">
+          <path d={`M198 49 H168 Q${ringR} 49 ${ringR} 74 V${v1.leiding - 14}`} stroke={BLAUW} strokeWidth="2" style={stroomNeer} />
+          {laagste === v2 && <path d={`M${ringR} ${v1.leiding + 14} V${v2.leiding - 14}`} stroke={BLAUW} strokeWidth="2" style={stroomNeer} />}
+          <path d={`M8 49 H40 Q${ringL} 49 ${ringL} 74 V${laagste.leiding + 14}`} stroke={BLAUW} strokeWidth="2" style={stroomNeer} />
+          <path d={`M${cx} ${laagste.leiding - 10} V24 Q${cx} 10 ${cx + 14} 10 H180`} stroke={C.red} strokeWidth="2.8" style={stroomOp} />
+          <Pijlpunt x={186} y={10} richting="r" kleur={C.red} />
+          <Pijlpunt x={186} y={49} richting="l" kleur={BLAUW} />
+          <Pijlpunt x={16} y={49} richting="r" kleur={BLAUW} />
+        </g>
+      )}
+      {bovenAan && ketelStroom(v1)}
+      {onderAan && ketelStroom(v2)}
+
+      {/* SPEL: routes voor de nieuwe aansluitleiding (ronde 2) */}
       {routes && (
         <g data-spel="route">
-          <g fill="none" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" stroke={C.olive} opacity="0.8" strokeDasharray="5 4">
-            <path d="M282 397 V338 H202" />
-            <path d="M282 397 V375 H318 V292 H212 V338 H202" />
-            <path d="M282 397 V386 H266 V374 H250 V362 H234 V350 H218 V338 H202" />
+          <g fill="none" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" stroke={C.olive} opacity="0.85" strokeDasharray="6 4">
+            <path d={`M${ka} ${v1.ketel} V${v1.leiding} H${STOMP_EIND + 4}`} />
+            <path d={`M${ka} ${v1.ketel} V176 H320 V131 H190 V${v1.leiding} H${STOMP_EIND + 4}`} />
+            <path d={`M${ka} ${v1.ketel} V178 H246 V170 H230 V162 H214 V154 H198 V${v1.leiding} H${STOMP_EIND + 4}`} />
           </g>
-          <text x="264" y="331" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">A</text>
-          <text x="300" y="286" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">B</text>
-          <text x="228" y="378" fontSize="16" fontWeight="800" fill={C.oliveDark} textAnchor="middle">C</text>
+          {[
+            ["A", 230, v1.leiding],
+            ["B", 320, 154],
+            ["C", 190, 172],
+          ].map(([t, x, y]) => (
+            <g key={t}>
+              <circle cx={x} cy={y} r="11" fill="white" stroke={C.oliveDark} strokeWidth="2" />
+              <text x={x} y={y + 5.5} fontSize="15" fontWeight="800" fill={C.oliveDark} textAnchor="middle">{t}</text>
+            </g>
+          ))}
         </g>
       )}
       {boven.leiding === "gat" && (
-        <path data-spel="route" d="M282 397 V338 H202" fill="none" stroke={C.olive} strokeWidth="5" strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+        <path data-spel="route" d={`M${ka} ${v1.ketel} V${v1.leiding} H${STOMP_EIND + 4}`} fill="none" stroke={C.olive} strokeWidth="5" strokeDasharray="6 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
       )}
-      {bovenLeidingZichtbaar && (
-        <g stroke={LIJN} strokeWidth="1.4" fill="none">
-          {leidingPaden(0).map((d) => (
-            <path key={d} d={d} />
-          ))}
-          <path d="M175 338.5 H204" stroke={GRIJS} strokeWidth="0.8" />
-          <path d="M175 338.5 Q168 338 167.5 331" stroke={GRIJS} strokeWidth="0.8" />
-        </g>
-      )}
-      {bovenLeidingZichtbaar && boven.ketel === "aan" && (
-        <path data-spel="stroom" d="M282 395 V338.5 H172" fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
-      )}
-      {bovenLeidingZichtbaar && boven.klep && <Klepje x={280} y={372} />}
-      <Toestel dy={0} status={boven.ketel === "weg" ? "weg" : "aan"} label={boven.label} />
 
-      {/* rookgas komt de woning in uit de open aansluitleiding */}
+      {/* SPEL: terugslagkleppen in de binnenpijp */}
+      {bovenLeiding && boven.klep && <Klepje x={ka} y={v1.leiding + 22} />}
+      {klepOnder && <Klepje x={ka} y={v2.leiding + 22} />}
+
+      {/* SPEL: rookgas komt de woning in uit de open aansluitleiding (ronde 1) */}
       {rookgasUit === "leiding" && (
         <g data-spel="rookgas">
-          <path d="M172 338.5 H282 V412" fill="none" stroke={C.red} strokeWidth="2.6" style={flowOp} />
-          <path d="M277.5 406 L282 414 L286.5 406" fill="none" stroke={C.red} strokeWidth="2" strokeLinecap="round" />
+          <path d={`M${cx} ${v1.leiding + 12} Q${cx} ${v1.leiding} ${cx + 12} ${v1.leiding} H${ka} V${v1.ketel + 26}`} fill="none" stroke={C.red} strokeWidth="3.2" style={stroomUit} />
+          <Pijlpunt x={ka} y={v1.ketel + 32} richting="n" kleur={C.red} maat={7} dik={3} />
           <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
-            <circle cx="282" cy="432" r="16" fill={C.red} opacity="0.14" />
-            <circle cx="262" cy="450" r="11" fill={C.red} opacity="0.12" />
+            <circle cx={ka} cy={v1.ketel + 40} r="20" fill={C.red} opacity="0.14" />
+            <circle cx={ka - 26} cy={v1.ketel + 54} r="13" fill={C.red} opacity="0.12" />
           </g>
         </g>
       )}
-
-      {/* ONDERSTE VERDIEPING */}
-      <g stroke={LIJN} strokeWidth="1.4" fill="none">
-        {leidingPaden(VERD).map((d) => (
-          <path key={d} d={d} />
-        ))}
-        <path d={`M175 ${338.5 + VERD} H204`} stroke={GRIJS} strokeWidth="0.8" />
-        <path d={`M175 ${338.5 + VERD} Q168 ${338 + VERD} 167.5 ${331 + VERD}`} stroke={GRIJS} strokeWidth="0.8" />
-      </g>
-      {onder.ketel === "aan" && (
-        <path data-spel="stroom" d={`M282 ${395 + VERD} V${338.5 + VERD} H172`} fill="none" stroke={C.red} strokeWidth="1.6" opacity="0.6" style={flowOp} />
-      )}
-      {klepOnder && <Klepje x={280} y={372 + VERD} />}
-      <Toestel dy={VERD} status="aan" label={onder.label} />
-
-      {/* onderzijde: binnenbuis dicht met sifon, inspectiedeksels, gebogen bodem met afvoer */}
-      <g stroke={LIJN} strokeWidth="0.9" fill="none">
-        <path d="M185 736 H192.8 M185 753.5 H192.8 M192.8 734 V755.5" />
-        <rect x="197.8" y="730.5" width="10" height="28.2" />
-        <rect x="197.8" y="761.7" width="10" height="28.3" />
-      </g>
-      <g stroke={GRIJS} strokeWidth="0.8" fill="none">
-        <path d="M207.8 739.5 A5 5 0 0 1 207.8 749.5" />
-        <path d="M207.8 770.7 A5 5 0 0 1 207.8 780.7" />
-        <path d="M158.3 754.5 V775 A9.35 9.35 0 0 0 177 775 V767" />
-        <path d="M165.3 754.5 V775 A2.15 2.15 0 0 0 169.6 775 V767" />
-        <circle cx="172.8" cy="763" r="4.5" />
-        <path d="M137 800 Q167 806 197 800" />
-        <path d="M161 803.7 H173.5 M171.3 803.7 V810.7 H225.8 M163.3 803.7 V811 Q163.3 818 170 818 H218.3" />
-        <path d="M227 806 L218 823" />
-      </g>
-      {plaatOnder && (
-        <g data-spel="typeplaat">
-          <rect x="246" y="798" width="18" height="13" rx="1.5" fill="#C9D6EA" stroke={LIJN} strokeWidth="0.8" />
-          <path d="M249 802 H261 M249 805 H259 M249 808 H260" stroke={LIJN} strokeWidth="0.5" />
-        </g>
-      )}
-
-      <Breek y={230} />
-      <Breek y={520} />
-      <Breek y={710} />
 
       {children}
     </svg>
   );
 }
 
-// ─── TEKENING 2: AANSLUITSTOMP DOOR DE SCHACHTWAND (C10 figuur 3, PDF-pagina 10) ───
+// ─── TEKENING 2: AANSLUITSTOMP DOOR DE SCHACHTWAND (naar C10 figuur 3, PDF-pagina 10) ───
 //
-// Nagetekend op de uitsnede van de normfiguur (clv-gauntlet\tekenen\F6.png,
-// 920 x 767 px = 4 px per PDF-punt). Coordinaten zijn dus de pixels van die
-// uitsnede: links het kanaal (twee wanden), de binnenbuis en de ring die in
-// de stomp ombuigen, de licht gearceerde schachtwand, de concentrische stomp
-// met maten L, d1 en D1 en de eventuele brandmanchet met label. Alles wat
-// niet in de figuur staat (doppen, rookgas, aansluitleiding, klep, wijslijnen)
-// is spel en heeft data-spel.
+// Eigen tekening in gamestijl (toetslijst F6 in DETAILLIJST.md): links een
+// stuk van het concentrische kanaal, rechts de schachtwand met een spleet
+// ertussen. De binnenpijp buigt uit de binnenbuis, de buitenpijp uit de
+// buitenbuis; samen gaan ze als concentrische stomp door de wand en eindigen
+// gelijk, open, aan de woningkant. Een eventuele brandmanchet zit om de
+// buitenpijp tegen de woningkant van de wand. Rood = rookgas (binnenbuis
+// omhoog), blauw = lucht (ring omlaag). Doppen, rookgas uit de stomp, de
+// nieuwe aansluitleiding, de klep en de labels zijn spel (data-spel).
 
-const DIK = 5.5; // dikke lijnen van de figuur
-const DUN = 2.6; // schachtwandlijnen en maatstrepen
-
-function arceer(x0, x1, y0, y1) {
-  // lichte arcering "/" om de 50 px, alleen binnen het vak
-  const lijnen = [];
-  for (let c = x0 + y0 - 44; c < x1 + y1 + 50; c += 50) {
-    const ya = Math.max(y0, c - x1);
-    const yb = Math.min(y1, c - x0);
-    if (yb > ya) lijnen.push(`M${c - ya} ${ya} L${c - yb} ${yb}`);
-  }
-  return lijnen.join(" ");
-}
+const VB_STOMP = { x: 0, y: 0, w: 460, h: 380 };
+const ST = { bl: 22, il: 60, ir: 176, br: 212, wandL: 234, wandR: 274, y: 190, rb: 24, rbu: 40, eind: 384, bocht: 10 };
 
 function StompDetail({ rookgasUit = false, dop = {}, leiding = false, klep = false, manchet = true, children }) {
-  const flowUit = { strokeDasharray: "14 12", animation: "flowDash 0.8s linear infinite" };
+  const { bl, il, ir, br, wandL, wandR, y, rb, rbu, eind, bocht: r } = ST;
+  const H = VB_STOMP.h;
+  const midden = (il + ir) / 2;
+  const ringL = (bl + il) / 2;
+  const ringR = (ir + br) / 2;
+  const kanaalOp = { strokeDasharray: "14 10", animation: "flowDash 0.9s linear infinite" };
+  const kanaalNeer = { strokeDasharray: "12 12", animation: "flowDash 1.2s linear infinite" };
+  const uit = { strokeDasharray: "14 10", animation: "flowDash 0.5s linear infinite" };
+  const bochtPad = (x, yStart, yPijp) => {
+    const dir = yPijp > yStart ? 1 : -1;
+    return `M${x} ${yStart} V${yPijp - dir * r} Q${x} ${yPijp} ${x + r} ${yPijp} H${eind}`;
+  };
+
   return (
-    <svg viewBox="0 0 920 767" className="w-full h-auto select-none" role="img" aria-label="Aansluitstomp door de schachtwand">
-      <rect x="0" y="0" width="920" height="767" fill="white" />
+    <svg viewBox={`0 0 ${VB_STOMP.w} ${H}`} className="w-full h-auto select-none" role="img" aria-label="Aansluitstomp door de schachtwand">
+      <rect x="0" y="0" width={VB_STOMP.w} height={H} fill="white" />
 
-      {/* afbreeklijnen boven en onder (licht), met stippen */}
-      <g stroke="#DADADA" strokeWidth="2.4" fill="none">
-        <path d="M0 8 L120 28 M230 46 L565 102" />
-        <path d="M0 665 L120 685 M230 703 L565 759" />
-      </g>
-      <g fill={LIJN}>
-        <rect x="176" y="35" width="3" height="6" />
-        <rect x="389" y="71" width="4" height="6" />
-        <rect x="176" y="690" width="3" height="3" />
-        <rect x="389" y="723" width="4" height="6" />
+      {/* schachtwand, onderbroken waar de stomp erdoor gaat */}
+      <g fill={C.beigeMid} stroke={LIJN} strokeWidth="2.5">
+        <rect x={wandL} y="-4" width={wandR - wandL} height={y - rbu + 2} />
+        <rect x={wandL} y={y + rbu - 2} width={wandR - wandL} height={H - y - rbu + 6} />
       </g>
 
-      {/* schachtwand: lichte arcering tussen twee dunne lijnen */}
-      <path d={`${arceer(461, 537, 85, 409)} ${arceer(461, 537, 523, 750)}`} stroke="#D3D3D3" strokeWidth="2.6" fill="none" />
-      <g stroke={LIJN} strokeWidth={DUN}>
-        <line x1="460" y1="83" x2="460" y2="409" />
-        <line x1="538" y1="95" x2="538" y2="409" />
-        <line x1="460" y1="523" x2="460" y2="740" />
-        <line x1="538" y1="523" x2="538" y2="752" />
+      {/* kanaal: buitenbuis en binnenbuis; rechts buigen ze om tot de concentrische stomp */}
+      <g stroke={LIJN} strokeWidth="4" fill="none">
+        <path d={`M${bl} -4 V${H + 4}`} />
+        <path d={`M${il} -4 V${H + 4}`} />
+        <path d={bochtPad(ir, -4, y - rb)} />
+        <path d={bochtPad(ir, H + 4, y + rb)} />
+        <path d={bochtPad(br, -4, y - rbu)} />
+        <path d={bochtPad(br, H + 4, y + rbu)} />
       </g>
 
-      {/* waar de stomp door de wand gaat, vallen wandrand en stomplijn samen tot een dikke band */}
-      <g fill={LIJN}>
-        <rect x="460" y="403" width="80" height="11" />
-        <rect x="460" y="517" width="80" height="11" />
+      {/* SPEL: nieuwe aansluitleiding (ronde 2), met een mof over de stomp geschoven */}
+      {leiding && (
+        <g data-spel="leiding" fill="none" stroke={C.brown}>
+          <path d={`M392 ${y - rbu} H${VB_STOMP.w} M392 ${y + rbu} H${VB_STOMP.w}`} strokeWidth="4" />
+          <path d={`M392 ${y - rb} H${VB_STOMP.w} M392 ${y + rb} H${VB_STOMP.w}`} strokeWidth="3" />
+          <rect x="372" y={y - rbu - 8} width="24" height={2 * rbu + 16} rx="3" fill="white" strokeWidth="3" />
+          <text x="456" y={y - rbu - 16} fontSize="17" fontWeight="700" fill={C.brown} stroke="none" textAnchor="end">naar de ketel</text>
+        </g>
+      )}
+
+      {/* stromen: rookgas in de binnenbuis omhoog, lucht in de ring omlaag */}
+      <g data-stroom="kanaal" fill="none">
+        <path d={`M${midden} ${H + 4} V-4`} stroke={C.red} strokeWidth="4" style={kanaalOp} />
+        <path d={`M${ringL} -4 V${H + 4}`} stroke={BLAUW} strokeWidth="3" style={kanaalNeer} />
+        <path d={`M${ringR} -4 V${y - rbu + 4}`} stroke={BLAUW} strokeWidth="3" style={kanaalNeer} />
+        <path d={`M${ringR} ${y + rbu - 4} V${H + 4}`} stroke={BLAUW} strokeWidth="3" style={kanaalNeer} />
+        <Pijlpunt x={midden} y={40} richting="o" kleur={C.red} maat={9} dik={3.4} />
+        <Pijlpunt x={ringR} y={110} richting="n" kleur={BLAUW} maat={8} dik={3} />
       </g>
+      {/* met de ketel aangesloten: rookgas uit de binnenpijp de binnenbuis in en omhoog, lucht uit de ring naar de ketel */}
+      {leiding && (
+        <g data-stroom="stomp" fill="none">
+          <path d={`M${VB_STOMP.w} ${y} H${midden + 24} Q${midden} ${y} ${midden} ${y - 24}`} stroke={C.red} strokeWidth="4" style={kanaalOp} />
+          <path d={`M${ringR} ${y - rbu - 10} Q${ringR} ${y - (rbu + rb) / 2} ${ringR + 14} ${y - (rbu + rb) / 2} H${VB_STOMP.w}`} stroke={BLAUW} strokeWidth="2.6" style={kanaalNeer} />
+          <path d={`M${ir + 18} ${y + (rbu + rb) / 2} H${VB_STOMP.w}`} stroke={BLAUW} strokeWidth="2.6" style={kanaalNeer} />
+        </g>
+      )}
 
-      {/* kanaal en stomp */}
-      <g stroke={LIJN} strokeWidth={DIK} fill="none" strokeLinejoin="miter">
-        <path d="M33 11 V671" strokeWidth="11" />
-        <path d="M107 26 V683" />
-        <path d="M347 62 V434.5 H747" />
-        <path d="M347 722 V497.5 H747" />
-        <path d="M422.5 77 V410.5 H747" />
-        <path d="M422.5 734 V521.5 H747" />
-        <path d="M747 408 V524" />
-      </g>
-
-      {/* stroompijlen van de figuur: ring omlaag, binnenbuis omhoog met bocht uit de stomp */}
-      <g fill={LIJN} stroke="none">
-        <rect x="381.5" y="224" width="5" height="98" />
-        <path d="M377.5 320 L390.5 320 L384 337 Z" />
-        <rect x="294.5" y="350" width="5" height="90" />
-        <path d="M290.5 352 L303.5 352 L297 335 Z" />
-        <rect x="323" y="464.5" width="94" height="3.4" />
-      </g>
-      <path d="M297 440 Q300 466 323 466" stroke="#C8C8C8" strokeWidth="2.6" fill="none" />
-
-      {/* maat L */}
-      <line x1="591" y1="330" x2="746" y2="330" stroke={LIJN} strokeWidth={DUN} />
-      <text x="660" y="320" fontSize="37" fontFamily="Arial, sans-serif" fill={LIJN}>L</text>
-
-      {/* d1 en D1 */}
-      <g fill={LIJN} fontFamily="Arial, sans-serif">
-        <text x="784" y="480" fontSize="37">d</text>
-        <text x="806" y="484" fontSize="32">1</text>
-        <line x1="825" y1="432" x2="825" y2="500" stroke={LIJN} strokeWidth={DUN + 1} />
-        <text x="860" y="480" fontSize="37">D</text>
-        <text x="886" y="484" fontSize="32">1</text>
-        <line x1="906" y1="411" x2="906" y2="521" stroke={LIJN} strokeWidth={DUN + 1} />
-      </g>
-
-      {/* eventuele brandmanchet: rood blokje boven en onder de stomp, label met holle pijl */}
+      {/* eventuele brandmanchet: blokje boven en onder om de buitenpijp, tegen de woningkant van de wand */}
       {manchet && (
         <g>
-          <rect x="540" y="389" width="52" height="20" fill="#D00000" stroke={LIJN} strokeWidth="1.5" />
-          <rect x="540" y="523" width="52" height="20" fill="#D00000" stroke={LIJN} strokeWidth="1.5" />
-          <line x1="606" y1="582" x2="580" y2="562" stroke="#BDBDBD" strokeWidth={DUN} />
-          <path d="M567 551 L590 557 L578 571 Z" fill="white" stroke="#BDBDBD" strokeWidth="2" />
-          <text x="620" y="594" fontSize="33" textLength="246" lengthAdjust="spacingAndGlyphs" fontFamily="Arial, sans-serif" fill={LIJN}>evt. brandmanchet</text>
-          <line x1="615" y1="604" x2="890" y2="604" stroke={LIJN} strokeWidth={DUN} />
+          <rect x={wandR + 2} y={y - rbu - 18} width="28" height="16" rx="2" fill={C.amber} stroke={LIJN} strokeWidth="2" />
+          <rect x={wandR + 2} y={y + rbu + 2} width="28" height="16" rx="2" fill={C.amber} stroke={LIJN} strokeWidth="2" />
+          <text data-spel="label" x={wandR + 4} y={y + rbu + 40} fontSize="16" fontWeight="700" fill={C.amber}>brandmanchet</text>
         </g>
       )}
 
-      {/* SPEL: nieuwe aansluitleiding (ronde 2), schuift over de stomp */}
-      {leiding && (
-        <g data-spel="leiding" stroke="#6B6B6B" strokeWidth="4" fill="none">
-          <rect x="735" y="398" width="34" height="136" fill="white" />
-          <path d="M769 410.5 H920 M769 521.5 H920" />
-          <path d="M769 434.5 H920 M769 497.5 H920" strokeWidth="3" />
-          <text x="915" y="388" fontSize="32" fontWeight="600" fill={C.brown} stroke="none" textAnchor="end">naar de ketel</text>
-        </g>
-      )}
       {leiding && klep && (
         <g data-spel="klep">
-          <circle cx="845" cy="441" r="6" fill={C.green} />
-          <line x1="845" y1="441" x2="871" y2="490" stroke={C.green} strokeWidth="7" strokeLinecap="round" />
-          <text x="915" y="560" fontSize="34" fontWeight="700" fill={C.green} textAnchor="end">klep</text>
+          <circle cx="428" cy={y - rb + 6} r="4.5" fill={C.green} />
+          <line x1="428" y1={y - rb + 6} x2="444" y2={y + rb - 7} stroke={C.green} strokeWidth="5" strokeLinecap="round" />
+          <text x="456" y={y + rbu + 40} fontSize="17" fontWeight="700" fill={C.green} textAnchor="end">klep</text>
         </g>
       )}
 
       {/* SPEL: rookgas uit de open stomp (ronde 1) */}
       {rookgasUit && (
         <g data-spel="rookgas">
-          <path d="M290 466 H760 Q775 466 775 450 V300" fill="none" stroke={C.red} strokeWidth="7" style={flowUit} />
-          <path d="M762 316 L775 292 L788 316" fill="none" stroke={C.red} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={`M${midden} 330 V${y + 24} Q${midden} ${y} ${midden + 24} ${y} H396 Q416 ${y} 416 ${y - 20} V112`} fill="none" stroke={C.red} strokeWidth="5" style={uit} />
+          <Pijlpunt x={416} y={104} richting="o" kleur={C.red} maat={10} dik={4} />
           <g style={{ animation: "pulseGlow 1.4s ease-in-out infinite" }}>
-            <circle cx="690" cy="240" r="38" fill={C.red} opacity="0.14" />
-            <circle cx="640" cy="262" r="24" fill={C.red} opacity="0.12" />
+            <circle cx="408" cy="98" r="26" fill={C.red} opacity="0.14" />
+            <circle cx="372" cy="110" r="16" fill={C.red} opacity="0.12" />
           </g>
         </g>
       )}
 
       {/* SPEL: doppen (ronde 1): de 60 mm-dop in de rookgasopening, de 100 mm-dop over het hele uiteinde */}
-      {dop.rookgas && <rect data-spel="dop" x="712" y="438" width="32" height="57" rx="4" fill={C.green} stroke={C.oliveDark} strokeWidth="2" />}
-      {dop.lucht && <rect data-spel="dop" x="748" y="400" width="28" height="132" rx="5" fill={C.olive} fillOpacity="0.85" stroke={C.oliveDark} strokeWidth="2" />}
+      {dop.rookgas && <rect data-spel="dop" x={eind - 14} y={y - rb + 3} width="18" height={2 * rb - 6} rx="3" fill={C.green} stroke={C.oliveDark} strokeWidth="2" />}
+      {dop.lucht && <rect data-spel="dop" x={eind + 2} y={y - rbu - 6} width="14" height={2 * rbu + 12} rx="4" fill={C.olive} fillOpacity="0.85" stroke={C.oliveDark} strokeWidth="2" />}
       {children}
     </svg>
   );
@@ -647,20 +594,19 @@ function vakStijl(vb, x, y, w, h) {
     height: `${(h / vb.h) * 100}%`,
   };
 }
-const VB_STOMP = { x: 0, y: 0, w: 920, h: 767 };
 
 // stippellijn van een vak naar de plek in de tekening
 function Wijslijnen({ vakken }) {
   return (
-    <g data-spel="wijslijn" stroke={C.olive} strokeWidth="3.2" fill="none" strokeDasharray="9 7">
+    <g data-spel="wijslijn" stroke={C.olive} strokeWidth="2" fill="none" strokeDasharray="6 5">
       {vakken.map((p) => {
         const [x, y, w, h] = p.vak;
         const bx = x + w * 0.75;
-        const by = y < 380 ? y + h : y;
+        const by = y < VB_STOMP.h / 2 ? y + h : y;
         return (
           <g key={p.id}>
             <path d={`M${p.doel[0]} ${p.doel[1]} L${bx} ${by}`} />
-            <circle cx={p.doel[0]} cy={p.doel[1]} r="8" fill={C.olive} />
+            <circle cx={p.doel[0]} cy={p.doel[1]} r="5" fill={C.olive} />
           </g>
         );
       })}
@@ -1198,8 +1144,8 @@ const R1_DOPPEN = [
 
 // twee vakken boven en onder de stomp; welk vak welke opening is, staat niet in de DOM
 const R1_VAKKEN = [
-  { id: "r1-vak-1", vak: [600, 10, 300, 130] },
-  { id: "r1-vak-2", vak: [600, 625, 300, 130] },
+  { id: "r1-vak-1", vak: [290, 6, 162, 64] },
+  { id: "r1-vak-2", vak: [290, 308, 162, 64] },
 ];
 
 // Per beurt willekeurig welk vak naar de ring (lucht) en welk naar het midden
@@ -1209,7 +1155,7 @@ function maakR1Vakken() {
   return R1_VAKKEN.map((v, i) => {
     const boven = i === 0;
     const opening = boven === luchtBoven ? "lucht" : "rookgas";
-    const doel = opening === "rookgas" ? [752, 466] : boven ? [752, 422] : [752, 510];
+    const doel = opening === "rookgas" ? [388, 190] : boven ? [388, 158] : [388, 222];
     return { ...v, opening, doel };
   });
 }
@@ -1373,7 +1319,7 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
     );
   }
 
-  const vb = UITSNEDE_BOVEN;
+  const vb = VB_SCHACHT;
   const opdrachtTekst = {
     weg: !ketelWeg ? "sleep de oude ketel naar Afvoeren." : "wat doe je met de oude aansluitleiding? Sleep hem naar een bak.",
     doppen: "sluit de open stomp af. Sleep een dop of kap naar elk vraagteken.",
@@ -1388,19 +1334,18 @@ function Ronde1({ beoordeel, onDone, noteer, skipIntro }) {
       <Opdracht titel="Ronde 1: Oude ketel eruit" stap={stapNr} stappen={3} tekst={opdrachtTekst} klaar={klaar} totaal={4} />
 
       {fase === "weg" ? (
-        <div className="relative w-full mb-2" style={{ maxWidth: 300 }}>
+        <div className="relative w-full mb-2" style={{ maxWidth: 340 }}>
           <SchachtC10
-            uitsnede={vb}
             boven={{ ketel: ketelWeg ? "weg" : "uit", leiding: "aan", label: ketelWeg ? null : "oude ketel" }}
             rookgasUit={ketelWeg ? "leiding" : null}
           />
           {!ketelWeg && (
-            <Draggable payload="ketel" ghost={<DopKaart label="Oude ketel" />} className="absolute" style={vakStijl(vb, 238, 395, 87, 103)}>
+            <Draggable payload="ketel" ghost={<DopKaart label="Oude ketel" />} className="absolute" style={vakStijl(vb, 206, 182, 112, 78)}>
               <div className="w-full h-full rounded-lg border-2 border-dashed" style={{ borderColor: C.olive, backgroundColor: "rgba(82,181,156,0.10)" }} />
             </Draggable>
           )}
           {ketelWeg && (
-            <Draggable payload="leiding" ghost={<DopKaart label="Oude aansluitleiding" />} className="absolute" style={vakStijl(vb, 199, 318, 100, 82)}>
+            <Draggable payload="leiding" ghost={<DopKaart label="Oude aansluitleiding" />} className="absolute" style={vakStijl(vb, 148, 126, 140, 62)}>
               <div className="w-full h-full rounded-lg border-2 border-dashed" style={{ borderColor: C.olive, backgroundColor: "rgba(82,181,156,0.10)" }} />
             </Draggable>
           )}
@@ -1614,37 +1559,37 @@ const R2_HALF = [
 
 // plekken op de stomptekening (vak in viewBox-coordinaten en de plek waar de lijn naar wijst)
 const KLEP_PLEKKEN = [
-  { id: "p1", label: "Rookgasdeel aansluitleiding", doel: [845, 466], vak: [600, 10, 300, 130], goed: true },
+  { id: "p1", label: "Rookgasdeel aansluitleiding", doel: [428, 190], vak: [290, 6, 162, 64], goed: true },
   {
     id: "p2",
     label: "Luchtdeel aansluitleiding",
-    doel: [860, 510],
-    vak: [600, 625, 300, 130],
+    doel: [432, 222],
+    vak: [290, 308, 162, 64],
     uitleg: "In het luchtdeel stroomt verbrandingslucht. De klep hoort in het rookgasdeel van de aansluitleiding.",
   },
   {
     id: "p3",
     label: "Kanaal in de schacht",
-    doel: [230, 300],
-    vak: [120, 10, 300, 130],
+    doel: [118, 112],
+    vak: [8, 6, 162, 64],
     uitleg: "Het kanaal is van het CLV en wordt gedeeld met de buren. De klep hoort in jouw aansluitleiding, bij de ketel.",
   },
 ];
 
 const MANCHET_PLEKKEN = [
-  { id: "m1", label: "Om de leiding bij de schachtwand", doel: [566, 398], vak: [600, 10, 300, 130], goed: true },
+  { id: "m1", label: "Om de leiding bij de schachtwand", doel: [290, 140], vak: [290, 6, 162, 64], goed: true },
   {
     id: "m2",
     label: "Bij de ketel",
-    doel: [905, 535],
-    vak: [600, 625, 300, 130],
+    doel: [446, 240],
+    vak: [290, 308, 162, 64],
     uitleg: "Een eventuele brandmanchet zit om de aansluitleiding waar die door de schachtwand gaat, niet bij de ketel.",
   },
   {
     id: "m3",
     label: "Om het kanaal in de schacht",
-    doel: [230, 300],
-    vak: [120, 10, 300, 130],
+    doel: [212, 86],
+    vak: [8, 6, 162, 64],
     uitleg: "Een eventuele brandmanchet zit om de aansluitleiding waar die door de schachtwand gaat, niet om het kanaal.",
   },
 ];
@@ -1769,7 +1714,7 @@ function Ronde2({ beoordeel, onDone, noteer, skipIntro }) {
     half: "stel: dit gebouw had een half-CLV. Waar sluit je dan de luchtleiding aan?",
     klaar: "klaar. Ga door naar de controlevragen.",
   };
-  const vb = UITSNEDE_BOVEN;
+  const vb = VB_SCHACHT;
 
   return (
     <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
@@ -1777,14 +1722,13 @@ function Ronde2({ beoordeel, onDone, noteer, skipIntro }) {
       <Opdracht titel="Ronde 2: Nieuwe ketel aansluiten" stap={R2_STAP[fase]} stappen={5} tekst={opdrachten[fase]} klaar={Math.min(index, 9)} totaal={9} />
 
       {schachtFase ? (
-        <div className="relative w-full mb-2" style={{ maxWidth: 300 }}>
+        <div className="relative w-full mb-2" style={{ maxWidth: 340 }}>
           <SchachtC10
-            uitsnede={vb}
             boven={{ ketel: fase === "montage" ? "aan" : "uit", leiding: fase === "route" ? "geen" : fase === "leiding" ? "gat" : "aan", label: "nieuwe ketel" }}
             routes={fase === "route"}
           />
           {fase === "leiding" && (
-            <DropTarget id="r2-route" onDropItem={dropSet} className="absolute" style={vakStijl(vb, 192, 318, 108, 82)}>
+            <DropTarget id="r2-route" onDropItem={dropSet} className="absolute" style={vakStijl(vb, 148, 122, 148, 68)}>
               {({ isHover, flash }) => (
                 <div
                   className="w-full h-full rounded-lg border-2 border-dashed flex items-end justify-center text-xs font-bold pb-1"
@@ -1911,8 +1855,8 @@ const PUNTEN = [
   {
     id: "ketel",
     naam: "Ketel en typeplaat bij de aansluiting",
-    x: 300,
-    y: 722,
+    x: 262,
+    y: 394,
     ok: [{ ketel: "C(10)3" }],
     gebreken: [{ ketel: "C43" }],
     goedOk: "Klopt: de plaat zegt alleen geschikt voor C(10) toestellen. Dit is een C(10)3-ketel. Een C43 (onderdruk) zou hier niet mogen.",
@@ -1924,8 +1868,9 @@ const PUNTEN = [
   {
     id: "klep",
     naam: "Aansluitleiding",
-    x: 282,
-    y: 656,
+    x: 314,
+    y: 324,
+    doel: [263, 326],
     ok: [{ tekst: "In het rookgasdeel van de aansluitleiding zit de terugslagklep die bij deze ketel hoort." }],
     gebreken: [
       { tekst: "Er zit geen terugslagklep in de aansluitleiding." },
@@ -1940,9 +1885,9 @@ const PUNTEN = [
   {
     id: "doorvoer",
     naam: "Doorvoer door de schachtwand",
-    x: 230,
-    y: 594,
-    doel: [200, 624],
+    x: 196,
+    y: 336,
+    doel: [146, 312],
     ok: [
       { tekst: "De doorvoer is dicht afgewerkt, met een brandmanchet om de leiding, volgens het voorschrift van de fabrikant van de doorvoer. De wbdbo-eis wordt gehaald." },
       { tekst: "De doorvoer is dicht afgewerkt volgens het voorschrift van de fabrikant van de doorvoer. Dat voorschrift vraagt hier geen brandmanchet. De wbdbo-eis wordt gehaald." },
@@ -1957,9 +1902,9 @@ const PUNTEN = [
   {
     id: "lek",
     naam: "Lekmeting luchttoevoer (deze verdieping)",
-    x: 98,
-    y: 632,
-    doel: [140, 632],
+    x: 22,
+    y: 320,
+    doel: [71, 320],
     ok: [{ tekst: "Gemeten lek: 3 m³/h bij 50 Pa." }],
     gebreken: [{ tekst: "Gemeten lek: 8 m³/h bij 50 Pa." }],
     goedOk: "Klopt: minder dan 5 m³/h per verdieping bij 50 Pa. De luchttoevoer is dicht genoeg.",
@@ -1971,9 +1916,9 @@ const PUNTEN = [
   {
     id: "luik",
     naam: "Inspectieluiken onderaan",
-    x: 228,
-    y: 748,
-    doel: [208, 748],
+    x: 202,
+    y: 446,
+    doel: [156, 448],
     ok: [{ tekst: "Bouwkundig luik 50 x 50 cm, vrij bereikbaar. De luikjes op lucht- en rookgaskanaal gaan open zonder speciale hulpmiddelen." }],
     gebreken: [
       { tekst: "Bouwkundig luik 40 x 40 cm. De luikjes op lucht- en rookgaskanaal gaan open zonder speciale hulpmiddelen." },
@@ -1988,9 +1933,9 @@ const PUNTEN = [
   {
     id: "sifon",
     naam: "Condensafvoer onderaan",
-    x: 98,
-    y: 772,
-    doel: [158, 768],
+    x: 22,
+    y: 412,
+    doel: [97, 452],
     ok: [{ tekst: "Onder de binnenbuis zit een sifon in de condensafvoer. Hij is bereikbaar voor onderhoud en inspectie." }],
     gebreken: [
       { tekst: "In de condensafvoer onder de binnenbuis zit geen sifon." },
@@ -2005,9 +1950,9 @@ const PUNTEN = [
   {
     id: "plaat",
     naam: "Typeplaat onderaan het CLV",
-    x: 290,
-    y: 818,
-    doel: [264, 806],
+    x: 22,
+    y: 474,
+    doel: [45, 474],
     ok: [
       { temp: "120", corrosie: "W", materiaal: "RVS (316L)", ce: true },
       { temp: "120", corrosie: "W", materiaal: "PP (kunststof)", ce: true },
@@ -2175,7 +2120,7 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
     );
   }
 
-  const vb = UITSNEDE_ONDER;
+  const vb = VB_SCHACHT;
   const klepWeg = situatie.klep.gebrek && oordelen.klep;
   const tekst = !alleGedaan
     ? "tik op elk rood punt en keur het goed of af."
@@ -2188,9 +2133,8 @@ function Ronde3({ beoordeel, onDone, noteer, skipIntro }) {
       <StepBanner step={1} />
       <Opdracht titel="Ronde 3: Controleren en opleveren" stap={alleGedaan ? 2 : 1} stappen={2} tekst={tekst} klaar={klaar} totaal={8} />
 
-      <div className="relative w-full mb-2" style={{ maxWidth: 300 }}>
+      <div className="relative w-full mb-2" style={{ maxWidth: 340 }}>
         <SchachtC10
-          uitsnede={vb}
           boven={{ ketel: "aan", leiding: "aan" }}
           onder={{ ketel: besloten && gebrekIds.length === 0 ? "aan" : "uit", label: "ketel collega" }}
           klepOnder={!klepWeg}
