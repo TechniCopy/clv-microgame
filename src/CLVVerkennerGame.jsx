@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Building2, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import {
   C,
@@ -19,6 +19,7 @@ import {
   playSound,
   VasteBalk,
   RUIMTE_VOOR_BALK,
+  useDrag,
 } from "./shared.jsx";
 import { useSessie, maakZender, EindschermKern } from "./microgame/schil.jsx";
 
@@ -172,12 +173,17 @@ function Melding({ melding }) {
   );
 }
 
-// Terugmelding bij sleepschermen: op een telefoon vast bovenin (over de kop),
-// zodat kaartjes en vlakken onderin vrij blijven. Tikken gaan erdoorheen.
+// Terugmelding bij sleepschermen: op een telefoon vast bovenin (over de kop,
+// onder de plek van de "x op rij"-melding), zodat kaartjes en vlakken onderin
+// vrij blijven. Tikken gaan erdoorheen. Zodra de speler een volgend kaartje
+// kiest of sleept, verdwijnt de melding: dan staat de tikmelding bovenin en is
+// de hele tekening weer vrij. Op een groot scherm staat hij gewoon in de pagina.
 function SleepMelding({ melding }) {
+  const drag = useDrag();
   if (!melding) return null;
+  const bezig = !!drag?.selected || !!drag?.dragging;
   return (
-    <div className="fixed top-14 inset-x-2 z-[85] flex justify-center pointer-events-none md:static md:mt-2 md:w-full">
+    <div className={`fixed top-[88px] inset-x-2 z-[85] justify-center pointer-events-none md:static md:mt-2 md:w-full md:flex ${bezig ? "hidden" : "flex"}`}>
       <Melding melding={melding} />
     </div>
   );
@@ -252,20 +258,22 @@ function useBovenaan(sleutel) {
 }
 
 // Eenvoudige stapel: steeds een kaart, de speler kiest een knop.
-// Bij goed komt meteen de volgende kaart; de waarom-regel blijft staan.
+// Bij goed blijft de kaart staan met de waarom-regel en een knop "Volgende
+// kaart"; zo hoort de melding altijd bij de kaart die in beeld is.
 function useStapel(items, { beoordeel, noteer, zie }) {
   const [index, setIndex] = useState(0);
   const [fout, setFout] = useState([]);
+  const [beantwoord, setBeantwoord] = useState(false);
   const [melding, setMelding] = useState(null);
   const item = items[index] ?? null;
+  const laatste = index + 1 >= items.length;
   const kiesKnop = (keuze, e) => {
-    if (!item || fout.includes(keuze)) return;
+    if (!item || beantwoord || fout.includes(keuze)) return;
     zie(item.feiten);
     if (keuze === item.juist) {
       beoordeel("goed", e);
       setMelding({ soort: "goed", tekst: item.goed });
-      setFout([]);
-      setIndex((i) => i + 1);
+      setBeantwoord(true);
     } else {
       beoordeel("fout", e);
       noteer(item.aandacht);
@@ -273,7 +281,27 @@ function useStapel(items, { beoordeel, noteer, zie }) {
       setFout((f) => [...f, keuze]);
     }
   };
-  return { item, index, fout, melding, kiesKnop, klaar: index >= items.length };
+  const volgende = () => {
+    setIndex((i) => i + 1);
+    setFout([]);
+    setBeantwoord(false);
+    setMelding(null);
+  };
+  return { item, index, fout, melding, kiesKnop, beantwoord, laatste, volgende, gedaan: index + (beantwoord ? 1 : 0) };
+}
+
+// Knop onder een beantwoorde kaart: naar de volgende kaart, of na de laatste
+// kaart naar de controlevragen.
+function StapelVerder({ stapel, onKlaar }) {
+  if (!stapel.beantwoord) return null;
+  return stapel.laatste ? (
+    <GameButton onClick={onKlaar} variant="green" className="w-full">Naar de controlevragen</GameButton>
+  ) : (
+    <GameButton onClick={stapel.volgende} variant="green" className="w-full">
+      Volgende kaart
+      <ArrowRight className="w-4 h-4" />
+    </GameButton>
+  );
 }
 
 // ─── TEKENING-ONDERDELEN ───
@@ -295,6 +323,10 @@ function Pijlpunt({ x, y, hoek, kleur, maat = 5 }) {
   const p = (a) => `${x - maat * Math.cos(r + a)},${y - maat * Math.sin(r + a)}`;
   return <polygon points={`${x},${y} ${p(0.5)} ${p(-0.5)}`} fill={kleur} />;
 }
+
+// Bewegende stroom in en rond de kappen (zelfde looprichting als in de figuren)
+const KAP_OP = { strokeDasharray: "5 3", animation: "flowDash 0.8s linear infinite" };
+const KAP_NEER = { strokeDasharray: "5 3", animation: "flowDash 1.1s linear infinite" };
 
 // Kap volgens NPR 3378-40 fig 1: flens met bouten, hals, taps deel, kap met
 // aan beide kanten een gaasrooster, kapplaat, korte uitstroompijp en twee
@@ -323,13 +355,13 @@ function KapF1({ cx, y0, w = 20, wi = 8, gaasId, stroom = true, lijnKleur = C.br
       <rect x={cx - 7} y={y0 - 70} width="14" height="12" fill="white" stroke={lijnKleur} strokeWidth="1.8" />
       {stroom && (
         <>
-          <g stroke={rookKleur} strokeWidth="2.2" fill="none" strokeLinecap="round">
+          <g stroke={rookKleur} strokeWidth="2.2" fill="none" strokeLinecap="round" style={KAP_OP}>
             <path d={`M${cx - 4} ${y0 - 72} L${cx - 9} ${y0 - 86}`} />
             <path d={`M${cx + 4} ${y0 - 72} L${cx + 9} ${y0 - 86}`} />
           </g>
           <Pijlpunt x={cx - 10} y={y0 - 89} hoek={-110} kleur={rookKleur} />
           <Pijlpunt x={cx + 10} y={y0 - 89} hoek={-70} kleur={rookKleur} />
-          <g stroke={BLAUW} strokeWidth="1.8" fill="none" strokeLinecap="round">
+          <g stroke={BLAUW} strokeWidth="1.8" fill="none" strokeLinecap="round" style={KAP_NEER}>
             <path d={`M${cx - w - 34} ${y0 - 68} L${cx - w - 2} ${y0 - 48} Q${cx - w + 4} ${y0 - 44} ${cx - w + 6} ${y0 - 30}`} />
             <path d={`M${cx + w + 34} ${y0 - 68} L${cx + w + 2} ${y0 - 48} Q${cx + w - 4} ${y0 - 44} ${cx + w - 6} ${y0 - 30}`} />
           </g>
@@ -358,9 +390,9 @@ function KapF4({ cx, y0, w = 19, wi = 7, gaasId, stroom = true }) {
       <line x1={cx + wi} y1={y0} x2={cx + wi + 2} y2={top - 36} stroke={C.brownText} strokeWidth="1.8" />
       {stroom && (
         <>
-          <path d={`M${cx} ${top - 36} Q${cx} ${top - 46} ${cx + 10} ${top - 46} H${cx + 32}`} fill="none" stroke={C.red} strokeWidth="2" />
+          <path d={`M${cx} ${top - 36} Q${cx} ${top - 46} ${cx + 10} ${top - 46} H${cx + 32}`} fill="none" stroke={C.red} strokeWidth="2" style={KAP_OP} />
           <Pijlpunt x={cx + 37} y={top - 46} hoek={0} kleur={C.red} />
-          <path d={`M${cx + wi + 6} ${top - 22} L${cx + wi + 7} ${y0 - 6}`} fill="none" stroke={BLAUW} strokeWidth="1.8" />
+          <path d={`M${cx + wi + 6} ${top - 22} L${cx + wi + 7} ${y0 - 6}`} fill="none" stroke={BLAUW} strokeWidth="1.8" style={KAP_NEER} />
           <Pijlpunt x={cx + wi + 7} y={y0 - 2} hoek={90} kleur={BLAUW} />
         </>
       )}
@@ -385,164 +417,151 @@ function Patronen({ achtervoegsel }) {
 
 // ─── RONDE 1: WELK SYSTEEM IS DIT? ───
 
-// Flatdoorsnede in drie uitvoeringen, elk zo dicht mogelijk bij de normfiguur:
-// - conc: NPR 3378-40 fig 1 (concentrisch CLV; schacht links, toestellen rechts,
-//   vloeren lopen open door, geen gevel)
-// - par:  NPR 3378-48 fig 9 (parallel CLV; gespiegeld zodat de schacht links staat;
-//   bovenste leiding naar het luchtkanaal, onderste loopt ervoor langs naar het
-//   rookgaskanaal)
-// - half: NPR 3378-41 fig 1 (half-CLV; spouwgevel met een luchttoevoerrooster per
-//   verdieping)
-// De hele onderzijde (open einde, deksel, luik, trechter, sifons) ligt onder
-// het laagste toestel, zoals in de figuren.
+// Spellabel in een tekening: eigen woorden in spelopmaak (cursief), geen normtekst
+function SpelLabel({ x, y, anker = "start", children }) {
+  return (
+    <text data-spel="label" x={x} y={y} fontSize="18" fontWeight="700" fontStyle="italic" fill={C.brown} textAnchor={anker}>
+      {children}
+    </text>
+  );
+}
+
+// Eenvoudig gesloten toestel: kast met een frontpaneel en een knopje
+function Toestel({ x, y, b = 56, h = 52, grijs = false }) {
+  return (
+    <g>
+      <rect x={x} y={y} width={b} height={h} fill={grijs ? "#EDEDED" : "white"} stroke={C.brownText} strokeWidth="2" />
+      <rect x={x + 5} y={y + h - 15} width={b * 0.46} height="9" fill="white" stroke={C.brownText} strokeWidth="1.1" />
+      <circle cx={x + b - 7} cy={y + h - 16} r="2" fill={C.brownText} />
+    </g>
+  );
+}
+
+// Flatdoorsnede in drie uitvoeringen, zelf getekend in de gamestijl; de
+// details volgen de normfiguren (zie clv-gauntlet\tekenen\DETAILLIJST.md):
+// - conc: concentrisch CLV (F1): schacht links, toestellen rechts, geen gevel
+// - half: half-CLV (F2): schacht links, spouwgevel rechts met een rooster per verdieping
+// - par:  parallel CLV (F8): eigen tekening, NIET gespiegeld: toestellen links, schacht rechts
 function FlatDoorsnede({ soort }) {
+  if (soort === "par") return <FlatParallel />;
   const op = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
   const neer = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
   const woningen = [110, 215, 320]; // plafond van elke woning
   const cx = 75;
-  const gat = soort === "half" ? [61, 89] : [55, 95];
-  const rechts = soort === "half" ? 318 : 330; // rechterkant van dak en vloeren
+  const half = soort === "half";
+  const gat = half ? [61, 89] : [55, 95];
+  const rechts = half ? 318 : 330; // rechterkant van dak en vloeren
   const lijn = { stroke: C.brownText, strokeWidth: 2 };
-  const tekst = { fontSize: 18, fontWeight: 600, fill: C.brownText };
 
   return (
     <svg viewBox="0 0 400 520" className="w-full h-auto select-none" role="img" aria-label="Doorsnede van een flat met schacht">
       <Patronen achtervoegsel="V1" />
 
-      {/* schachtwanden */}
+      {/* schachtwanden (van dak tot begane-grondvloer) */}
       <rect x="40" y="110" width="10" height="386" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
       <rect x="100" y="110" width="10" height="386" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
-      {/* half-CLV: spouwgevel (twee wanden) rechts */}
-      {soort === "half" && (
+      {/* half-CLV: spouwgevel (twee bladen) rechts */}
+      {half && (
         <>
           <rect x="300" y="110" width="7" height="386" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.8" />
           <rect x="311" y="96" width="7" height="400" fill={C.beigeMid} stroke={C.brownText} strokeWidth="1.8" />
         </>
       )}
-      {/* dak en verdiepingsvloeren, met een sparing voor het kanaal */}
+      {/* dak en verdiepingsvloeren lopen door de schachtwanden tot tegen het kanaal */}
       <rect x="8" y="96" width={gat[0] - 8} height="14" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="2" />
       <rect x={gat[1]} y="96" width={rechts - gat[1]} height="14" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="2" />
       {[205, 310].map((y) => (
         <g key={y}>
           <rect x="8" y={y} width={gat[0] - 8} height="11" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="1.5" />
-          <rect x={gat[1]} y={y} width={(soort === "half" ? 300 : rechts) - gat[1]} height="11" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="1.5" />
+          <rect x={gat[1]} y={y} width={(half ? 300 : rechts) - gat[1]} height="11" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="1.5" />
         </g>
       ))}
-      {/* vloer */}
+      {/* begane-grondvloer, dicht onder de schacht door */}
       <rect x="4" y="496" width="392" height="14" fill="url(#arceringV1)" stroke={C.brownText} strokeWidth="2" />
 
-      {/* ── concentrisch (NPR 3378-40 fig 1) ── */}
-      {soort === "conc" && (
+      {/* bouwkundig luik: opening in de rechterschachtwand, plaat aan de woningkant, vast boven en onder;
+          daaronder de condensafvoer door de wand naar buiten: sifon, open uitloop boven een trechter, sifon, riool */}
+      <g>
+        <rect x="100" y="424" width="10" height="28" fill="white" stroke="none" />
+        <rect x="110" y="420" width="5" height="36" fill="white" stroke={C.brownText} strokeWidth="1.6" />
+        <line x1="115" y1="424" x2="121" y2="424" stroke={C.brownText} strokeWidth="1.4" />
+        <line x1="115" y1="452" x2="121" y2="452" stroke={C.brownText} strokeWidth="1.4" />
+        <DrainageTrein x={120} y={half ? 464 : 472} s={0.75} strokeWidth={2.2} riool={false} />
+        <path d={half ? "M148 468 H182" : "M148 476 H182"} fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" />
+        <SpelLabel x={126} y={442}>luik</SpelLabel>
+        <SpelLabel x={186} y={half ? 473 : 481}>riool</SpelLabel>
+      </g>
+
+      {/* ── concentrisch (F1) ── */}
+      {!half && (
         <g>
           <line x1="55" y1="90" x2="55" y2="478" {...lijn} />
           <line x1="95" y1="90" x2="95" y2="478" {...lijn} />
           <line x1="67" y1="90" x2="67" y2="438" {...lijn} />
           <line x1="83" y1="90" x2="83" y2="438" {...lijn} />
-          {/* opvangtrechter over de volle breedte, daaronder de afvoer door de wand */}
+          {/* einde van de binnenbuis: dwarslijn over de volle breedte */}
+          <line x1="67" y1="438" x2="83" y2="438" stroke={C.brownText} strokeWidth="2.4" />
+          {/* opvangtrechter over de volle breedte van de buitenbuis, uitloop in het midden, afvoer door de wand onder het luik */}
           <path d="M55 456 L71 468 H79 L95 456" fill="white" stroke={C.brownText} strokeWidth="1.8" />
           <path d="M75 468 V472 H120" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
           {/* voetstuk met drie openingen */}
           <rect x="55" y="478" width="40" height="18" fill="white" stroke={C.brownText} strokeWidth="1.8" />
           {[65, 75, 85].map((x) => <circle key={x} cx={x} cy="487" r="4" fill="none" stroke={C.brownText} strokeWidth="1.4" />)}
-          {/* inspectiedeksel (kastje) op de buitenbuis ter hoogte van het open einde */}
-          <rect x="95" y="430" width="5" height="18" fill="white" stroke={C.brownText} strokeWidth="1.5" />
-          {[434, 439, 444].map((y) => <line key={y} x1="96" y1={y} x2="99" y2={y} stroke={C.brownText} strokeWidth="0.9" />)}
+          {/* inspectiedeksel: kort stompje rechts op de buitenbuis met een rond, geribbeld deksel, op de hoogte van het einde van de binnenbuis */}
+          <rect x="95" y="433" width="4" height="12" fill="white" stroke={C.brownText} strokeWidth="1.4" />
+          <rect x="99" y="428" width="5" height="22" rx="2.5" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+          {[432, 436, 440, 444].map((y) => <line key={y} x1="100" y1={y} x2="103" y2={y} stroke={C.brownText} strokeWidth="0.9" />)}
           <KapF1 cx={cx} y0={96} gaasId="gaasV1" />
         </g>
       )}
 
-      {/* ── parallel (NPR 3378-48 fig 9) ── */}
-      {soort === "par" && (
+      {/* ── half-CLV (F2) ── */}
+      {half && (
         <g>
-          {/* rookgaskanaal (links) loopt door tot onder; luchtkanaal stopt bij de onderste aansluiting */}
-          <line x1="55" y1="90" x2="55" y2="430" {...lijn} />
-          <line x1="71" y1="90" x2="71" y2="430" {...lijn} />
-          <line x1="79" y1="90" x2="79" y2="350" {...lijn} />
-          <line x1="95" y1="90" x2="95" y2="350" {...lijn} />
-          <line x1="79" y1="350" x2="95" y2="350" {...lijn} />
-          {/* inspectiestuk met rond deksel, daaronder bocht met sifon */}
-          <rect x="52" y="430" width="22" height="24" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          <circle cx="63" cy="442" r="7" fill="white" stroke={C.brownText} strokeWidth="1.6" />
-          <circle cx="63" cy="442" r="3" fill="none" stroke={C.brownText} strokeWidth="1" />
-          <path d="M63 454 V468 Q63 476 70 476 Q77 476 77 468 V462 H94" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          {/* kap: opstand, onderkast met puntjes, roosterkast, kapplaat, rookgaspijp */}
-          <rect x="58" y="88" width="34" height="8" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          <rect x="50" y="68" width="50" height="20" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          {[61, 75, 89].map((x) => <circle key={x} cx={x} cy="80" r="1.2" fill={C.brownText} />)}
-          <rect x="47" y="46" width="56" height="22" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          {[61, 75, 89].map((x) => <line key={x} x1={x} y1="46" x2={x} y2="68" stroke={C.brownText} strokeWidth="1.2" />)}
-          {[51, 55, 59, 63].map((y) => <line key={y} x1="49" y1={y} x2="101" y2={y} stroke={C.brownText} strokeWidth="0.8" />)}
-          <rect x="45" y="42" width="60" height="4" fill={C.brownText} />
-          <rect x="69" y="28" width="12" height="14" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          <path d="M75 26 V12" stroke={C.red} strokeWidth="2.4" fill="none" />
-          <Pijlpunt x={75} y={7} hoek={-90} kleur={C.red} maat={7} />
-          <path d="M18 57 H38 M132 57 H112" stroke={BLAUW} strokeWidth="2" fill="none" />
-          <Pijlpunt x={43} y={57} hoek={0} kleur={BLAUW} />
-          <Pijlpunt x={107} y={57} hoek={180} kleur={BLAUW} />
-        </g>
-      )}
-
-      {/* ── half-CLV (NPR 3378-41 fig 1) ── */}
-      {soort === "half" && (
-        <g>
-          <line x1="61" y1="66" x2="61" y2="478" {...lijn} />
-          <line x1="89" y1="66" x2="89" y2="478" {...lijn} />
-          {/* gestippelde opvangtrechter in de buis, afvoer door de wand */}
+          <line x1="61" y1="74" x2="61" y2="478" {...lijn} />
+          <line x1="89" y1="74" x2="89" y2="478" {...lijn} />
+          {/* opvangtrechter in de buis (verborgen, gestippeld), afvoer door de wand onder het luik */}
           <path d="M63 448 L72 458 H78 L87 448" fill="none" stroke={C.brownText} strokeWidth="1.4" strokeDasharray="3 2" />
           <path d="M75 458 V464 H120" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          {/* bol inspectiedeksel op de buis */}
+          {/* bol, rond inspectiedeksel rechts op de buis */}
           <path d="M89 424 Q100 437 89 450" fill="white" stroke={C.brownText} strokeWidth="1.6" />
-          {/* voetstuk met drie openingen */}
+          {/* voetstuk met drie openingen; de buis loopt door tot op het voetstuk */}
           <rect x="61" y="478" width="28" height="18" fill="white" stroke={C.brownText} strokeWidth="1.6" />
           {[68, 75, 82].map((x) => <circle key={x} cx={x} cy="487" r="3" fill="none" stroke={C.brownText} strokeWidth="1.2" />)}
-          {/* kap: flens, mantel met de buis gestippeld erdoor, kapplaat; rookgas naar links en rechts */}
-          <rect x="55" y="90" width="40" height="6" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          <rect x="58" y="86" width="5" height="4" fill={C.brownText} />
-          <rect x="87" y="86" width="5" height="4" fill={C.brownText} />
-          <rect x="63" y="64" width="24" height="22" fill="white" stroke={C.brownText} strokeWidth="1.8" />
-          <line x1="68" y1="64" x2="68" y2="86" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
-          <line x1="82" y1="64" x2="82" y2="86" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
-          <rect x="57" y="58" width="36" height="5" fill={C.brownText} />
-          <path d="M61 68 H35 M89 68 H115" stroke={C.red} strokeWidth="2.2" fill="none" />
-          <Pijlpunt x={30} y={68} hoek={180} kleur={C.red} />
-          <Pijlpunt x={120} y={68} hoek={0} kleur={C.red} />
-        </g>
-      )}
-
-      {/* bouwkundig inspectieluik in de rechterschachtwand, met bevestiging boven en onder */}
-      {soort !== "par" && (
-        <g>
-          <rect x="100" y="424" width="10" height="28" fill="white" stroke="none" />
-          <rect x="110" y="420" width="5" height="36" fill="white" stroke={C.brownText} strokeWidth="1.6" />
-          <line x1="115" y1="424" x2="121" y2="424" stroke={C.brownText} strokeWidth="1.4" />
-          <line x1="115" y1="452" x2="121" y2="452" stroke={C.brownText} strokeWidth="1.4" />
-          <text x="126" y="442" {...tekst}>inspectieluik</text>
-          <DrainageTrein x={120} y={soort === "half" ? 464 : 472} s={0.75} strokeWidth={2.2} riool={false} />
-          <path d={soort === "half" ? "M148 468 H182" : "M148 476 H182"} fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" />
-          <text x="186" y={soort === "half" ? 473 : 481} {...tekst} fill={C.brown}>riool</text>
+          {/* kap: voetflens met bouten, rechte kast, deel dat naar boven smaller wordt, afdekplaat;
+              de buis loopt gestippeld door tot onder de afdekplaat */}
+          <rect x="50" y="90" width="50" height="6" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+          <rect x="53" y="86" width="5" height="4" fill={C.brownText} />
+          <rect x="92" y="86" width="5" height="4" fill={C.brownText} />
+          <rect x="54" y="72" width="42" height="18" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+          <polygon points="54,72 96,72 90,62 60,62" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+          <line x1="63" y1="62" x2="63" y2="90" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+          <line x1="87" y1="62" x2="87" y2="90" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+          <rect x="46" y="52" width="58" height="5" fill={C.brownText} />
+          {/* rookgas buigt onder de afdekplaat horizontaal naar links en naar rechts */}
+          <g fill="none" stroke={C.red} strokeWidth="2.2" strokeLinecap="round" style={KAP_OP}>
+            <path d="M71 74 Q71 59.5 62 59.5 H30" />
+            <path d="M79 74 Q79 59.5 88 59.5 H120" />
+          </g>
+          <Pijlpunt x={25} y={59.5} hoek={180} kleur={C.red} />
+          <Pijlpunt x={125} y={59.5} hoek={0} kleur={C.red} />
         </g>
       )}
 
       {/* rookgas en lucht in de schacht */}
-      {soort === "conc" && (
+      {!half && (
         <>
           <path d={`M${cx} 436 L${cx} 44`} fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={op} />
           <path d="M61 72 L61 436" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={neer} />
-          <path d="M89 72 L89 436" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={neer} />
-          {/* langs het open einde loopt de ring door naar de opvang */}
-          <path d="M61 440 V452" fill="none" stroke={BLAUW} strokeWidth="1.6" strokeDasharray="2 3" />
-          <Pijlpunt x={61} y={456} hoek={90} kleur={BLAUW} maat={4} />
+          <path d="M89 72 V446 Q89 451 84 451 H79" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={neer} />
+          {/* doorgetrokken pijl in de rechter ring: langs het einde van de binnenbuis omlaag en eronder naar links */}
+          <path d="M89 430 V446 Q89 451 84 451 H79" fill="none" stroke={BLAUW} strokeWidth="1.4" />
+          <Pijlpunt x={75} y={451} hoek={180} kleur={BLAUW} maat={5} />
         </>
       )}
-      {soort === "par" && (
-        <>
-          <path d="M63 428 L63 96" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={op} />
-          <path d="M87 98 L87 344" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={neer} />
-        </>
-      )}
-      {soort === "half" && <path d={`M${cx} 474 L${cx} 66`} fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={op} />}
+      {half && <path d={`M${cx} 474 L${cx} 76`} fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={op} />}
 
-      {/* per woning: toestel met twee leidingen net onder het plafond */}
+      {/* per woning: toestel met twee losse leidingen uit de bovenkant, net onder het plafond */}
       {woningen.map((top) => {
         const yB = top + 16; // bovenste leiding
         const yO = top + 28; // onderste leiding
@@ -551,46 +570,139 @@ function FlatDoorsnede({ soort }) {
           <g key={top}>
             <rect x="176" y={kt - 8} width="12" height="8" fill="white" stroke={C.brownText} strokeWidth="1.5" />
             <rect x="204" y={kt - 8} width="12" height="8" fill="white" stroke={C.brownText} strokeWidth="1.5" />
-            {soort === "conc" && (
+            {!half && (
               <>
+                {/* rookgas (rechter stomp, buitenste bocht) door de ring tot in de binnenbuis, daar omhoog; lucht (linker stomp) uit de ring */}
                 <Pijp d={`M210 ${kt - 6} V${yB} H${cx} V${yB - 8}`} kleur={C.red} anim={op} />
                 <Pijp d={`M95 ${yO} H182 V${kt - 6}`} kleur={BLAUW} anim={neer} />
               </>
             )}
-            {soort === "par" && (
+            {half && (
               <>
-                <Pijp d={`M95 ${yB} H210 V${kt - 6}`} kleur={BLAUW} anim={neer} />
-                <Pijp d={`M182 ${kt - 6} V${yO} H63 V${yO - 8}`} kleur={C.red} anim={op} />
-              </>
-            )}
-            {soort === "half" && (
-              <>
+                {/* links de rookgasleiding naar de afvoerbuis, rechts de luchtleiding door de gevel, op dezelfde hoogte */}
                 <Pijp d={`M182 ${kt - 6} V${yB} H89`} kleur={C.red} anim={op} />
                 <Pijp d={`M326 ${yB} H210 V${kt - 6}`} kleur={BLAUW} anim={neer} />
-                {/* beugelvormig rooster aan de buitenkant van de gevel */}
+                {/* kapje (rooster) over het pijpeinde aan de buitenkant van de gevel; lucht van buiten naar binnen */}
                 <path d={`M318 ${yB - 12} H328 V${yB + 12} H318`} fill="white" stroke={C.brownText} strokeWidth="2" />
                 {[yB - 6, yB + 6].map((ly) => (
                   <line key={ly} x1="320" y1={ly} x2="327" y2={ly} stroke={C.brownText} strokeWidth="1.2" />
                 ))}
-                <path d={`M362 ${yB} H340`} fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" />
-                <Pijlpunt x={334} y={yB} hoek={180} kleur={BLAUW} maat={6} />
+                <path d={`M366 ${yB} H338`} fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={KAP_NEER} />
+                <Pijlpunt x={333} y={yB} hoek={180} kleur={BLAUW} maat={6} />
               </>
             )}
-            {/* gesloten toestel */}
-            <rect x="166" y={kt} width="56" height="52" fill="white" stroke={C.brownText} strokeWidth="2" />
-            <rect x="171" y={kt + 37} width="26" height="9" fill="white" stroke={C.brownText} strokeWidth="1.1" />
-            <circle cx="215" cy={kt + 36} r="2" fill={C.brownText} />
+            <Toestel x={166} y={kt} />
           </g>
         );
       })}
 
-      {soort === "half" && (
-        <>
-          <text x="398" y="78" {...tekst} textAnchor="end">luchttoevoerrooster</text>
-          <line x1="350" y1="80" x2="326" y2="112" stroke={C.brownText} strokeWidth="1" />
-        </>
+      {half && (
+        <g data-spel="label">
+          <SpelLabel x={398} y={78} anker="end">rooster in de gevel</SpelLabel>
+          <line x1="350" y1="82" x2="327" y2="112" stroke={C.brown} strokeWidth="1" />
+        </g>
       )}
-      <text x="228" y="184" {...tekst}>toestel</text>
+      <SpelLabel x={228} y={184}>toestel</SpelLabel>
+    </svg>
+  );
+}
+
+// Parallel CLV (F8), NIET gespiegeld: de toestellen staan links, de schacht
+// rechts. In de schacht twee losse buizen: links (aan de kant van de toestellen)
+// het luchtkanaal, rechts het rookgaskanaal. Per toestel gaat de bovenste
+// leiding (van de stomp die het verst van de schacht zit) met een T-stuk naar
+// het luchtkanaal; de onderste loopt voor het luchtkanaal langs naar het
+// rookgaskanaal. Onderaan: luchtkanaal dicht, rookgaskanaal met inspectiestuk,
+// steun aan de wand en een sifon; de afvoer gaat door de schachtwand naar de
+// ruimte van het onderste toestel: open uitloop boven een trechter, sifon, riool.
+function FlatParallel() {
+  const op = { strokeDasharray: "8 6", animation: "flowDash 0.8s linear infinite" };
+  const neer = { strokeDasharray: "6 5", animation: "flowDash 1.1s linear infinite" };
+  const woningen = [110, 215, 320];
+  const lijn = { stroke: C.brownText, strokeWidth: 2 };
+  const LK = 311; // hart luchtkanaal (304-318)
+  const RK = 337; // hart rookgaskanaal (330-344)
+  const onderLucht = 352; // luchtkanaal dicht onder de onderste aansluiting
+
+  return (
+    <svg viewBox="0 0 400 520" className="w-full h-auto select-none" role="img" aria-label="Doorsnede van een flat met een parallel CLV">
+      <Patronen achtervoegsel="V1p" />
+
+      {/* woningen links: dak en vloeren tot tegen de schacht; begane-grondvloer loopt door */}
+      <rect x="8" y="96" width="282" height="14" fill="url(#arceringV1p)" stroke={C.brownText} strokeWidth="2" />
+      {[205, 310].map((y) => (
+        <rect key={y} x="8" y={y} width="282" height="11" fill="url(#arceringV1p)" stroke={C.brownText} strokeWidth="1.5" />
+      ))}
+      <rect x="4" y="496" width="392" height="14" fill="url(#arceringV1p)" stroke={C.brownText} strokeWidth="2" />
+
+      {/* schacht rechts: twee wanden en een afdekking waarop de kap staat */}
+      <rect x="290" y="84" width="10" height="412" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="350" y="84" width="10" height="412" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
+      <rect x="286" y="78" width="16" height="6" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+      <rect x="348" y="78" width="16" height="6" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+
+      {/* kap: dichte onderkast, roosterkast met lamellen, vlakke bovenplaat, ronde rookgaspijp met kraag */}
+      <rect x="298" y="56" width="54" height="22" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+      {[308, 325, 342].map((x) => <circle key={x} cx={x} cy="67" r="1.2" fill={C.brownText} />)}
+      <rect x="295" y="32" width="60" height="24" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+      {[37, 42, 47, 52].map((y) => <line key={y} x1="297" y1={y} x2="353" y2={y} stroke={C.brownText} strokeWidth="0.9" />)}
+      <rect x="291" y="28" width="68" height="4" fill={C.brownText} />
+      <rect x="332" y="12" width="10" height="16" fill="white" stroke={C.brownText} strokeWidth="1.6" />
+      <rect x="329" y="17" width="16" height="4" fill="white" stroke={C.brownText} strokeWidth="1.4" />
+
+      {/* twee losse buizen naast elkaar; in de kap gestippeld */}
+      <line x1="304" y1="56" x2="304" y2="78" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+      <line x1="318" y1="56" x2="318" y2="78" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+      <line x1="330" y1="28" x2="330" y2="78" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+      <line x1="344" y1="28" x2="344" y2="78" stroke={C.brownText} strokeWidth="1.1" strokeDasharray="3 2" />
+      <line x1="304" y1="78" x2="304" y2={onderLucht} {...lijn} />
+      <line x1="318" y1="78" x2="318" y2={onderLucht} {...lijn} />
+      <line x1="304" y1={onderLucht} x2="318" y2={onderLucht} stroke={C.brownText} strokeWidth="2.4" />
+      <line x1="330" y1="78" x2="330" y2="404" {...lijn} />
+      <line x1="344" y1="78" x2="344" y2="404" {...lijn} />
+
+      {/* onderaan het rookgaskanaal: inspectiestuk met rond deksel en een steun aan de schachtwand */}
+      <rect x="326" y="368" width="22" height="26" fill="white" stroke={C.brownText} strokeWidth="1.8" />
+      <circle cx={RK} cy="381" r="7" fill="white" stroke={C.brownText} strokeWidth="1.6" />
+      <circle cx={RK} cy="381" r="3" fill="none" stroke={C.brownText} strokeWidth="1" />
+      <rect x="327" y="397" width="20" height="4" fill={C.brownText} />
+      <path d="M347 396 L350 392 V406 L347 402 Z" fill={C.brownText} stroke={C.brownText} strokeWidth="1" strokeLinejoin="round" />
+      {/* einde van het rookgaskanaal: verloop naar de sifon */}
+      <path d="M330 404 L334 410 H340 L344 404" fill="white" stroke={C.brownText} strokeWidth="1.8" strokeLinejoin="round" />
+      {/* sifon onder het einde, afvoer door de linker schachtwand naar de ruimte van het onderste toestel */}
+      <path d={`M${RK} 410 V420 Q${RK} 428 330 428 Q323 428 323 420 V414 H264 Q259 414 259 419 V425`} fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* open uitloop boven een trechter, daaronder een sifon en de leiding omlaag naar het riool */}
+      <path d="M252 431 L259 438 L266 431" fill="none" stroke={C.brownText} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M259 438 V450 Q259 457 265 457 Q271 457 271 450 V444 H278 V494" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <SpelLabel x={274} y={490} anker="end">riool</SpelLabel>
+
+      {/* stroom in de schacht: lucht via de lamellen aan beide kanten naar binnen en het luchtkanaal in; rookgas omhoog en recht naar buiten */}
+      <path d={`M262 44 H304 Q${LK} 44 ${LK} 52 V${onderLucht - 6}`} fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={neer} />
+      <Pijlpunt x={296} y={44} hoek={0} kleur={BLAUW} maat={6} />
+      <path d="M398 44 H360" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" style={KAP_NEER} />
+      <Pijlpunt x={356} y={44} hoek={180} kleur={BLAUW} maat={6} />
+      <path d={`M${RK} 360 V6`} fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={op} />
+      <Pijlpunt x={RK} y={2} hoek={-90} kleur={C.red} maat={7} />
+
+      {/* per woning: toestel met twee losse leidingen uit de bovenkant */}
+      {woningen.map((top) => {
+        const yB = top + 16; // bovenste leiding: naar het luchtkanaal
+        const yO = top + 28; // onderste leiding: naar het rookgaskanaal
+        const kt = top + 46; // bovenkant toestel
+        return (
+          <g key={top}>
+            <rect x="158" y={kt - 8} width="12" height="8" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+            <rect x="186" y={kt - 8} width="12" height="8" fill="white" stroke={C.brownText} strokeWidth="1.5" />
+            <Pijp d={`M304 ${yB} H164 V${kt - 6}`} kleur={BLAUW} anim={neer} />
+            <Pijp d={`M192 ${kt - 6} V${yO} H${RK} V${yO - 8}`} kleur={C.red} anim={op} />
+            {/* T-stukken op de kanalen */}
+            <rect x="302" y={yB - 7} width="18" height="14" fill="none" stroke={C.brownText} strokeWidth="1.6" />
+            <rect x="328" y={yO - 7} width="18" height="14" fill="none" stroke={C.brownText} strokeWidth="1.6" />
+            <Toestel x={150} y={kt} />
+          </g>
+        );
+      })}
+      <SpelLabel x={144} y={184} anker="end">toestel</SpelLabel>
     </svg>
   );
 }
@@ -815,26 +927,37 @@ function R1Eigenschappen({ beoordeel, noteer, zie, onKlaar }) {
   const [items] = useState(maakR1Eigenschappen);
   const [index, setIndex] = useState(0);
   const [keuze, setKeuze] = useState([]);
+  const [beantwoord, setBeantwoord] = useState(false);
   const [melding, setMelding] = useState(null);
   const item = items[index];
-  const klaar = index >= items.length;
+  const laatste = index + 1 >= items.length;
   useBovenaan("r1-stap2");
 
-  const wissel = (id) => setKeuze((k) => (k.includes(id) ? k.filter((x) => x !== id) : [...k, id]));
+  const wissel = (id) => {
+    if (beantwoord) return;
+    setKeuze((k) => (k.includes(id) ? k.filter((x) => x !== id) : [...k, id]));
+  };
 
   const controleer = (e) => {
+    if (beantwoord) return;
     zie(item.feiten);
     const goed = keuze.length === item.juist.length && item.juist.every((j) => keuze.includes(j));
     if (goed) {
       beoordeel("goed", e);
       setMelding({ soort: "goed", tekst: `Juist. ${item.uitleg}` });
-      setIndex((i) => i + 1);
-      setKeuze([]);
+      setBeantwoord(true);
     } else {
       beoordeel("fout", e);
       noteer(`${item.tekst.replace(/\.$/, "")}: ${item.juist.map((j) => R1_SYSTEMEN.find((s) => s.id === j).naam).join(", ")}`);
       setMelding({ soort: "fout", tekst: `Niet goed. ${item.uitleg} Pas je keuze aan.` });
     }
+  };
+
+  const volgende = () => {
+    setIndex((i) => i + 1);
+    setKeuze([]);
+    setBeantwoord(false);
+    setMelding(null);
   };
 
   return (
@@ -844,42 +967,48 @@ function R1Eigenschappen({ beoordeel, noteer, zie, onKlaar }) {
         titel="Welk systeem is dit?"
         stap={2}
         opdracht="Bij welke systemen past deze eigenschap? Vaak is het er meer dan een. Tik ze aan en druk op Controleer."
-        gedaan={index}
+        gedaan={index + (beantwoord ? 1 : 0)}
         totaal={items.length}
       />
       <div className="flex flex-col gap-3 w-full max-w-md">
-        {!klaar ? (
-          <>
-            <div className="rounded-2xl border-2 p-4 text-center shadow-md" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
-              <div className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: C.olive }}>Eigenschap</div>
-              <div className="text-base font-bold italic" style={{ color: C.brownText }}>{item.tekst}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {R1_SYSTEMEN.map((sys) => {
-                const aan = keuze.includes(sys.id);
-                return (
-                  <button
-                    key={sys.id}
-                    type="button"
-                    aria-pressed={aan}
-                    onClick={() => wissel(sys.id)}
-                    className="min-h-[52px] rounded-xl border-2 px-1 text-sm font-bold leading-tight transition-colors"
-                    style={{ backgroundColor: aan ? C.olive : C.bgCard, borderColor: aan ? C.oliveDark : C.beigeMid, color: aan ? "white" : C.brownText }}
-                  >
-                    {aan ? "✓ " : ""}
-                    {sys.naam}
-                  </button>
-                );
-              })}
-            </div>
-            <GameButton onClick={controleer} disabled={keuze.length === 0} className="w-full">
-              Controleer
-            </GameButton>
-          </>
-        ) : (
-          <GameButton onClick={onKlaar} variant="green" className="w-full">Naar de controlevragen</GameButton>
+        <div className="rounded-2xl border-2 p-4 text-center shadow-md" style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}>
+          <div className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: C.olive }}>Eigenschap</div>
+          <div className="text-base font-bold italic" style={{ color: C.brownText }}>{item.tekst}</div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {R1_SYSTEMEN.map((sys) => {
+            const aan = keuze.includes(sys.id);
+            return (
+              <button
+                key={sys.id}
+                type="button"
+                aria-pressed={aan}
+                onClick={() => wissel(sys.id)}
+                disabled={beantwoord}
+                className="min-h-[52px] rounded-xl border-2 px-1 text-sm font-bold leading-tight transition-colors disabled:cursor-default"
+                style={{ backgroundColor: aan ? C.olive : C.bgCard, borderColor: aan ? C.oliveDark : C.beigeMid, color: aan ? "white" : C.brownText }}
+              >
+                {aan ? "✓ " : ""}
+                {sys.naam}
+              </button>
+            );
+          })}
+        </div>
+        {!beantwoord && (
+          <GameButton onClick={controleer} disabled={keuze.length === 0} className="w-full">
+            Controleer
+          </GameButton>
         )}
         <Melding melding={melding} />
+        {beantwoord &&
+          (laatste ? (
+            <GameButton onClick={onKlaar} variant="green" className="w-full">Naar de controlevragen</GameButton>
+          ) : (
+            <GameButton onClick={volgende} variant="green" className="w-full">
+              Volgende eigenschap
+              <ArrowRight className="w-4 h-4" />
+            </GameButton>
+          ))}
       </div>
     </div>
   );
@@ -891,13 +1020,13 @@ function Ronde1({ beoordeel, noteer, zie, onDone, qaFase }) {
     return (
       <RondeIntro title="Ronde 1: Welk systeem is dit?" intro="In veel flats zijn de toestellen aangesloten op kanalen in een schacht. In deze ronde zie je drie uitvoeringen." onStart={() => setFase("stap1")}>
         <UitlegItem term="CLV">
-          alle toestellen in de flat delen een luchtkanaal en een rookgaskanaal. De lucht komt boven het dak via de kap binnen.
+          alle toestellen op de schacht delen een luchtkanaal en een rookgaskanaal. De lucht komt boven het dak via de kap binnen.
         </UitlegItem>
         <UitlegItem term="Half-CLV">
-          alleen de rookgasafvoer is gezamenlijk. Elk toestel haalt zijn lucht zelf, bijvoorbeeld via een rooster in de gevel.
+          alleen de rookgasafvoer is gezamenlijk. Elk toestel haalt zijn lucht zelf, bijvoorbeeld via een rooster in de gevel. De afvoer werkt op natuurlijke trek. Door trek en wind kunnen grote drukverschillen over het toestel ontstaan; het toestel moet daartegen bestand zijn.
         </UitlegItem>
         <UitlegItem term="Concentrisch of parallel">
-          concentrisch is een buis in een buis: het luchtkanaal zit om het rookgaskanaal. Parallel zijn het twee losse kanalen naast elkaar.
+          concentrisch is een buis in een buis: het luchtkanaal zit om het rookgaskanaal. Parallel zijn het twee losse kanalen naast elkaar. De norm voor het onderdruk-CLV (NPR 3378-40) gaat alleen over metalen, concentrische systemen.
         </UitlegItem>
       </RondeIntro>
     );
@@ -922,9 +1051,32 @@ const leidingY = (t) => ({ rook: t.y - 20, lucht: t.y - 11 });
 
 function Badge({ x, y, tekst, kleur, breed = 20 }) {
   return (
-    <g>
+    <g data-spel="teken">
       <rect x={x - breed / 2} y={y - 12} width={breed} height="24" rx="12" fill="white" stroke={kleur} strokeWidth="1.8" />
       <text x={x} y={y + 6} fontSize="17" fontWeight="800" fill={kleur} textAnchor="middle">{tekst}</text>
+    </g>
+  );
+}
+
+// Concentrische aansluitleiding (C(10)): uit de bovenkant van het toestel omhoog en
+// horizontaal naar het kanaal. De buitenpijp sluit aan op de buitenbuis (lucht uit de
+// ring naar het toestel, blauw); de binnenpijp loopt door de ring tot de binnenbuiswand
+// en het rookgas buigt in de binnenbuis omhoog (rood). Werkt naar rechts en naar links.
+function ConcLeiding({ x, y, yH, buiten, binnen, cx, stil = false, op, neer }) {
+  const r = buiten > x ? 1 : -1; // richting naar het kanaal: -1 = naar links
+  const off = 4.2; // blauw loopt in de buitenbocht, tussen binnenpijp en buitenpijp
+  return (
+    <g>
+      <path d={`M${x} ${y} V${yH} H${buiten}`} fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" />
+      <path d={`M${x} ${y} V${yH} H${buiten}`} fill="none" stroke="white" strokeWidth="10" strokeLinejoin="round" />
+      <path d={`M${x} ${y} V${yH} H${binnen}`} fill="none" stroke={C.brownText} strokeWidth="5.5" strokeLinejoin="round" />
+      <path d={`M${x} ${y} V${yH} H${binnen}`} fill="none" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+      {!stil && (
+        <>
+          <path d={`M${buiten} ${yH - off} H${x - r * off} V${y}`} fill="none" stroke={BLAUW} strokeWidth="1.3" style={neer} />
+          <path d={`M${x} ${y} V${yH} H${cx} V${yH - 12}`} fill="none" stroke={C.red} strokeWidth="2" style={op} />
+        </>
+      )}
     </g>
   );
 }
@@ -991,21 +1143,30 @@ function DrukSchacht({ modus, scene = {} }) {
           <path d="M105 384 V388 H150" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinejoin="round" />
           <rect x="86" y="392" width="38" height="22" fill="white" stroke={C.brownText} strokeWidth="1.8" />
           {[96, 105, 114].map((x) => <circle key={x} cx={x} cy="403" r="3.6" fill="none" stroke={C.brownText} strokeWidth="1.3" />)}
-          <rect x="123" y="344" width="6" height="14" rx="2" fill="white" stroke={C.brownText} strokeWidth="1.4" />
+          {/* einde van de binnenbuis: dwarslijn over de volle breedte */}
+          <line x1={IL} y1="350" x2={IR} y2="350" stroke={C.brownText} strokeWidth="2.4" />
+          {/* bouwkundig luik: opening in de rechterschachtwand, plaat aan de woningkant, vast boven en onder */}
           <rect x="134" y="338" width="10" height="26" fill="white" />
           <rect x="144" y="334" width="5" height="34" fill="white" stroke={C.brownText} strokeWidth="1.5" />
           <line x1="149" y1="338" x2="155" y2="338" stroke={C.brownText} strokeWidth="1.4" />
           <line x1="149" y1="364" x2="155" y2="364" stroke={C.brownText} strokeWidth="1.4" />
-          <text x="160" y="356" {...lbl} fill={C.brownText}>inspectieluik</text>
+          {/* inspectiedeksel: kort stompje rechts op de buitenbuis met een rond, geribbeld deksel */}
+          <rect x="124" y="346" width="4" height="10" fill="white" stroke={C.brownText} strokeWidth="1.3" />
+          <rect x="128" y="341" width="5" height="20" rx="2.5" fill="white" stroke={C.brownText} strokeWidth="1.4" />
+          {[345, 349, 353, 357].map((y) => <line key={y} x1="129" y1={y} x2="132" y2={y} stroke={C.brownText} strokeWidth="0.9" />)}
+          <SpelLabel x={160} y={356}>luik</SpelLabel>
           <DrainageTrein x={150} y={388} s={0.8} strokeWidth={2.2} riool={false} />
           <path d="M180 392 H206" fill="none" stroke={C.brownText} strokeWidth="2.2" strokeLinecap="round" />
-          <text x="212" y="397" {...lbl} fill={C.brown}>riool</text>
+          <SpelLabel x={212} y={397}>riool</SpelLabel>
           <KapF1 cx={cx} y0={dak} w={19} wi={7} gaasId="gaasV2" />
         </g>
       ) : (
         <g>
           {/* onderzijde overdruk: binnenbuis dicht met sifon, twee deksels, opvang met afvoer */}
           <line x1={IL} y1="338" x2={IR} y2="338" stroke={C.brownText} strokeWidth="2.4" />
+          {/* klein zijstuk met deksel rechts op de binnenbuis, net boven haar bodem */}
+          <rect x={IR} y="328" width="4.5" height="7" fill="white" stroke={C.brownText} strokeWidth="1.1" />
+          <rect x={IR + 4.5} y="326" width="2.5" height="11" fill="white" stroke={C.brownText} strokeWidth="1.1" />
           <path d="M103 338 V350 Q103 355 107 355 Q111 355 111 350 V345" fill="none" stroke={C.brownText} strokeWidth="1.6" />
           {[326, 352].map((y) => (
             <g key={y}>
@@ -1023,7 +1184,16 @@ function DrukSchacht({ modus, scene = {} }) {
       {/* stroming in het kanaal */}
       <path d={`M${cx} ${over ? 334 : 346} V${dak - 40}`} fill="none" stroke={C.red} strokeWidth={zwak ? 2 : over ? 4.5 : 3.5} strokeLinecap="round" style={op} />
       <path d={`M${ringL} ${dak + 6} V${over ? 330 : 346}`} fill="none" stroke={BLAUW} strokeWidth={zwak ? 1.6 : 2.2} style={neer} />
-      <path d={`M${ringR} ${dak + 6} V${over ? 320 : 346}`} fill="none" stroke={BLAUW} strokeWidth={zwak ? 1.6 : 2.2} style={neer} />
+      {over ? (
+        <path d={`M${ringR} ${dak + 6} V320`} fill="none" stroke={BLAUW} strokeWidth={zwak ? 1.6 : 2.2} style={neer} />
+      ) : (
+        <>
+          {/* rechter ring: langs het einde van de binnenbuis omlaag en eronder naar links (doorgetrokken pijl) */}
+          <path d={`M${ringR} ${dak + 6} V358 Q${ringR} 362 ${ringR - 4} 362 H108`} fill="none" stroke={BLAUW} strokeWidth={zwak ? 1.6 : 2.2} style={neer} />
+          <path d={`M${ringR} 344 V358 Q${ringR} 362 ${ringR - 4} 362 H108`} fill="none" stroke={BLAUW} strokeWidth="1.3" />
+          <Pijlpunt x={104} y={362} hoek={180} kleur={BLAUW} maat={5} />
+        </>
+      )}
 
       {/* toestellen met aansluitleidingen */}
       {toestellen.map((t) => {
@@ -1037,17 +1207,12 @@ function DrukSchacht({ modus, scene = {} }) {
                 <Pijp d={`M124 ${lucht} H214 V${t.y}`} kleur={stil ? null : BLAUW} anim={neer} dik={7} />
               </>
             ) : (
-              <>
-                <path d={`M221 ${t.y} V${rook + 4} H124`} fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" />
-                <path d={`M221 ${t.y} V${rook + 4} H124`} fill="none" stroke="white" strokeWidth="9.5" strokeLinejoin="round" />
-                <path d={`M221 ${t.y} V${rook + 4} H${cx} V${rook - 8}`} fill="none" stroke={C.brownText} strokeWidth="1.3" strokeLinejoin="round" />
-                {!stil && <path d={`M221 ${t.y} V${rook + 4} H${cx} V${rook - 8}`} fill="none" stroke={C.red} strokeWidth="2" style={op} />}
-              </>
+              <ConcLeiding x={221} y={t.y} yH={rook + 4} buiten={124} binnen={IR} cx={cx} stil={stil} op={op} neer={neer} />
             )}
             <rect x="196" y={t.y} width="48" height="56" fill={stil ? "#EDEDED" : "white"} stroke={C.brownText} strokeWidth="2" />
             {!over && <rect x="200" y={t.y + 42} width="20" height="8" fill="white" stroke={C.brownText} strokeWidth="1" />}
             {scene.status && (
-              <text x="220" y={t.y + 34} fontSize="17" fontWeight="800" fill={stil ? C.brown : C.green} textAnchor="middle">
+              <text data-spel="status" x="220" y={t.y + 34} fontSize="17" fontWeight="800" fill={stil ? C.brown : C.green} textAnchor="middle">
                 {stil ? "UIT" : "AAN"}
               </text>
             )}
@@ -1057,20 +1222,20 @@ function DrukSchacht({ modus, scene = {} }) {
 
       {/* ── spelaanwijzingen per casus ── */}
       {scene.klep === "vraag" && (
-        <g>
+        <g data-spel="klep">
           <circle cx={klepX} cy={T2.y - 6} r="7" fill="white" stroke={ORANJE} strokeWidth="2" strokeDasharray="3 2" />
           <text x={klepX} y={T2.y} fontSize="17" fontWeight="800" fill={ORANJE} textAnchor="middle">?</text>
         </g>
       )}
       {scene.klep === "dicht" && (
-        <g>
+        <g data-spel="klep">
           <circle cx={klepX} cy={T2.y - 6} r="7" fill={C.greenLight} stroke={C.green} strokeWidth="2" />
           <line x1={klepX - 5} y1={T2.y - 6} x2={klepX + 5} y2={T2.y - 6} stroke={C.green} strokeWidth="2.5" />
           <text x={klepX + 12} y={T2.y - 1} {...lbl} fill={C.green}>klepje dicht</text>
         </g>
       )}
       {scene.terug && (
-        <g>
+        <g data-spel="terug">
           {/* zonder klepje stroomt rookgas uit het kanaal terug de stilstaande ketel in (C10 bijlage D) */}
           <path d={`M${cx} ${leidingY(T2).rook - 6} V${leidingY(T2).rook + 4} H${klepX} V${T2.y + 26}`} fill="none" stroke={C.red} strokeWidth="3.5" style={terug} />
           <Pijlpunt x={klepX} y={T2.y + 33} hoek={90} kleur={C.red} maat={7} />
@@ -1080,13 +1245,10 @@ function DrukSchacht({ modus, scene = {} }) {
         </g>
       )}
       {scene.derde && (
-        <g>
+        <g data-spel="derde">
           {/* tweede toestel op dezelfde verdieping, links van het kanaal */}
           {/* concentrische aansluitleiding, net als rechts: buitenpijp tot het kanaal, binnenleiding tot in de binnenbuis */}
-          <path d={`M36 ${T2.y} V${leidingY(T2).rook + 4} H86`} fill="none" stroke={C.brownText} strokeWidth="13" strokeLinejoin="round" />
-          <path d={`M36 ${T2.y} V${leidingY(T2).rook + 4} H86`} fill="none" stroke="white" strokeWidth="9.5" strokeLinejoin="round" />
-          <path d={`M36 ${T2.y} V${leidingY(T2).rook + 4} H${cx} V${leidingY(T2).rook - 8}`} fill="none" stroke={C.brownText} strokeWidth="1.3" strokeLinejoin="round" />
-          <path d={`M36 ${T2.y} V${leidingY(T2).rook + 4} H${cx} V${leidingY(T2).rook - 8}`} fill="none" stroke={C.red} strokeWidth="2" style={op} />
+          <ConcLeiding x={36} y={T2.y} yH={leidingY(T2).rook + 4} buiten={86} binnen={IL} cx={cx} op={op} neer={neer} />
           <rect x="12" y={T2.y} width="48" height="56" fill="white" stroke={C.brownText} strokeWidth="2" />
           <text x="36" y={T2.y + 33} {...lbl} fill={C.brownText} textAnchor="middle">2e</text>
           <text x="220" y={T2.y + 33} {...lbl} fill={C.brownText} textAnchor="middle">1e</text>
@@ -1101,10 +1263,10 @@ function DrukSchacht({ modus, scene = {} }) {
         </g>
       )}
       {scene.markeerOnder && (
-        <rect x="88" y="318" width="34" height="44" rx="6" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
+        <rect data-spel="markeer" x="88" y="318" width="34" height="44" rx="6" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
       )}
       {scene.wind && (
-        <g stroke={C.brown} strokeWidth="2" fill="none" strokeLinecap="round">
+        <g data-spel="wind" stroke={C.brown} strokeWidth="2" fill="none" strokeLinecap="round">
           <path d="M8 40 q10 -6 20 0 t20 0" />
           <path d="M8 54 q10 -6 20 0 t20 0" />
           <text x="8" y="28" {...lbl} fill={C.brown} stroke="none">wind</text>
@@ -1112,21 +1274,21 @@ function DrukSchacht({ modus, scene = {} }) {
       )}
       {scene.storing &&
         toestellen.map((t) => (
-          <g key={`s${t.y}`}>
+          <g key={`s${t.y}`} data-spel="storing">
             <circle cx="244" cy={t.y} r="9" fill={C.red} />
             <text x="244" y={t.y + 4} fontSize="12" fontWeight="900" fill="white" textAnchor="middle">!</text>
           </g>
         ))}
       {scene.tekens === "aansluiting" &&
         toestellen.map((t) => (
-          <g key={`a${t.y}`}>
+          <g key={`a${t.y}`} data-spel="tekens">
             <Badge x={170} y={leidingY(t).rook} tekst="+" kleur={C.red} />
             <Badge x={cx} y={t.y + 40} tekst="−" kleur={BLAUW} />
           </g>
         ))}
       {scene.tekens === "verschil" &&
         toestellen.map((t) => (
-          <g key={`v${t.y}`}>
+          <g key={`v${t.y}`} data-spel="tekens">
             <Badge x={166} y={leidingY(t).rook - 6} tekst="lager" kleur={C.red} breed={56} />
             <Badge x={166} y={leidingY(t).lucht + 16} tekst="hoger" kleur={BLAUW} breed={56} />
           </g>
@@ -1237,8 +1399,26 @@ function maakR2Casussen() {
   return schud(ids).map((id) => ({ id, ...R2_CASUSSEN[id], opties: schud(R2_CASUSSEN[id].opties) }));
 }
 
-// Ruimte onder de pagina zodat de tekening boven de vaste balk kan scrollen
-const RUIMTE_HOGE_BALK = "pb-[21rem] md:pb-6";
+// Op een telefoon: schuif de pagina zo dat de hele tekening boven de vaste
+// balk staat (de balk meldt zijn hoogte in --balk-hoogte). Zo ziet de speler
+// het gevolg in de tekening, ook als de balk na een antwoord groeit.
+function useTekeningBovenBalk(ref, sleutel) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const el = ref.current;
+      if (!el) return;
+      const balk = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--balk-hoogte")) || 0;
+      if (balk <= 0) return;
+      const r = el.getBoundingClientRect();
+      const onderrand = window.innerHeight - balk - 8;
+      if (r.bottom <= onderrand) return;
+      // niet verder dan de bovenkant van de tekening
+      const dy = Math.min(r.bottom - onderrand, Math.max(0, r.top - 8));
+      if (dy > 0) window.scrollBy({ top: dy, behavior: "smooth" });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [ref, sleutel]);
+}
 
 function SysteemLabel({ modus }) {
   return (
@@ -1256,10 +1436,14 @@ function R2Casussen({ beoordeel, noteer, zie, onKlaar }) {
   const [index, setIndex] = useState(0);
   const [fout, setFout] = useState([]);
   const [goedGekozen, setGoedGekozen] = useState(false);
+  // na een fout eerst de tekening bekijken: de keuzes komen terug met "Kies opnieuw"
+  const [kijken, setKijken] = useState(false);
   const [melding, setMelding] = useState(null);
+  const tekeningRef = useRef(null);
   const casus = casussen[index];
   const scene = goedGekozen ? casus.na(true) : fout.length > 0 ? casus.na(false) : casus.voor;
   useBovenaan(`r2-casus-${index}`);
+  useTekeningBovenBalk(tekeningRef, `${index}-${fout.length}-${goedGekozen}-${kijken}`);
 
   const kiesOptie = (optie, e) => {
     if (goedGekozen || fout.includes(optie.id)) return;
@@ -1272,7 +1456,8 @@ function R2Casussen({ beoordeel, noteer, zie, onKlaar }) {
       beoordeel("fout", e);
       noteer(casus.aandacht);
       setFout((f) => [...f, optie.id]);
-      setMelding({ soort: "fout", tekst: `${casus.fout} Kies nu het goede antwoord.` });
+      setKijken(true);
+      setMelding({ soort: "fout", tekst: casus.fout });
     }
   };
 
@@ -1284,11 +1469,12 @@ function R2Casussen({ beoordeel, noteer, zie, onKlaar }) {
     setIndex(index + 1);
     setFout([]);
     setGoedGekozen(false);
+    setKijken(false);
     setMelding(null);
   };
 
   return (
-    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_HOGE_BALK}`}>
+    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
       <OpdrachtKop
         nummer={2}
         titel="Onderdruk of overdruk?"
@@ -1298,14 +1484,20 @@ function R2Casussen({ beoordeel, noteer, zie, onKlaar }) {
         totaal={casussen.length}
       />
       <div className="flex flex-col md:flex-row gap-4 w-full max-w-3xl items-center md:items-start">
-        <div className="w-full max-w-[250px] md:max-w-[330px]">
+        <div ref={tekeningRef} className="w-full max-w-[250px] md:max-w-[330px]">
           <SysteemLabel modus={casus.modus} />
           <DrukSchacht modus={casus.modus} scene={scene} />
         </div>
         <VasteBalk className="md:flex-1">
           <p className="text-sm font-bold" style={{ color: C.brownText }}>{casus.vraag}</p>
           <Melding melding={melding} />
+          {!goedGekozen && kijken && (
+            <GameButton onClick={() => setKijken(false)} variant="secondary" className="w-full">
+              Kies opnieuw
+            </GameButton>
+          )}
           {!goedGekozen &&
+            !kijken &&
             casus.opties.map((o) => (
               <KeuzeKnop key={o.id} onClick={(e) => kiesOptie(o, e)} disabled={fout.includes(o.id)} fout={fout.includes(o.id)}>
                 {o.tekst}
@@ -1339,7 +1531,7 @@ const R2_KENMERKEN = {
     { id: "v5", tekst: "Ook de aansluitstompen en aansluitleidingen zijn altijd concentrisch", goed: "Juist: bij C(10) zijn kanalen, stompen en aansluitleidingen allemaal concentrisch.", fout: "Niet goed. Bij C(10) zijn ook stompen en aansluitleidingen concentrisch. Bij het onderdruk-CLV in de tekening zie je twee losse leidingen.", feiten: ["5.2e-03", "F1"] },
     { id: "v6", tekst: "De binnenbuis is onderaan dicht, met een eigen sifon", goed: "Juist: bij het overdruk-CLV is de binnenbuis onderaan dicht en heeft hij een eigen sifon.", fout: "Niet goed. Kijk in de tekening: bij overdruk is de binnenbuis onderaan dicht, met een eigen sifon.", feiten: ["F4", "5.2d-02"] },
     { id: "v7", tekst: "Geschikt voor de gesloten HR-toestellen die nu op de markt zijn", goed: "Juist: sinds 2015 komen alleen nog gesloten HR-toestellen op de markt. Een onderdruk-CLV werkt daar niet meer voor.", fout: "Niet goed. Dit is overdruk. Voor de HR-toestellen van nu werkt een onderdruk-CLV niet meer.", feiten: ["5.1c-07"] },
-    { id: "v8", tekst: "Onderaan twee deksels boven elkaar: een op het luchtkanaal en een op het rookgaskanaal", goed: "Juist: bij het C(10)-systeem zitten achter het bouwkundige luik aparte luikjes op het luchtkanaal en op het rookgaskanaal.", fout: "Niet goed. Kijk onderaan in de tekening: het C(10)-systeem heeft aparte luikjes op het luchtkanaal en op het rookgaskanaal.", feiten: ["5.2a-04", "F4"] },
+    { id: "v8", tekst: "Onderaan twee deksels boven elkaar: een op het luchtkanaal en een op het rookgaskanaal", goed: "Juist: bij het C(10)-systeem zitten onderaan op het kanaal aparte luikjes, een op het luchtkanaal en een op het rookgaskanaal.", fout: "Niet goed. Kijk onderaan in de tekening: het C(10)-systeem heeft aparte luikjes op het luchtkanaal en op het rookgaskanaal.", feiten: ["5.2a-04", "F4"] },
   ],
 };
 
@@ -1362,13 +1554,13 @@ function R2Kenmerken({ beoordeel, noteer, zie, onKlaar }) {
   useBovenaan("r2-stap2");
 
   return (
-    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_HOGE_BALK}`}>
+    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
       <OpdrachtKop
         nummer={2}
         titel="Onderdruk of overdruk?"
         stap={2}
         opdracht="Hoort dit kenmerk bij onderdruk of bij overdruk? Met de schuif kun je beide tekeningen bekijken."
-        gedaan={stapel.index}
+        gedaan={stapel.gedaan}
         totaal={kaarten.length}
       />
       <div className="flex flex-col md:flex-row gap-4 w-full max-w-3xl items-center md:items-start">
@@ -1383,27 +1575,24 @@ function R2Kenmerken({ beoordeel, noteer, zie, onKlaar }) {
           <DrukSchacht modus={modus} />
         </div>
         <VasteBalk className="md:flex-1">
-          {!stapel.klaar ? (
-            <>
-              <div className="text-center">
-                <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Kenmerk</div>
-                <div className="text-base font-bold italic leading-snug" style={{ color: C.brownText }}>{stapel.item.tekst}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  ["onderdruk", "Onderdruk-CLV"],
-                  ["overdruk", "Overdruk-CLV C(10)"],
-                ].map(([id, label]) => (
-                  <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
-                    <span className="block text-center">{label}</span>
-                  </KeuzeKnop>
-                ))}
-              </div>
-            </>
-          ) : (
-            <GameButton onClick={onKlaar} variant="green" className="w-full">Naar de controlevragen</GameButton>
+          <div className="text-center">
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Kenmerk</div>
+            <div className="text-base font-bold italic leading-snug" style={{ color: C.brownText }}>{stapel.item.tekst}</div>
+          </div>
+          {!stapel.beantwoord && (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ["onderdruk", "Onderdruk-CLV"],
+                ["overdruk", "Overdruk-CLV C(10)"],
+              ].map(([id, label]) => (
+                <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
+                  <span className="block text-center">{label}</span>
+                </KeuzeKnop>
+              ))}
+            </div>
           )}
           <Melding melding={stapel.melding} />
+          <StapelVerder stapel={stapel} onKlaar={onKlaar} />
         </VasteBalk>
       </div>
     </div>
@@ -1416,10 +1605,10 @@ function Ronde2({ beoordeel, noteer, zie, onDone, qaFase }) {
     return (
       <RondeIntro title="Ronde 2: Onderdruk of overdruk?" intro="Een CLV kan op twee manieren werken. Zeg dus altijd welk systeem je bedoelt." onStart={() => setFase("stap1")}>
         <UitlegItem term="Onderdruk-CLV">
-          het hete rookgas stijgt op en zuigt zo de lucht aan: natuurlijke trek. In het rookgaskanaal is de druk lager dan in het luchtkanaal.
+          het hete rookgas stijgt op en zuigt zo de lucht aan: natuurlijke trek. In het rookgaskanaal is de druk lager dan in het luchtkanaal. De ventilator in het toestel geeft alleen in de aansluitleiding overdruk.
         </UitlegItem>
         <UitlegItem term="Overdruk-CLV C(10)">
-          de ventilatoren in de toestellen duwen het rookgas door het kanaal: in het rookgaskanaal is overdruk. Elk toestel heeft een terugslagklepje en per verdieping mogen maximaal 2 toestellen.
+          de ventilatoren in de toestellen duwen het rookgas door het kanaal: in het rookgaskanaal is overdruk. Elk toestel heeft een terugslagklepje en per verdieping mogen maximaal 2 toestellen. Onderaan mag geen trekonderbreker.
         </UitlegItem>
         <UitlegItem term="Waarom overdruk?">
           HR-ketels maken koeler rookgas, dus minder trek. Sinds 2015 mogen alleen nog gesloten HR-toestellen op de markt. Daar werkt een onderdruk-CLV niet meer voor.
@@ -1545,7 +1734,7 @@ function SchachtOnderdelen({ placed, keur = null }) {
           const x1 = o.side === "left" ? o.zone.x + R3_ZONE.w : o.zone.x;
           const y1 = o.zone.y + R3_ZONE.h / 2;
           return (
-            <g key={`lijn-${o.id}`}>
+            <g key={`lijn-${o.id}`} data-spel="verwijslijn">
               <line x1={x1} y1={y1} x2={o.anchor.x} y2={o.anchor.y} stroke={ok(o.id) ? C.green : C.brown} strokeWidth="1.5" strokeDasharray="4 3" />
               <circle cx={o.anchor.x} cy={o.anchor.y} r="3.5" fill={ok(o.id) ? C.green : C.brown} />
             </g>
@@ -1573,6 +1762,13 @@ function SchachtOnderdelen({ placed, keur = null }) {
       {/* dak dicht rond de pijp: deksegmenten tussen schachtwand en doorvoer */}
       <rect x="250" y="150" width="14" height="18" fill="url(#hatchV3)" stroke={C.brownText} strokeWidth="2" />
       <rect x="296" y="150" width="14" height="18" fill="url(#hatchV3)" stroke={C.brownText} strokeWidth="2" />
+      {/* verdiepingsvloeren lopen door de schachtwanden tot tegen het kanaal (F1) */}
+      {[178, 238, 298].map((y) => (
+        <g key={`vs${y}`}>
+          <rect x="234" y={y} width="30" height="8" fill="url(#hatchV3)" stroke={C.brownText} strokeWidth="1.4" />
+          <rect x="296" y={y} width="30" height="8" fill="url(#hatchV3)" stroke={C.brownText} strokeWidth="1.4" />
+        </g>
+      ))}
 
       {/* concentrische pijp: buitenwand (264/296) loopt door tot aan de drukvereffening onderin */}
       <line x1="264" y1="120" x2="264" y2="456" stroke={C.brownText} strokeWidth="2" />
@@ -1611,13 +1807,13 @@ function SchachtOnderdelen({ placed, keur = null }) {
         <line x1="288" y1="84" x2="288" y2="144" stroke={C.brownText} strokeWidth="1.2" strokeDasharray="4 3" />
         <rect x="250" y="80" width="60" height="4" fill={mark("uitstroming")} />
         <rect x="273" y="68" width="14" height="12" fill={fillOk("uitstroming")} stroke={mark("uitstroming")} strokeWidth="2" />
-        <g stroke={C.red} strokeWidth="2.4" fill="none" strokeLinecap="round">
+        <g stroke={C.red} strokeWidth="2.4" fill="none" strokeLinecap="round" style={KAP_OP}>
           <path d="M276 66 L270 50" />
           <path d="M284 66 L290 50" />
         </g>
         <Pijlpunt x={269} y={46} hoek={-110} kleur={C.red} />
         <Pijlpunt x={291} y={46} hoek={-70} kleur={C.red} />
-        <g stroke={BLAUW} strokeWidth="2" fill="none" strokeLinecap="round">
+        <g stroke={BLAUW} strokeWidth="2" fill="none" strokeLinecap="round" style={KAP_NEER}>
           <path d="M222 72 L258 92 Q264 96 266 112" />
           <path d="M338 72 L302 92 Q296 96 294 112" />
         </g>
@@ -1631,6 +1827,12 @@ function SchachtOnderdelen({ placed, keur = null }) {
       <path d="M292 124 L292 370" fill="none" stroke={BLAUW} strokeWidth="3" strokeLinecap="round" style={flowDown} />
       <path d="M287 364 L292 373 L297 364" fill="none" stroke={BLAUW} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M280 402 L280 80" fill="none" stroke={C.red} strokeWidth="4" strokeLinecap="round" style={flowUp} />
+      {/* einde van de binnenbuis (F1): dwarslijn, en een doorgetrokken pijl in de rechter
+          ring die langs het einde omlaag gaat en eronder naar links buigt. Verder is de
+          goedgekeurde onderzijde ongewijzigd. */}
+      <line x1="272" y1="406" x2="288" y2="406" stroke={C.brownText} strokeWidth="2.4" />
+      <path d="M292 400 V407 Q292 412 287 412 H283" fill="none" stroke={BLAUW} strokeWidth="2" strokeLinecap="round" />
+      <Pijlpunt x={279} y={412} hoek={180} kleur={BLAUW} maat={5} />
 
       {/* AANSLUITSTOMPEN per verdieping (NPR 3378-40 fig 1): twee losse
           leidingen door de rechterschachtwand; de bovenste gaat door tot in de
@@ -1654,7 +1856,7 @@ function SchachtOnderdelen({ placed, keur = null }) {
       <DrainageTrein x={350} y={434} s={1.2} stroke={mark("condens")} strokeWidth={ok("condens") ? 2.4 : 2} riool={false} />
       {/* na sifon 2: omhoog, over de vloer en met een OPEN uiteinde in de vloersparing (NEN 3287) */}
       <path d="M394 440 V426 H466 V474" fill="none" stroke={mark("condens")} strokeWidth={ok("condens") ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round" />
-      <text x="452" y="496" fontSize="20" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
+      <text data-spel="label" x="452" y="496" fontSize="20" fontWeight="600" fill={C.brown} textAnchor="middle">riool</text>
 
       {/* DRUKVEREFFENINGSCONSTRUCTIE: geperforeerde strook onderin het kanaal, tussen de buitenwanden */}
       <g>
@@ -1666,14 +1868,14 @@ function SchachtOnderdelen({ placed, keur = null }) {
 
       {/* ── keurkaarten (stap 2): de situatie wordt in de tekening getoond ── */}
       {keur?.toon === "luikmaat" && (
-        <g>
+        <g data-spel="keur">
           <rect x="304" y="369" width="30" height="42" rx="4" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
           <rect x="338" y="376" width="92" height="28" rx="6" fill="white" stroke={ORANJE} strokeWidth="2" />
           <text x="384" y="396" fontSize="16" fontWeight="800" fill={ORANJE} textAnchor="middle">{keur.waarde}</text>
         </g>
       )}
       {keur?.toon === "afstand" && (
-        <g>
+        <g data-spel="keur">
           {/* hartlijn van het kanaal en de maat tot de voorkant van het luik (zoals fig 1, maat 2) */}
           <line x1="280" y1="380" x2="280" y2="506" stroke={ORANJE} strokeWidth="1.5" strokeDasharray="10 3 2 3" />
           <line x1="328" y1="405" x2="328" y2="506" stroke={ORANJE} strokeWidth="1.2" />
@@ -1685,19 +1887,19 @@ function SchachtOnderdelen({ placed, keur = null }) {
         </g>
       )}
       {keur?.toon === "sifons" && (
-        <g>
+        <g data-spel="keur">
           <ellipse cx="374" cy="450" rx="34" ry="26" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
         </g>
       )}
       {keur?.toon === "sifondicht" && (
-        <g>
+        <g data-spel="keur">
           <rect x="374" y="430" width="30" height="40" fill="url(#hatchV3)" stroke={C.brownText} strokeWidth="2" />
           <rect x="374" y="430" width="30" height="40" fill={C.beigeMid} opacity="0.55" />
           <text x="389" y="422" fontSize="17" fontWeight="700" fill={C.brownText} textAnchor="middle">dichte wand</text>
         </g>
       )}
       {keur?.toon === "kast" && (
-        <g>
+        <g data-spel="keur">
           <rect x="330" y="356" width="64" height="114" fill={C.beigeMid} stroke={C.brownText} strokeWidth="2" />
           <line x1="362" y1="356" x2="362" y2="470" stroke={C.brownText} strokeWidth="1.2" />
           <circle cx="356" cy="412" r="2" fill={C.brownText} />
@@ -1706,10 +1908,10 @@ function SchachtOnderdelen({ placed, keur = null }) {
         </g>
       )}
       {keur?.toon === "luikvrij" && (
-        <rect x="304" y="369" width="30" height="42" rx="4" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
+        <rect data-spel="keur" x="304" y="369" width="30" height="42" rx="4" fill="none" stroke={ORANJE} strokeWidth="2.5" strokeDasharray="5 3" />
       )}
       {keur?.toon === "verbindingdicht" && (
-        <g>
+        <g data-spel="keur">
           {/* de open verbinding tussen de sifons is dichtgemaakt */}
           <rect x="374" y="432" width="12" height="22" fill={C.brownText} />
           <text x="380" y="424" fontSize="17" fontWeight="700" fill={C.brownText} textAnchor="middle">dicht</text>
@@ -1746,7 +1948,7 @@ function R3Labels({ beoordeel, noteer, zie, onKlaar }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-3 sm:p-6 pb-40 md:pb-6">
+    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
       <OpdrachtKop
         nummer={3}
         titel="De onderdelen"
@@ -1845,13 +2047,13 @@ function R3Keuren({ beoordeel, noteer, zie, onKlaar }) {
   useBovenaan("r3-stap2");
 
   return (
-    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_HOGE_BALK}`}>
+    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
       <OpdrachtKop
         nummer={3}
         titel="De onderdelen"
         stap={2}
         opdracht="Je keurt dit onderdruk-CLV. Bekijk de situatie: goedkeuren of afkeuren?"
-        gedaan={stapel.index}
+        gedaan={stapel.gedaan}
         totaal={kaarten.length}
       />
       <div className="flex flex-col md:flex-row gap-4 w-full max-w-3xl items-center md:items-start">
@@ -1859,27 +2061,24 @@ function R3Keuren({ beoordeel, noteer, zie, onKlaar }) {
           <SchachtOnderdelen placed={{}} keur={stapel.item ? { toon: stapel.item.toon, waarde: stapel.item.waarde } : { toon: null }} />
         </div>
         <VasteBalk className="md:flex-1">
-          {!stapel.klaar ? (
-            <>
-              <div className="text-center">
-                <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Situatie</div>
-                <div className="text-base font-bold italic leading-snug" style={{ color: C.brownText }}>{stapel.item.tekst}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  ["goed", "Goedkeuren"],
-                  ["af", "Afkeuren"],
-                ].map(([id, label]) => (
-                  <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
-                    <span className="block text-center">{label}</span>
-                  </KeuzeKnop>
-                ))}
-              </div>
-            </>
-          ) : (
-            <GameButton onClick={onKlaar} variant="green" className="w-full">Naar de controlevragen</GameButton>
+          <div className="text-center">
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Situatie</div>
+            <div className="text-base font-bold italic leading-snug" style={{ color: C.brownText }}>{stapel.item.tekst}</div>
+          </div>
+          {!stapel.beantwoord && (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ["goed", "Goedkeuren"],
+                ["af", "Afkeuren"],
+              ].map(([id, label]) => (
+                <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
+                  <span className="block text-center">{label}</span>
+                </KeuzeKnop>
+              ))}
+            </div>
           )}
           <Melding melding={stapel.melding} />
+          <StapelVerder stapel={stapel} onKlaar={onKlaar} />
         </VasteBalk>
       </div>
     </div>
@@ -1892,10 +2091,10 @@ function Ronde3({ beoordeel, noteer, zie, onDone, qaFase }) {
     return (
       <RondeIntro title="Ronde 3: De onderdelen" intro="Je bekijkt een onderdruk-CLV van de kap tot de vloer." onStart={() => setFase("stap1")}>
         <UitlegItem term="Wie ontwerpt het?">
-          de fabrikant ontwerpt het CLV. Het wordt al tijdens de bouw van de flat geplaatst. Voor jou als installateur is het een gegeven.
+          de CLV-fabrikant ontwerpt het CLV. Het wordt al tijdens de bouw van de flat geplaatst. Voor jou als installateur is het een gegeven.
         </UitlegItem>
         <UitlegItem term="De maat van het kanaal">
-          eerst bepaal je de belasting per strang. Een strang zijn alle toestellen boven elkaar op dezelfde afvoer; de belasting is wat die toestellen samen aan vermogen vragen. De maat volgt in overleg met de fabrikant.
+          eerst bepaal je de belasting per strang. Een strang zijn alle toestellen boven elkaar op dezelfde afvoer; de belasting is wat die toestellen samen aan vermogen vragen. De maat volgt in overleg met de toestelfabrikant. Hoe meer toestellen en hoe hoger de belasting, hoe groter het kanaal.
         </UitlegItem>
       </RondeIntro>
     );
@@ -1966,15 +2165,15 @@ const R4_GROEPEN = {
   c6: {
     kaarten: [{ id: "C62", type: "C62" }, { id: "C63", type: "C63" }],
     bak: "onder",
-    goed: "Juist. Type C6 (C62 of C63) mag ook op een onderdruk-CLV.",
-    fout: "Niet goed. C62 en C63 zijn type C6: die mogen op het onderdruk-CLV.",
+    goed: "Juist. Type C6 (C62 of C63) hoort ook bij het onderdruk-CLV.",
+    fout: "Niet goed. C62 en C63 zijn type C6: die horen bij het onderdruk-CLV.",
     aandacht: "Onderdruk-CLV: type C4 (C42, C43) of C6 (C62, C63)",
     feiten: ["5.1b-02"],
   },
   c8: {
     kaarten: [{ id: "C82", type: "C82" }, { id: "C83", type: "C83" }],
     bak: "half",
-    goed: "Juist. Op een half-CLV mag alleen type C8 (C82 of C83).",
+    goed: "Juist. Bij een half-CLV hoort alleen type C8 (C82 of C83).",
     fout: "Niet goed. C82 en C83 zijn type C8: die horen bij het half-CLV.",
     aandacht: "Half-CLV: alleen type C8 (C82, C83)",
     feiten: ["5.1b-03"],
@@ -1988,7 +2187,7 @@ const R4_GROEPEN = {
     feiten: ["5.1b-04"],
   },
   open: {
-    kaarten: [{ id: "B1", type: "B1", sub: "open toestel" }],
+    kaarten: [{ id: "B1", type: "B1" }],
     bak: "geen",
     goed: "Juist. Een open toestel mag nooit op een CLV.",
     fout: "Niet goed. Een open toestel mag op geen enkel CLV.",
@@ -2041,12 +2240,12 @@ function R4Slepen({ beoordeel, noteer, zie, onKlaar }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-3 sm:p-6 pb-40 md:pb-6">
+    <div className={`flex-1 flex flex-col items-center p-3 sm:p-6 ${RUIMTE_VOOR_BALK}`}>
       <OpdrachtKop
         nummer={4}
         titel="Welke toestellen mogen erop?"
         stap={1}
-        opdracht="Lees de typeplaat en sleep elk toestel naar het systeem waar het op mag."
+        opdracht="Lees de typeplaat en sleep elk toestel naar het systeem waar dat type bij hoort."
         gedaan={aantal}
         totaal={kaarten.length}
       />
@@ -2100,7 +2299,7 @@ function R4Slepen({ beoordeel, noteer, zie, onKlaar }) {
 }
 
 const SCHACHT_NAAM = {
-  onder: "Onderdruk-CLV (het oude C4-systeem)",
+  onder: "Onderdruk-CLV",
   half: "Half-CLV",
   over: "Overdruk-CLV C(10)",
 };
@@ -2108,11 +2307,11 @@ const SCHACHT_NAAM = {
 const R4_COMBI = {
   c10goed: { schacht: "over", ketel: { type: "C(10)3" }, juist: "mag", goed: "Juist. De plaat zegt: alleen C(10)3-toestellen. Deze ketel is C(10)3.", fout: "Niet goed. Lees de plaat bij de aansluiting: alleen C(10)3-toestellen. Deze ketel is C(10)3, dus hij mag.", aandacht: "Lees bij een C(10)-aansluiting de plaat: alleen geschikt voor C(10) toestellen", feiten: ["5.1b-07", "5.1b-04"] },
   c10fout: { schacht: "over", ketel: { type: "C43" }, juist: "niet", goed: "Juist. Op deze aansluiting mogen alleen C(10)-toestellen. Een C43 hoort bij onderdruk.", fout: "Niet goed. De plaat zegt: alleen C(10)3-toestellen. Een C43 mag hier dus niet.", aandacht: "Lees bij een C(10)-aansluiting de plaat: alleen geschikt voor C(10) toestellen", feiten: ["5.1b-07", "5.1b-02"] },
-  hrOud: { schacht: "onder", ketel: { type: "C(10)3" }, juist: "niet", goed: "Juist. C(10)3 hoort bij het overdruk-CLV. Moderne HR-ketels mogen niet op het oude C4-onderdruksysteem.", fout: "Niet goed. C(10)3 is geen C4 of C6. Moderne HR-ketels mogen niet op het oude C4-onderdruksysteem.", aandacht: "Moderne HR-ketel nooit op een oude C4-onderdrukschacht", feiten: ["5.1b-05", "5.1b-04"] },
-  halfGoed: { schacht: "half", ketel: { type: "C83" }, juist: "mag", goed: "Juist. Op een half-CLV mag type C8, dus een C83 past.", fout: "Niet goed. C83 is type C8 en dat hoort bij het half-CLV.", aandacht: "Half-CLV: alleen type C8 (C82, C83)", feiten: ["5.1b-03"] },
-  halfFout: { schacht: "half", ketel: { type: "C43" }, juist: "niet", goed: "Juist. Op een half-CLV mag alleen type C8. Een C43 hoort bij onderdruk.", fout: "Niet goed. Op een half-CLV mag alleen type C8.", aandacht: "Half-CLV: alleen type C8 (C82, C83)", feiten: ["5.1b-03"] },
-  onderGoed: { schacht: "onder", ketel: { type: "C62" }, juist: "mag", goed: "Juist. Type C6 mag op een onderdruk-CLV.", fout: "Niet goed. C62 is type C6 en dat mag op een onderdruk-CLV.", aandacht: "Onderdruk-CLV: type C4 (C42, C43) of C6 (C62, C63)", feiten: ["5.1b-02"] },
-  onderOpen: { schacht: "onder", ketel: { type: "B1", sub: "open toestel" }, juist: "niet", goed: "Juist. Een open toestel mag nooit op een CLV.", fout: "Niet goed. Op een CLV alleen gesloten toestellen met ventilator.", aandacht: "Op een CLV alleen gesloten toestellen met ventilator", feiten: ["5.1b-01"] },
+  hrOud: { schacht: "onder", ketel: { type: "C(10)3", naam: "Moderne HR-ketel" }, juist: "niet", goed: "Juist. C(10)3 hoort bij het overdruk-CLV. En een moderne HR-ketel mag niet op een oud C4-onderdruksysteem.", fout: "Niet goed. C(10)3 is geen C4 of C6. En een moderne HR-ketel mag niet op een oud C4-onderdruksysteem.", aandacht: "Moderne HR-ketel nooit op een oude C4-onderdrukschacht", feiten: ["5.1b-05", "5.1b-04"] },
+  halfGoed: { schacht: "half", ketel: { type: "C83" }, juist: "mag", goed: "Juist. Bij een half-CLV hoort type C8, dus een C83 past.", fout: "Niet goed. C83 is type C8 en dat hoort bij het half-CLV.", aandacht: "Half-CLV: alleen type C8 (C82, C83)", feiten: ["5.1b-03"] },
+  halfFout: { schacht: "half", ketel: { type: "C43" }, juist: "niet", goed: "Juist. Bij een half-CLV hoort alleen type C8. Een C43 hoort bij onderdruk.", fout: "Niet goed. Bij een half-CLV hoort alleen type C8.", aandacht: "Half-CLV: alleen type C8 (C82, C83)", feiten: ["5.1b-03"] },
+  onderGoed: { schacht: "onder", ketel: { type: "C62" }, juist: "mag", goed: "Juist. Type C6 hoort bij het onderdruk-CLV.", fout: "Niet goed. C62 is type C6 en dat hoort bij het onderdruk-CLV.", aandacht: "Onderdruk-CLV: type C4 (C42, C43) of C6 (C62, C63)", feiten: ["5.1b-02"] },
+  onderOpen: { schacht: "onder", ketel: { type: "B1" }, juist: "niet", goed: "Juist. Een open toestel mag nooit op een CLV.", fout: "Niet goed. Op een CLV alleen gesloten toestellen met ventilator.", aandacht: "Op een CLV alleen gesloten toestellen met ventilator", feiten: ["5.1b-01"] },
   overHalf: { schacht: "over", ketel: { type: "C83" }, juist: "niet", goed: "Juist. Op deze aansluiting mogen alleen C(10)-toestellen. Een C83 hoort bij het half-CLV.", fout: "Niet goed. De plaat zegt alleen C(10)3-toestellen.", aandacht: "Lees bij een C(10)-aansluiting de plaat: alleen geschikt voor C(10) toestellen", feiten: ["5.1b-07", "5.1b-03"] },
 };
 
@@ -2134,44 +2333,42 @@ function R4Combi({ beoordeel, noteer, zie, onKlaar }) {
         nummer={4}
         titel="Welke toestellen mogen erop?"
         stap={2}
-        opdracht="Bekijk het systeem en de typeplaat van de nieuwe ketel. Mag deze ketel erop?"
-        gedaan={stapel.index}
+        opdracht="Bekijk het systeem en de typeplaat. Hoort dit toesteltype bij dit systeem?"
+        gedaan={stapel.gedaan}
         totaal={kaarten.length}
       />
       <div className="flex flex-col gap-3 w-full max-w-md items-center">
-        {!stapel.klaar ? (
-          <>
-            <div className="grid grid-cols-2 gap-2 w-full">
-              <div className="rounded-2xl border-2 p-2 flex flex-col items-center text-center gap-1" style={{ borderColor: C.brownText, backgroundColor: C.bgCard }}>
-                <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Het systeem</div>
-                <div className="text-sm font-bold italic leading-tight" style={{ color: C.brownText }}>{SCHACHT_NAAM[item.schacht]}</div>
-                {item.schacht === "over" && (
-                  <div className="w-full mt-1">
-                    <div className="text-xs font-bold" style={{ color: C.brown }}>Plaat bij de aansluiting:</div>
-                    <AansluitPlaat />
-                  </div>
-                )}
-              </div>
-              <div className="rounded-2xl border-2 p-2 flex flex-col items-center justify-center text-center" style={{ borderColor: C.brownText, backgroundColor: C.bgCard }}>
-                <div className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: C.olive }}>De nieuwe ketel</div>
-                <Typeplaat type={item.ketel.type} sub={item.ketel.sub} />
-              </div>
+        <div className="grid grid-cols-2 gap-2 w-full">
+          <div className="rounded-2xl border-2 p-2 flex flex-col items-center text-center gap-1" style={{ borderColor: C.brownText, backgroundColor: C.bgCard }}>
+            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: C.olive }}>Het systeem</div>
+            <div className="text-sm font-bold italic leading-tight" style={{ color: C.brownText }}>{SCHACHT_NAAM[item.schacht]}</div>
+          </div>
+          <div className="rounded-2xl border-2 p-2 flex flex-col items-center justify-center text-center" style={{ borderColor: C.brownText, backgroundColor: C.bgCard }}>
+            <div className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: C.olive }}>{item.ketel.naam ?? "Het toestel"}</div>
+            <Typeplaat type={item.ketel.type} sub={item.ketel.sub} />
+          </div>
+          {item.schacht === "over" && (
+            // over de volle breedte, zodat de plaat op een telefoon niet wordt afgesneden
+            <div className="col-span-2 rounded-2xl border-2 p-2" style={{ borderColor: C.brownText, backgroundColor: C.bgCard }}>
+              <div className="text-xs font-bold mb-1" style={{ color: C.brown }}>Plaat bij de aansluiting van het systeem:</div>
+              <AansluitPlaat />
             </div>
-            <div className="grid grid-cols-2 gap-2 w-full">
-              {[
-                ["mag", "Mag erop"],
-                ["niet", "Mag er niet op"],
-              ].map(([id, label]) => (
-                <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
-                  <span className="block text-center">{label}</span>
-                </KeuzeKnop>
-              ))}
-            </div>
-          </>
-        ) : (
-          <GameButton onClick={onKlaar} variant="green">Naar de controlevragen</GameButton>
+          )}
+        </div>
+        {!stapel.beantwoord && (
+          <div className="grid grid-cols-2 gap-2 w-full">
+            {[
+              ["mag", "Hoort erbij"],
+              ["niet", "Hoort er niet bij"],
+            ].map(([id, label]) => (
+              <KeuzeKnop key={id} onClick={(e) => stapel.kiesKnop(id, e)} disabled={stapel.fout.includes(id)} fout={stapel.fout.includes(id)}>
+                <span className="block text-center">{label}</span>
+              </KeuzeKnop>
+            ))}
+          </div>
         )}
         <Melding melding={stapel.melding} />
+        <StapelVerder stapel={stapel} onKlaar={onKlaar} />
       </div>
     </div>
   );
@@ -2181,10 +2378,11 @@ function Ronde4({ beoordeel, noteer, zie, onDone, qaFase }) {
   const [fase, setFase] = useState(() => startFase(qaFase));
   if (fase === "intro") {
     return (
-      <RondeIntro title="Ronde 4: Welke toestellen mogen erop?" intro="Het toesteltype staat op de typeplaat van het toestel en in het installatievoorschrift van de fabrikant." onStart={() => setFase("stap1")}>
+      <RondeIntro title="Ronde 4: Welke toestellen mogen erop?" intro="Het toesteltype staat op de typeplaat van het toestel en in het installatievoorschrift van de toestelfabrikant." onStart={() => setFase("stap1")}>
         <UitlegItem term="Alleen gesloten toestellen met ventilator">
-          een open toestel of een toestel zonder ventilator mag nooit op een CLV.
+          een open toestel (zoals type B1) of een toestel zonder ventilator mag nooit op een CLV.
         </UitlegItem>
+        <p className="text-sm font-bold mt-2" style={{ color: C.brownText }}>Welk toesteltype hoort bij welk systeem?</p>
         <table className="w-full text-sm my-2 border-collapse" style={{ color: C.brownText }}>
           <thead>
             <tr className="text-xs uppercase tracking-wide" style={{ color: C.brown }}>
@@ -2194,9 +2392,9 @@ function Ronde4({ beoordeel, noteer, zie, onDone, qaFase }) {
           </thead>
           <tbody>
             {[
-              ["Onderdruk-CLV (het oude C4-systeem)", "C4 (C42, C43) of C6 (C62, C63), rendement tot 104 % (HR104)"],
+              ["Onderdruk-CLV", "C4 (C42, C43) of C6 (C62, C63), rendement tot 104 % (HR104)"],
               ["Half-CLV", "alleen C8 (C82, C83), rendement tot 107 % (HR107)"],
-              ["Overdruk-CLV", "alleen C(10)"],
+              ["Overdruk-CLV C(10)", "alleen C(10)"],
             ].map(([sys, typ]) => (
               <tr key={sys} className="border-t" style={{ borderColor: C.beigeMid }}>
                 <td className="py-1 pr-2 font-bold align-top">{sys}</td>
@@ -2205,8 +2403,10 @@ function Ronde4({ beoordeel, noteer, zie, onDone, qaFase }) {
             ))}
           </tbody>
         </table>
-        <UitlegItem term="Let op">
-          de 3 in C(10)3 betekent: ventilator in de luchttoevoer. Moderne HR-ketels mogen niet op het oude C4-onderdruksysteem. Bij elke C(10)-aansluiting hangt een plaat die zegt welke toestellen erop mogen.
+        <UitlegItem term="C(10)3">de 3 betekent: ventilator in de luchttoevoer.</UitlegItem>
+        <UitlegItem term="Plaat bij de aansluiting">bij elke C(10)-aansluiting hangt een plaat die zegt welke toestellen erop mogen.</UitlegItem>
+        <UitlegItem term="Moderne HR-ketels">
+          mogen niet op de oude C4-onderdruksystemen. Vervang je een toestel op een bestaand CLV, dan gelden extra eisen.
         </UitlegItem>
       </RondeIntro>
     );
@@ -2221,9 +2421,9 @@ function Ronde4({ beoordeel, noteer, zie, onDone, qaFase }) {
 // introkaart, de opdracht of een terugmelding aan bod kwam.
 
 const RONDE_INTRO_FEITEN = {
-  r1: ["5.1a-01", "5.1a-02", "5.1a-04", "5.2e-01"],
-  r2: ["5.1c-01", "5.1c-02", "5.1c-03", "5.1c-05", "5.1c-06", "5.1c-07", "5.2b-01", "5.1f-03"],
-  r3: ["5.1a-07", "5.1f-01", "5.1f-02"],
+  r1: ["5.1a-01", "5.1a-02", "5.1a-04", "5.2e-01", "5.1c-08", "5.2e-02"],
+  r2: ["5.1c-01", "5.1c-02", "5.1c-03", "5.1c-04", "5.1c-05", "5.1c-06", "5.1c-07", "5.2b-01", "5.2c-02", "5.1f-03"],
+  r3: ["5.1a-07", "5.1f-01", "5.1f-02", "5.1f-04"],
   r4: ["5.1b-01", "5.1b-02", "5.1b-03", "5.1b-04", "5.1b-05", "5.1b-06", "5.1b-07"],
 };
 
@@ -2231,7 +2431,7 @@ const POOLS = {
   r1: [
     {
       feiten: ["5.1a-01"],
-      question: "Wat is bij een CLV gezamenlijk voor alle toestellen in de flat?",
+      question: "Wat is bij een CLV gezamenlijk voor alle toestellen op de schacht?",
       options: ["Het luchtkanaal en het rookgaskanaal", "Alleen het rookgaskanaal", "Alleen het luchtkanaal", "Alleen de condensafvoer"],
       correct: 0,
       feedbackCorrect: "Juist. Bij een CLV delen alle toestellen een luchtkanaal en een rookgaskanaal.",
@@ -2296,6 +2496,29 @@ const POOLS = {
       feedbackCorrect: "Juist. Bij half-CLV zit er alleen de gezamenlijke afvoer in de schacht.",
       feedbackWrong: "Bij een half-CLV is alleen de rookgasafvoer gezamenlijk. Er zit dus alleen een afvoerbuis in de schacht.",
       aandacht: "Half-CLV: in de schacht alleen de rookgasafvoer",
+    },
+    {
+      feiten: ["5.1c-08"],
+      question: "Half-CLV: waar moet het toestel tegen bestand zijn?",
+      options: [
+        "Grote drukverschillen over het toestel door trek en wind",
+        "Lucht uit een gezamenlijk luchtkanaal",
+        "Overdruk in de afvoer door de ventilatoren van de buren",
+        "Regenwater dat via het gevelrooster binnenkomt",
+      ],
+      correct: 0,
+      feedbackCorrect: "Juist. De afvoer werkt op trek; door trek en wind kunnen grote drukverschillen over het toestel ontstaan.",
+      feedbackWrong: "Bij een half-CLV werkt de afvoer op natuurlijke trek. Door trek en wind kunnen grote drukverschillen over het toestel ontstaan; daar moet het toestel tegen bestand zijn.",
+      aandacht: "Half-CLV: het toestel moet bestand zijn tegen drukverschillen door trek en wind",
+    },
+    {
+      feiten: ["5.2e-02"],
+      question: "Over welke systemen gaat de norm voor het onderdruk-CLV (NPR 3378-40)?",
+      options: ["Alleen metalen, concentrische systemen", "Alleen kunststof, parallelle systemen", "Over alle systemen, ook half-CLV", "Alleen over het overdruk-CLV C(10)"],
+      correct: 0,
+      feedbackCorrect: "Juist. Die norm gaat alleen over metalen, concentrische systemen.",
+      feedbackWrong: "NPR 3378-40 gaat alleen over metalen, concentrische systemen.",
+      aandacht: "NPR 3378-40: alleen metalen, concentrische systemen",
     },
   ],
   r2: [
@@ -2406,7 +2629,7 @@ const POOLS = {
     },
     {
       feiten: ["5.2a-04"],
-      question: "Overdruk-CLV C(10): wat zit er onderaan achter het bouwkundige inspectieluik?",
+      question: "Overdruk-CLV C(10): welke inspectieluikjes zitten onderaan op het kanaal?",
       options: [
         "Aparte luikjes op het luchtkanaal en op het rookgaskanaal",
         "Alleen een luikje op het luchtkanaal",
@@ -2414,9 +2637,9 @@ const POOLS = {
         "De terugslagklepjes van alle toestellen",
       ],
       correct: 0,
-      feedbackCorrect: "Juist. Bij het C(10)-systeem heeft elk kanaal achter het bouwkundige luik een eigen luikje.",
-      feedbackWrong: "Bij het C(10)-systeem zitten achter het bouwkundige luik aparte luikjes op het luchtkanaal en op het rookgaskanaal.",
-      aandacht: "Overdruk-CLV C(10): achter het bouwkundige luik aparte luikjes op luchtkanaal en rookgaskanaal",
+      feedbackCorrect: "Juist. Bij het C(10)-systeem heeft elk kanaal onderaan een eigen inspectieluikje.",
+      feedbackWrong: "Bij het C(10)-systeem zitten onderaan op het kanaal aparte luikjes op het luchtkanaal en op het rookgaskanaal.",
+      aandacht: "Overdruk-CLV C(10): onderaan aparte luikjes op luchtkanaal en rookgaskanaal",
     },
   ],
   r3: [
@@ -2471,9 +2694,9 @@ const POOLS = {
       question: "Wie ontwerpt het CLV-systeem?",
       options: ["De fabrikant van het CLV", "De installateur van de ketel", "De bewoner", "De gebouweigenaar"],
       correct: 0,
-      feedbackCorrect: "Juist. De fabrikant ontwerpt het. Voor de installateur is het systeem een gegeven.",
-      feedbackWrong: "Het CLV wordt ontworpen door de fabrikant en al tijdens de bouw van de flat geplaatst. Voor de installateur is het een gegeven.",
-      aandacht: "Het CLV wordt ontworpen door de fabrikant; voor de installateur een gegeven",
+      feedbackCorrect: "Juist. De CLV-fabrikant ontwerpt het. Voor de installateur is het systeem een gegeven.",
+      feedbackWrong: "Het CLV wordt ontworpen door de CLV-fabrikant en al tijdens de bouw van de flat geplaatst. Voor de installateur is het een gegeven.",
+      aandacht: "Het CLV wordt ontworpen door de CLV-fabrikant; voor de installateur een gegeven",
     },
     {
       feiten: ["5.2a-06"],
@@ -2488,15 +2711,24 @@ const POOLS = {
       feiten: ["5.1f-01", "5.1f-02"],
       question: "Hoe wordt de maat van het afvoerkanaal bepaald?",
       options: [
-        "Eerst de belasting per strang bepalen, dan de maat in overleg met de fabrikant",
+        "Eerst de belasting per strang bepalen, dan de maat in overleg met de toestelfabrikant",
         "Altijd even groot als de aansluiting op de ketel",
         "De installateur kiest een maat op gevoel",
         "Altijd de maat van het oude kanaal aanhouden",
       ],
       correct: 0,
-      feedbackCorrect: "Juist. Eerst de belasting per strang, dan de maat in overleg met de fabrikant.",
-      feedbackWrong: "Voor de maat bepaal je eerst de belasting per strang. De maat volgt in overleg met de fabrikant.",
-      aandacht: "Kanaalmaat: eerst belasting per strang, dan in overleg met de fabrikant",
+      feedbackCorrect: "Juist. Eerst de belasting per strang, dan de maat in overleg met de toestelfabrikant.",
+      feedbackWrong: "Voor de maat bepaal je eerst de belasting per strang. De maat volgt in overleg met de toestelfabrikant.",
+      aandacht: "Kanaalmaat: eerst belasting per strang, dan in overleg met de toestelfabrikant",
+    },
+    {
+      feiten: ["5.1f-04"],
+      question: "Op een strang komen meer toestellen met een hogere belasting. Wat betekent dat voor het kanaal?",
+      options: ["Het kanaal moet groter zijn", "Het kanaal mag kleiner zijn", "Het kanaal blijft even groot", "Alleen de kap wordt groter"],
+      correct: 0,
+      feedbackCorrect: "Juist. Hoe meer toestellen en hoe hoger de belasting, hoe groter het kanaal.",
+      feedbackWrong: "Hoe meer toestellen en hoe hoger de belasting, hoe groter het kanaal moet zijn.",
+      aandacht: "Meer toestellen en hogere belasting: groter kanaal",
     },
     {
       feiten: ["5.2a-01", "5.2a-07"],
@@ -2529,11 +2761,11 @@ const POOLS = {
     },
     {
       feiten: ["5.1b-02"],
-      question: "Welk toesteltype mag op een onderdruk-CLV?",
+      question: "Welk toesteltype hoort bij een onderdruk-CLV?",
       options: ["C43", "C83", "C(10)3", "B1"],
       correct: 0,
-      feedbackCorrect: "Juist. Op een onderdruk-CLV mag type C4 (C42, C43) of C6 (C62, C63).",
-      feedbackWrong: "Op een onderdruk-CLV mag type C4 (C42, C43) of C6 (C62, C63). C83 hoort bij half-CLV, C(10)3 bij overdruk.",
+      feedbackCorrect: "Juist. Bij een onderdruk-CLV hoort type C4 (C42, C43) of C6 (C62, C63).",
+      feedbackWrong: "Bij een onderdruk-CLV hoort type C4 (C42, C43) of C6 (C62, C63). C83 hoort bij half-CLV, C(10)3 bij overdruk.",
       aandacht: "Onderdruk-CLV: type C4 (C42, C43) of C6 (C62, C63)",
     },
     {
@@ -2567,15 +2799,15 @@ const POOLS = {
       feiten: ["5.1b-06"],
       question: "Waar zie je of een toestel geschikt is voor een bepaald CLV?",
       options: [
-        "In het installatievoorschrift van de fabrikant; het type staat ook op de typeplaat",
+        "In het installatievoorschrift van de toestelfabrikant; het type staat ook op de typeplaat",
         "Op de kap van het CLV",
         "Op de plaat onderaan het CLV",
         "Aan de diameter van de aansluitstomp",
       ],
       correct: 0,
-      feedbackCorrect: "Juist. Installatievoorschrift van de fabrikant en de typeplaat van het toestel.",
-      feedbackWrong: "Of een toestel geschikt is, staat in het installatievoorschrift van de fabrikant. Het type staat ook op de typeplaat.",
-      aandacht: "Geschiktheid toestel: installatievoorschrift van de fabrikant en de typeplaat",
+      feedbackCorrect: "Juist. Installatievoorschrift van de toestelfabrikant en de typeplaat van het toestel.",
+      feedbackWrong: "Of een toestel geschikt is, staat in het installatievoorschrift van de toestelfabrikant. Het type staat ook op de typeplaat.",
+      aandacht: "Geschiktheid toestel: installatievoorschrift van de toestelfabrikant en de typeplaat",
     },
     {
       feiten: ["5.1b-02", "5.1b-03"],
