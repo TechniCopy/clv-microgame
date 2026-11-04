@@ -31,52 +31,57 @@ function getAudioCtx() {
   return audioCtxRef.current;
 }
 
+// Doffe, warme tonen in het lage register (nooit hoger dan 523 Hz): een
+// zuivere sinus zonder boventoon, een zachte aanzet en een korte uitklank,
+// door een laag laagdoorlaatfilter. Klinkt als een houten marimba, niet als
+// een piepje. Elke noot is een eigen oscillator, dus geen toonsprongen.
+function noot(ctx, uit, freq, start, duur, volume, { glijNaar = null, aanzet = 0.025 } = {}) {
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.0001, start);
+  env.gain.linearRampToValueAtTime(volume, start + aanzet);
+  env.gain.exponentialRampToValueAtTime(0.0001, start + duur);
+  env.connect(uit);
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, start);
+  if (glijNaar) osc.frequency.exponentialRampToValueAtTime(glijNaar, start + Math.min(duur, 0.15));
+  osc.connect(env);
+  osc.start(start);
+  osc.stop(start + duur + 0.05);
+}
+
 export function playSound(type) {
   try {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    const t = ctx.currentTime;
+    if (ctx.state === "suspended") ctx.resume();
+    const t = ctx.currentTime + 0.01;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 1100;
+    filter.Q.value = 0.5;
+    const master = ctx.createGain();
+    master.gain.value = 0.8;
+    filter.connect(master);
+    master.connect(ctx.destination);
 
     if (type === "correct") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(523, t);
-      osc.frequency.setValueAtTime(659, t + 0.08);
-      osc.frequency.setValueAtTime(784, t + 0.16);
-      gain.gain.setValueAtTime(0.15, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-      osc.start(t);
-      osc.stop(t + 0.3);
+      // zacht "dum-die": twee lage, ronde tonen omhoog (kwart)
+      noot(ctx, filter, 392, t, 0.28, 0.2);
+      noot(ctx, filter, 523, t + 0.1, 0.38, 0.18);
     } else if (type === "wrong") {
-      osc.type = "square";
-      osc.frequency.setValueAtTime(200, t);
-      osc.frequency.setValueAtTime(150, t + 0.1);
-      gain.gain.setValueAtTime(0.08, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-      osc.start(t);
-      osc.stop(t + 0.2);
-    } else if (type === "levelup") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(523, t);
-      osc.frequency.setValueAtTime(659, t + 0.1);
-      osc.frequency.setValueAtTime(784, t + 0.2);
-      osc.frequency.setValueAtTime(1047, t + 0.3);
-      gain.gain.setValueAtTime(0.15, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-      osc.start(t);
-      osc.stop(t + 0.5);
+      // een doffe, lage "bonk" die iets zakt
+      filter.frequency.value = 600;
+      noot(ctx, filter, 220, t, 0.32, 0.24, { glijNaar: 165 });
     } else if (type === "drop") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, t);
-      gain.gain.setValueAtTime(0.1, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-      osc.start(t);
-      osc.stop(t + 0.1);
+      // heel zacht houten tikje
+      filter.frequency.value = 800;
+      noot(ctx, filter, 300, t, 0.09, 0.12, { glijNaar: 200, aanzet: 0.008 });
+    } else if (type === "levelup") {
+      // rustig, warm akkoord dat zich opbouwt (C-groot, laag)
+      [262, 330, 392, 523].forEach((f, i) => noot(ctx, filter, f, t + i * 0.09, 0.8 - i * 0.08, 0.12, { aanzet: 0.04 }));
     }
   } catch {
-    /* audio not available */
+    /* geen geluid beschikbaar */
   }
 }
 
@@ -181,23 +186,19 @@ function ConfettiBurst({ x, y, onDone }) {
 
 // ─── STREAK INDICATOR ───
 
+// Wordt per streakwaarde opnieuw gemount (key={streak}), zodat elke nieuwe
+// combo zichtbaar begint en na 1,5 seconde vanzelf verdwijnt.
 function StreakIndicator({ streak }) {
-  // Combo-melding kort tonen en daarna vanzelf laten verdwijnen
-  const [zichtbaar, setZichtbaar] = useState(false);
+  const [zichtbaar, setZichtbaar] = useState(true);
   useEffect(() => {
-    if (streak < 2) {
-      setZichtbaar(false);
-      return undefined;
-    }
-    setZichtbaar(true);
     const timer = setTimeout(() => setZichtbaar(false), 1500);
     return () => clearTimeout(timer);
-  }, [streak]);
+  }, []);
   if (!zichtbaar || streak < 2) return null;
   return (
-    <div className="fixed top-20 right-4 z-[90] animate-bounce">
+    <div className="fixed top-14 right-2 z-[90] pointer-events-none">
       <div
-        className="rounded-xl px-4 py-2 shadow-lg border-2 font-bold italic text-sm"
+        className="rounded-lg px-2.5 py-1 shadow-md border font-bold italic text-xs"
         style={{ backgroundColor: "#F9762E", borderColor: C.brownText, color: "white" }}
       >
         {streak}x op rij! {streak >= 5 ? "ONSTOPBAAR!" : streak >= 3 ? "COMBO!" : ""}
@@ -259,7 +260,7 @@ export function useGameJuice() {
         {confettis.map((c) => (
           <ConfettiBurst key={c.id} x={c.x} y={c.y} onDone={() => removeConfetti(c.id)} />
         ))}
-        <StreakIndicator streak={streak} />
+        <StreakIndicator key={streak} streak={streak} />
       </>
     ),
     [floatingPoints, confettis, streak, removeFloat, removeConfetti]
@@ -317,6 +318,16 @@ export function DragProvider({ children }) {
   const [ghost, setGhost] = useState(null);
   const [hoverZone, setHoverZone] = useState(null);
   const [selected, setSelected] = useState(null); // { payload } bij tik-selectie
+  // De tikmelding is alleen nodig zolang de speler het tikken nog leert: de
+  // eerste twee selecties, en dan steeds hooguit 2,5 seconde.
+  const [tikHintTeller, setTikHintTeller] = useState(0);
+  const [tikHintVerlopen, setTikHintVerlopen] = useState(false);
+  const toonTikHint = tikHintTeller <= 2 && !tikHintVerlopen;
+  useEffect(() => {
+    if (!selected) return undefined;
+    const timer = setTimeout(() => setTikHintVerlopen(true), 2500);
+    return () => clearTimeout(timer);
+  }, [selected]);
 
   // Raakzone: een vlak dat exact onder de vinger ligt wint; anders het
   // dichtstbijzijnde vlak binnen RAAKMARGE px. Op een telefoon zijn de
@@ -325,6 +336,8 @@ export function DragProvider({ children }) {
     let found = null;
     let dichtst = Infinity;
     zonesRef.current.forEach((zone, id) => {
+      // een gevuld of uitgeschakeld vlak vangt niets meer, ook niet in de raakmarge
+      if (zone.isActief && !zone.isActief()) return;
       const r = zone.getRect();
       if (!r || r.width === 0) return;
       const dx = Math.max(r.left - x, 0, x - r.right);
@@ -345,7 +358,9 @@ export function DragProvider({ children }) {
   // ook. Het vlak zelf handelt een exacte tik al af (handleTap), dus hier
   // alleen de tikken die net misten. Tikken op een kaartje tellen nooit.
   const selectedRef = useRef(null);
-  selectedRef.current = selected;
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   useEffect(() => {
     const opTik = (e) => {
       const sel = selectedRef.current;
@@ -363,13 +378,13 @@ export function DragProvider({ children }) {
     hoverZone,
     dragging: !!ghost,
     selected,
-    registerZone(id, getRect, onDrop) {
-      zonesRef.current.set(id, { getRect, onDrop });
+    registerZone(id, getRect, onDrop, isActief) {
+      zonesRef.current.set(id, { getRect, onDrop, isActief });
       return () => zonesRef.current.delete(id);
     },
-    begin(payload, render, x, y) {
+    begin(payload, render, x, y, aanraking = false) {
       setSelected(null);
-      ghostRef.current = { payload, render, x, y };
+      ghostRef.current = { payload, render, x, y, aanraking };
       setGhost(ghostRef.current);
     },
     move(x, y) {
@@ -394,6 +409,11 @@ export function DragProvider({ children }) {
       setHoverZone(null);
     },
     toggleSelect(payload) {
+      const wordtGekozen = !(selected && selected.payload === payload);
+      if (wordtGekozen) {
+        setTikHintTeller((n) => n + 1);
+        setTikHintVerlopen(false);
+      }
       setSelected((s) => (s && s.payload === payload ? null : { payload }));
     },
     clearSelect() {
@@ -407,17 +427,29 @@ export function DragProvider({ children }) {
       {ghost && (
         <div
           className="fixed pointer-events-none z-[95]"
-          style={{ left: ghost.x, top: ghost.y, transform: "translate(-50%, -50%) scale(1.05)", opacity: 0.9 }}
+          style={{
+            // binnen het scherm houden: het kaartje is hooguit 60% van de breedte
+            // en het midden blijft daarom minstens 30% van de rand af
+            left: Math.min(
+              Math.max(ghost.x, (typeof window !== "undefined" ? window.innerWidth : 800) * 0.3 + 8),
+              (typeof window !== "undefined" ? window.innerWidth : 800) * 0.7 - 8
+            ),
+            top: ghost.y,
+            maxWidth: "60vw",
+            // met een vinger zweeft het kaartje er net boven, zodat je ziet waar je het neerlegt
+            transform: ghost.aanraking ? "translate(-50%, calc(-100% - 14px)) scale(1.05)" : "translate(-50%, -50%) scale(1.05)",
+            opacity: 0.9,
+          }}
         >
           {ghost.render}
         </div>
       )}
-      {selected && !ghost && (
+      {selected && !ghost && toonTikHint && (
         <div
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center"
+          className="fixed top-3 left-1/2 -translate-x-1/2 z-[96] px-4 py-2 rounded-xl shadow-lg border-2 text-xs font-bold text-center pointer-events-none"
           style={{ backgroundColor: C.olive, color: "white", borderColor: C.oliveDark, maxWidth: "90vw" }}
         >
-          Tik op de plek waar dit hoort — of tik nogmaals op het kaartje om te annuleren
+          Tik op de plek waar dit hoort. Nog een keer op het kaartje tikken is annuleren.
         </div>
       )}
     </DragCtx.Provider>
@@ -465,7 +497,7 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
           // genoeg beweging: dit is slepen, geen tik
           draggingRef.current = true;
           setDragging(true);
-          api.begin(payload, renderRef.current, e.clientX, e.clientY);
+          api.begin(payload, renderRef.current, e.clientX, e.clientY, e.pointerType === "touch" || e.pointerType === "pen");
         }
         api.move(e.clientX, e.clientY);
       }}
@@ -512,13 +544,19 @@ export function Draggable({ payload, disabled = false, ghost, children, classNam
 // "wrong" geeft een korte rode flash (terugveer-effect: de ghost verdwijnt en
 // het origineel staat nog op zijn plek). Werkt voor slepen en voor tikken:
 // is er een kaartje geselecteerd, dan plaatst een tik op het vlak het kaartje.
-export function DropTarget({ id, onDropItem, children, className = "", style, render }) {
+// actief={false} (bijv. als het vlak al gevuld is): het vlak vangt dan niets,
+// zodat een kaartje dat er vlak naast landt naar het lege buurvlak gaat.
+export function DropTarget({ id, onDropItem, children, className = "", style, render, actief = true }) {
   const api = useContext(DragCtx);
   const ref = useRef(null);
   const cbRef = useRef(onDropItem);
+  const actiefRef = useRef(actief);
   useEffect(() => {
     cbRef.current = onDropItem;
   }, [onDropItem]);
+  useEffect(() => {
+    actiefRef.current = actief;
+  }, [actief]);
   const [flash, setFlash] = useState(null);
 
   const handleResult = useCallback((result) => {
@@ -535,22 +573,24 @@ export function DropTarget({ id, onDropItem, children, className = "", style, re
       (payload, point) => {
         const result = cbRef.current?.(payload, point);
         handleResult(result);
-        if (point?.viaTik && result === "correct") api.clearSelect();
+        // na goed en na fout de selectie loslaten, zodat de tikmelding de uitleg niet afdekt
+        if (point?.viaTik && result) api.clearSelect();
         return result;
-      }
+      },
+      () => actiefRef.current
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleTap = (e) => {
-    if (!api.selected) return;
+    if (!api.selected || !actief) return;
     const result = cbRef.current?.(api.selected.payload, { clientX: e.clientX, clientY: e.clientY });
     handleResult(result);
-    if (result === "correct") api.clearSelect();
+    if (result) api.clearSelect();
   };
 
   const isHover = api.hoverZone === id && api.dragging;
-  const armedStyle = api.selected
+  const armedStyle = api.selected && actief
     ? { outline: `2px dashed ${C.olive}`, outlineOffset: 3, borderRadius: 14, cursor: "pointer" }
     : {};
 
@@ -598,8 +638,8 @@ export function DragCard({ label, disabled, small = false }) {
 
 // ─── PROGRESS BAR (3 bolletjes + 5 hartjes) ───
 
-export function ProgressBar({ currentRound, score, lives }) {
-  const rounds = [1, 2, 3];
+export function ProgressBar({ currentRound, score, lives, totalRounds = 3 }) {
+  const rounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
   const [displayScore, setDisplayScore] = useState(score);
   const [scorePop, setScorePop] = useState(false);
 
@@ -642,7 +682,7 @@ export function ProgressBar({ currentRound, score, lives }) {
                   borderColor: isComplete || isCurrent ? "#F7E3CF" : C.beigeMid,
                 }}
               >
-                {isComplete && <span style={{ color: C.brownText }} className="text-[8px]">&#10003;</span>}
+                {isComplete && <span style={{ color: C.brownText }} className="text-[11px]">&#10003;</span>}
               </div>
             );
           })}
@@ -774,7 +814,7 @@ function pickAndShuffle(pool) {
   };
 }
 
-export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = false }) {
+export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = false, volgendeTekst = "Volgende ronde" }) {
   const [q] = useState(() => pickAndShuffle(pool));
   const [selected, setSelected] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -851,7 +891,7 @@ export function MCControle({ pool, beantwoord, onComplete, onFout, lastRound = f
             {isCorrect ? q.feedbackCorrect : q.feedbackWrong}
           </p>
           <GameButton onClick={handleNext} variant={isCorrect || attempts >= 2 ? "green" : "danger"} className="w-full">
-            {isCorrect || attempts >= 2 ? (lastRound ? "Bekijk je resultaat" : "Volgende ronde") : "Probeer opnieuw"}
+            {isCorrect || attempts >= 2 ? (lastRound ? "Bekijk je resultaat" : volgendeTekst) : "Probeer opnieuw"}
           </GameButton>
         </div>
       )}
@@ -959,7 +999,7 @@ export function StepBanner({ step }) {
   const s = map[step] ?? map[1];
   return (
     <div
-      className="rounded-lg px-3 py-1 mb-3 text-[11px] font-bold uppercase tracking-widest border"
+      className="rounded-lg px-3 py-1 mb-3 text-xs font-bold uppercase tracking-widest border"
       style={{ backgroundColor: s.bg, borderColor: s.border, color: s.color }}
     >
       {s.txt}
@@ -996,6 +1036,72 @@ export function RondeIntro({ title, intro, children, onStart, buttonText = "Aan 
   );
 }
 
+// ─── VASTE BALK ONDERIN (telefoon) ───
+//
+// Vraag, keuzeknoppen, uitleg na goed of fout en de knop "Verder" staan op een
+// telefoon in een balk die vast onderin het scherm zit. Zo ziet de speler de
+// uitleg altijd, ook als de tekening langer is dan het scherm. Vanaf md-breedte
+// staat de balk gewoon in de pagina. Geef de pagina eronder ruimte met
+// RUIMTE_VOOR_BALK: die groeit mee met de echte hoogte van de balk (de balk
+// zet zijn hoogte in de CSS-variabele --balk-hoogte), zodat de speler alles
+// boven de balk kan scrollen, ook als de uitleg lang is.
+export const RUIMTE_VOOR_BALK = "pb-[calc(var(--balk-hoogte,0px)+1rem)] md:pb-6";
+
+export function VasteBalk({ children, className = "" }) {
+  const buitenRef = useRef(null);
+  const binnenRef = useRef(null);
+  const [meer, setMeer] = useState(false);
+
+  useEffect(() => {
+    const buiten = buitenRef.current;
+    const binnen = binnenRef.current;
+    if (!buiten || !binnen) return undefined;
+    const meet = () => {
+      const vast = window.matchMedia("(max-width: 767px)").matches;
+      document.documentElement.style.setProperty("--balk-hoogte", vast ? `${buiten.offsetHeight}px` : "0px");
+      setMeer(binnen.scrollHeight - binnen.clientHeight - binnen.scrollTop > 6);
+    };
+    meet();
+    const ro = new ResizeObserver(meet);
+    ro.observe(buiten);
+    ro.observe(binnen);
+    binnen.addEventListener("scroll", meet, { passive: true });
+    window.addEventListener("resize", meet);
+    return () => {
+      ro.disconnect();
+      binnen.removeEventListener("scroll", meet);
+      window.removeEventListener("resize", meet);
+      document.documentElement.style.setProperty("--balk-hoogte", "0px");
+    };
+  }, []);
+
+  return (
+    <div
+      ref={buitenRef}
+      className={`fixed inset-x-0 bottom-0 z-[80] p-2 md:static md:p-0 md:z-auto ${className}`}
+      style={{ filter: "drop-shadow(0 -4px 12px rgba(0,0,0,0.15))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
+      <div className="relative max-w-xl mx-auto">
+        <div
+          ref={binnenRef}
+          className="rounded-2xl border-2 p-3 flex flex-col gap-2 max-h-[48vh] overflow-y-auto"
+          style={{ backgroundColor: C.bgCard, borderColor: C.brownText }}
+        >
+          {children}
+        </div>
+        {meer && (
+          <div
+            className="pointer-events-none absolute inset-x-[2px] bottom-[2px] h-9 rounded-b-2xl flex items-end justify-center pb-1 text-xs font-bold"
+            style={{ background: `linear-gradient(to bottom, rgba(255,255,255,0), ${C.bgCard} 70%)`, color: C.brown }}
+          >
+            veeg omhoog voor meer &#8595;
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Rij in een uitleg-kaart: term (vet) + korte functie-omschrijving.
 export function UitlegItem({ term, children }) {
   return (
@@ -1003,7 +1109,7 @@ export function UitlegItem({ term, children }) {
       <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: C.olive }} />
       <p className="text-sm leading-snug" style={{ color: C.brownText }}>
         <span className="font-bold">{term}</span>
-        {term && children ? " — " : ""}
+        {term && children ? ": " : ""}
         {children}
       </p>
     </div>
